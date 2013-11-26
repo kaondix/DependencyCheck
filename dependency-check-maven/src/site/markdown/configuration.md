@@ -14,3 +14,4 @@ proxyUrl            | The Proxy URL.                     |
 proxyPort           | The Proxy Port.                    |
 proxyUsername       | Defines the proxy user name.       |
 proxyPassword       | Defines the proxy password.        |
+whiteListedDependencies | Defines optional white-listed vulnerabilities which should be ignored. Configurable via the 'org.owasp.dependencycheck.whitelisted' (comma-separated string, eg. 'CVE-2008-6504,CVE-2006-0550') |

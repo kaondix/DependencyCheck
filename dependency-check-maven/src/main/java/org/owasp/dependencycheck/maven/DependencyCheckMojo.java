@@ -18,6 +18,23 @@
  */
 package org.owasp.dependencycheck.maven;
 
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.doxia.sink.Sink;
+import org.apache.maven.doxia.sink.SinkFactory;
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.*;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.reporting.MavenMultiPageReport;
+import org.apache.maven.reporting.MavenReport;
+import org.apache.maven.reporting.MavenReportException;
+import org.owasp.dependencycheck.Engine;
+import org.owasp.dependencycheck.dependency.*;
+import org.owasp.dependencycheck.reporting.ReportGenerator;
+import org.owasp.dependencycheck.utils.LogUtils;
+import org.owasp.dependencycheck.utils.Settings;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,34 +44,9 @@ import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.apache.maven.doxia.sink.SinkFactory;
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.project.MavenProject;
-import java.util.Set;
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.plugins.annotations.Component;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.plugins.annotations.ResolutionScope;
-import org.apache.maven.reporting.MavenMultiPageReport;
-import org.apache.maven.reporting.MavenReport;
-import org.apache.maven.reporting.MavenReportException;
-import org.apache.maven.doxia.sink.Sink;
-import org.apache.maven.plugin.MojoFailureException;
-import org.owasp.dependencycheck.Engine;
-import org.owasp.dependencycheck.dependency.Dependency;
-import org.owasp.dependencycheck.dependency.Evidence;
-import org.owasp.dependencycheck.dependency.Identifier;
-import org.owasp.dependencycheck.dependency.Reference;
-import org.owasp.dependencycheck.dependency.Vulnerability;
-import org.owasp.dependencycheck.dependency.VulnerableSoftware;
-import org.owasp.dependencycheck.reporting.ReportGenerator;
-import org.owasp.dependencycheck.utils.LogUtils;
-import org.owasp.dependencycheck.utils.Settings;
 
 /**
  * Maven Plugin that checks project dependencies to see if they have any known
@@ -101,6 +93,14 @@ public class DependencyCheckMojo extends AbstractMojo implements MavenMultiPageR
      */
     @Parameter(property = "name", defaultValue = "Dependency-Check")
     private String name;
+
+	/**
+	 * Optional white-listed dependencies. Useful when a dependency vulnerability might have a bad version field
+	 * ('all versions', for example).
+	 */
+	@Parameter(property = "whiteListedDependencies", defaultValue = "${org.owasp.dependencycheck.whitelisted}")
+	private String whiteListedDependencies;
+
     /**
      * The description of the Dependency-Check report to be displayed in the
      * Maven Generated Reports page
@@ -191,7 +191,7 @@ public class DependencyCheckMojo extends AbstractMojo implements MavenMultiPageR
         LogUtils.prepareLogger(in, logFile);
 
         populateSettings();
-        final Engine engine = new Engine();
+        final Engine engine = new Engine(whiteListedDependencies);
         final Set<Artifact> artifacts = project.getArtifacts();
         for (Artifact a : artifacts) {
             if (!TEST_SCOPE.equals(a.getScope())) {
