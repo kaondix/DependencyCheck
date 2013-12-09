@@ -120,8 +120,14 @@ public class DependencyCheckMojo extends AbstractMojo implements MavenMultiPageR
      * level is identified. The default is 11 which means since the CVSS scores
      * are 0-10, by default the build will never fail.
      */
-    @Parameter(property = "failBuildOnCVSS", defaultValue = "11", required = true)
-    private float failBuildOnCVSS = 11;
+    @Parameter(property = "failBuildOnCVSS", defaultValue = "${check.failBuildOnCVSS}", required = false)
+    private String failBuildOnCVSSParameter;
+
+    /**
+     * The failBuildOnCVSS parameter cache
+     */
+    private float failBuildOnCVSS = -1f;
+
     /**
      * The output directory.
      */
@@ -667,7 +673,7 @@ public class DependencyCheckMojo extends AbstractMojo implements MavenMultiPageR
     public void execute() throws MojoExecutionException, MojoFailureException {
         final Engine engine = executeDependencyCheck();
         generateExternalReports(engine);
-        if (this.failBuildOnCVSS <= 10) {
+        if (this.getFailBuildOnCVSS()<= 10) {
             checkForFailure(engine.getDependencies());
         }
     }
@@ -786,7 +792,7 @@ public class DependencyCheckMojo extends AbstractMojo implements MavenMultiPageR
         final StringBuilder ids = new StringBuilder();
         for (Dependency d : dependencies) {
             for (Vulnerability v : d.getVulnerabilities()) {
-                if (v.getCvssScore() >= failBuildOnCVSS) {
+                if (v.getCvssScore() >= getFailBuildOnCVSS()) {
                     if (ids.length() == 0) {
                         ids.append(v.getName());
                     } else {
@@ -802,4 +808,18 @@ public class DependencyCheckMojo extends AbstractMojo implements MavenMultiPageR
             throw new MojoFailureException(msg);
         }
     }
+
+
+    private float getFailBuildOnCVSS(){
+        if(failBuildOnCVSS < 0) {
+            try{
+                failBuildOnCVSS = Float.parseFloat(failBuildOnCVSSParameter);
+            }catch(Exception ex){
+                Logger.getLogger(DependencyCheckMojo.class.getName()).log(Level.WARNING,"Unable to read ${check.failBuildOnCVSS}, using 11 as a default");
+                failBuildOnCVSS = 11;
+            }
+        }
+    return failBuildOnCVSS;
+}
+
 }
