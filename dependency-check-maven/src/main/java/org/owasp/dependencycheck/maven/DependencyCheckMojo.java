@@ -816,7 +816,6 @@ public class DependencyCheckMojo extends AbstractMojo implements MavenMultiPageR
                 failBuildOnCVSS = Float.parseFloat(failBuildOnCVSSParameter);
             }catch(Exception ex){
                 Logger.getLogger(DependencyCheckMojo.class.getName()).log(Level.WARNING,"Unable to read ${check.failBuildOnCVSS}, using 11 as a default");
-                Logger.getLogger(DependencyCheckMojo.class.getName()).log(Level.WARNING, null, ex);
                 failBuildOnCVSS = 11;
             }
         }
