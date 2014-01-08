@@ -153,20 +153,20 @@ public class NexusAnalyzer extends AbstractAnalyzer {
         }
 
         try {
-            MavenArtifact ma = searcher.searchSha1(dependency.getSha1sum());
-            if (ma.getGroupId() != null && ! "".equals(ma.getGroupId())) {
+            final MavenArtifact ma = searcher.searchSha1(dependency.getSha1sum());
+            if (ma.getGroupId() != null && !"".equals(ma.getGroupId())) {
                 dependency.getVendorEvidence().addEvidence("nexus", "groupid", ma.getGroupId(),
                         Evidence.Confidence.HIGH);
             }
-            if (ma.getArtifactId() != null && ! "".equals(ma.getArtifactId())) {
+            if (ma.getArtifactId() != null && !"".equals(ma.getArtifactId())) {
                 dependency.getProductEvidence().addEvidence("nexus", "artifactid", ma.getArtifactId(),
                         Evidence.Confidence.HIGH);
             }
-            if (ma.getVersion() != null && ! "".equals(ma.getVersion())) {
+            if (ma.getVersion() != null && !"".equals(ma.getVersion())) {
                 dependency.getVersionEvidence().addEvidence("nexus", "version", ma.getVersion(),
                         Evidence.Confidence.HIGH);
             }
-            if (ma.getArtifactUrl() != null && ! "".equals(ma.getArtifactUrl())) {
+            if (ma.getArtifactUrl() != null && !"".equals(ma.getArtifactUrl())) {
                 dependency.addIdentifier("maven", ma.toString(), ma.getArtifactUrl());
             }
         } catch (IllegalArgumentException iae) {
