@@ -60,7 +60,7 @@ import org.owasp.dependencycheck.utils.Settings;
  * Maven Plugin that checks project dependencies to see if they have any known
  * published vulnerabilities.
  *
- * @author Jeremy Long (jeremy.long@owasp.org)
+ * @author Jeremy Long <jeremy.long@owasp.org>
  */
 @Mojo(name = "check", defaultPhase = LifecyclePhase.COMPILE, threadSafe = true,
         requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM,
@@ -228,10 +228,10 @@ public class DependencyCheckMojo extends AbstractMojo implements MavenMultiPageR
         try {
             r.generateReports(outputDirectory.getCanonicalPath(), format);
         } catch (IOException ex) {
-            Logger.getLogger(DependencyCheckMojo.class.getName()).log(Level.SEVERE, "Unexpected exception occured during analysis; please see the verbose error log for more details.");
+            Logger.getLogger(DependencyCheckMojo.class.getName()).log(Level.SEVERE, "Unexpected exception occurred during analysis; please see the verbose error log for more details.");
             Logger.getLogger(DependencyCheckMojo.class.getName()).log(Level.FINE, null, ex);
         } catch (Exception ex) {
-            Logger.getLogger(DependencyCheckMojo.class.getName()).log(Level.SEVERE, "Unexpected exception occured during analysis; please see the verbose error log for more details.");
+            Logger.getLogger(DependencyCheckMojo.class.getName()).log(Level.SEVERE, "Unexpected exception occurred during analysis; please see the verbose error log for more details.");
             Logger.getLogger(DependencyCheckMojo.class.getName()).log(Level.FINE, null, ex);
         }
     }

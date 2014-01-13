@@ -21,7 +21,6 @@ package org.owasp.dependencycheck.analyzer;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -56,7 +55,7 @@ import org.owasp.dependencycheck.utils.DependencyVersionUtil;
  * to discern if there is an associated CPE. It uses the evidence contained
  * within the dependency to search the Lucene index.
  *
- * @author Jeremy Long (jeremy.long@owasp.org)
+ * @author Jeremy Long <jeremy.long@owasp.org>
  */
 public class CPEAnalyzer implements Analyzer {
 
@@ -101,16 +100,10 @@ public class CPEAnalyzer implements Analyzer {
      * usually occurs when the database is in use by another process.
      */
     public void open() throws IOException, DatabaseException {
+        Logger.getLogger(CPEAnalyzer.class.getName()).log(Level.FINE, "Opening the CVE Database");
         cve = new CveDB();
-        try {
-            cve.open();
-        } catch (SQLException ex) {
-            Logger.getLogger(CPEAnalyzer.class.getName()).log(Level.FINE, null, ex);
-            throw new DatabaseException("Unable to open the cve db", ex);
-        } catch (ClassNotFoundException ex) {
-            Logger.getLogger(CPEAnalyzer.class.getName()).log(Level.FINE, null, ex);
-            throw new DatabaseException("Unable to open the cve db", ex);
-        }
+        cve.open();
+        Logger.getLogger(CPEAnalyzer.class.getName()).log(Level.FINE, "Creating the Lucene CPE Index");
         cpe = CpeMemoryIndex.getInstance();
         try {
             cpe.open(cve);
@@ -144,11 +137,13 @@ public class CPEAnalyzer implements Analyzer {
      * @throws ParseException is thrown when the Lucene query cannot be parsed.
      */
     protected void determineCPE(Dependency dependency) throws CorruptIndexException, IOException, ParseException {
-        Confidence vendorConf = Confidence.HIGHEST;
-        Confidence productConf = Confidence.HIGHEST;
+        Confidence confidence = Confidence.HIGHEST;
 
-        String vendors = addEvidenceWithoutDuplicateTerms("", dependency.getVendorEvidence(), vendorConf);
-        String products = addEvidenceWithoutDuplicateTerms("", dependency.getProductEvidence(), productConf);
+        String vendors = addEvidenceWithoutDuplicateTerms("", dependency.getVendorEvidence(), confidence);
+        String products = addEvidenceWithoutDuplicateTerms("", dependency.getProductEvidence(), confidence);
+        /* bug fix for #40 - version evidence is not showing up as "used" in the reports if there is no
+         * CPE identified. As such, we are "using" the evidence and ignoring the results. */
+        addEvidenceWithoutDuplicateTerms("", dependency.getVersionEvidence(), confidence);
 
         int ctr = 0;
         do {
@@ -164,13 +159,17 @@ public class CPEAnalyzer implements Analyzer {
                     }
                 }
             }
-            vendorConf = reduceConfidence(vendorConf);
-            if (dependency.getVendorEvidence().contains(vendorConf)) {
-                vendors = addEvidenceWithoutDuplicateTerms(vendors, dependency.getVendorEvidence(), vendorConf);
+            confidence = reduceConfidence(confidence);
+            if (dependency.getVendorEvidence().contains(confidence)) {
+                vendors = addEvidenceWithoutDuplicateTerms(vendors, dependency.getVendorEvidence(), confidence);
             }
-            productConf = reduceConfidence(productConf);
-            if (dependency.getProductEvidence().contains(productConf)) {
-                products = addEvidenceWithoutDuplicateTerms(products, dependency.getProductEvidence(), productConf);
+            if (dependency.getProductEvidence().contains(confidence)) {
+                products = addEvidenceWithoutDuplicateTerms(products, dependency.getProductEvidence(), confidence);
+            }
+            /* bug fix for #40 - version evidence is not showing up as "used" in the reports if there is no
+             * CPE identified. As such, we are "using" the evidence and ignoring the results. */
+            if (dependency.getVersionEvidence().contains(confidence)) {
+                addEvidenceWithoutDuplicateTerms("", dependency.getVersionEvidence(), confidence);
             }
         } while ((++ctr) < 4);
     }
@@ -435,8 +434,10 @@ public class CPEAnalyzer implements Analyzer {
         final List<String> list = new ArrayList<String>();
         String tempWord = null;
         for (String word : words) {
-            //single letter words should be concatonated with the next word.
-            // so { "m", "core", "sample" } -> { "mcore", "sample" }
+            /*
+            single letter words should be concatenated with the next word.
+            so { "m", "core", "sample" } -> { "mcore", "sample" }
+            */
             if (tempWord != null) {
                 list.add(tempWord + word);
                 tempWord = null;
@@ -561,7 +562,7 @@ public class CPEAnalyzer implements Analyzer {
                         dbVer = DependencyVersionUtil.parseVersion(vs.getVersion());
                     }
                     if (dbVer == null //special case, no version specified - everything is vulnerable
-                            || evVer.equals(dbVer)) { //woot exect match
+                            || evVer.equals(dbVer)) { //yeah! exact match
                         final String url = String.format("http://web.nvd.nist.gov/view/vuln/search?cpe=%s", URLEncoder.encode(vs.getName(), "UTF-8"));
                         final IdentifierMatch match = new IdentifierMatch("cpe", vs.getName(), url, IdentifierConfidence.EXACT_MATCH, conf);
                         collected.add(match);
@@ -627,7 +628,7 @@ public class CPEAnalyzer implements Analyzer {
     private static class IdentifierMatch implements Comparable<IdentifierMatch> {
 
         /**
-         * Constructs an IdentiferMatch.
+         * Constructs an IdentifierMatch.
          *
          * @param type the type of identifier (such as CPE)
          * @param value the value of the identifier

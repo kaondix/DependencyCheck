@@ -4,7 +4,6 @@
  */
 package org.owasp.dependencycheck.utils;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import org.junit.After;
@@ -16,7 +15,7 @@ import static org.junit.Assert.*;
 
 /**
  *
- * @author Jeremy Long (jeremy.long@owasp.org)
+ * @author Jeremy Long <jeremy.long@owasp.org>
  */
 public class DependencyVersionTest {
 

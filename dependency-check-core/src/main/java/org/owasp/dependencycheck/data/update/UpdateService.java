@@ -18,13 +18,12 @@
  */
 package org.owasp.dependencycheck.data.update;
 
-import org.owasp.dependencycheck.data.update.CachedWebDataSource;
 import java.util.Iterator;
 import java.util.ServiceLoader;
 
 /**
  *
- * @author Jeremy Long (jeremy.long@owasp.org)
+ * @author Jeremy Long <jeremy.long@owasp.org>
  */
 public final class UpdateService {
 

@@ -18,13 +18,11 @@
  */
 package org.owasp.dependencycheck.data.nvdcve;
 
-import org.owasp.dependencycheck.data.cpe.*;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
@@ -34,7 +32,7 @@ import org.owasp.dependencycheck.utils.Settings;
 
 /**
  *
- * @author Jeremy Long (jeremy.long@owasp.org)
+ * @author Jeremy Long <jeremy.long@owasp.org>
  */
 public abstract class BaseDBTestCase extends TestCase {
 

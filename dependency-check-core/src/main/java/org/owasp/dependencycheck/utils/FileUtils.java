@@ -36,7 +36,7 @@ import org.owasp.dependencycheck.Engine;
 /**
  * A collection of utilities for processing information about files.
  *
- * @author Jeremy Long (jeremy.long@owasp.org)
+ * @author Jeremy Long <jeremy.long@owasp.org>
  */
 public final class FileUtils {
 
@@ -98,7 +98,7 @@ public final class FileUtils {
      * location of the JAR containing the specified class.
      *
      * @param configuredFilePath the configured relative or absolute path
-     * @param clazz the class whos path will be resolved
+     * @param clazz the class to resolve the path
      * @return a File object
      * @throws IOException is thrown if the path could not be decoded
      * @deprecated This method should no longer be used. See the implementation

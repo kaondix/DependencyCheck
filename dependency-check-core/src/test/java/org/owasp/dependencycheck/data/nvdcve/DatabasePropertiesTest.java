@@ -19,7 +19,6 @@
 package org.owasp.dependencycheck.data.nvdcve;
 
 import org.owasp.dependencycheck.data.nvdcve.DatabaseProperties;
-import java.io.File;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -31,7 +30,7 @@ import org.owasp.dependencycheck.data.update.NvdCveInfo;
 
 /**
  *
- * @author Jeremy Long (jeremy.long@owasp.org)
+ * @author Jeremy Long <jeremy.long@owasp.org>
  */
 public class DatabasePropertiesTest {
 

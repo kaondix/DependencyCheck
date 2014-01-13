@@ -19,7 +19,6 @@
 package org.owasp.dependencycheck.reporting;
 
 import org.owasp.dependencycheck.Engine;
-import org.owasp.dependencycheck.data.cpe.BaseIndexTestCase;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -36,7 +35,7 @@ import java.io.InputStream;
 
 /**
  *
- * @author Jeremy Long (jeremy.long@owasp.org)
+ * @author Jeremy Long <jeremy.long@owasp.org>
  */
 public class ReportGeneratorTest {
 

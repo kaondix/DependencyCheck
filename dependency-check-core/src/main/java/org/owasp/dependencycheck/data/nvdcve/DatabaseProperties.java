@@ -25,7 +25,7 @@ import org.owasp.dependencycheck.data.update.NvdCveInfo;
 /**
  * This is a wrapper around a set of properties that are stored in the database.
  *
- * @author Jeremy Long (jeremy.long@owasp.org)
+ * @author Jeremy Long <jeremy.long@owasp.org>
  */
 public class DatabaseProperties {
 
@@ -91,9 +91,7 @@ public class DatabaseProperties {
         if (updatedValue == null) {
             return;
         }
-        properties.put("version", CveDB.DB_SCHEMA_VERSION);
         properties.put(LAST_UPDATED_BASE + updatedValue.getId(), String.valueOf(updatedValue.getTimestamp()));
-        cveDB.saveProperty("version", CveDB.DB_SCHEMA_VERSION);
         cveDB.saveProperty(LAST_UPDATED_BASE + updatedValue.getId(), String.valueOf(updatedValue.getTimestamp()));
     }
 

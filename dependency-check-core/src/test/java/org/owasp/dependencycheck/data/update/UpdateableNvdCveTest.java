@@ -31,7 +31,7 @@ import org.owasp.dependencycheck.utils.DownloadFailedException;
 
 /**
  *
- * @author Jeremy Long (jeremy.long@owasp.org)
+ * @author Jeremy Long <jeremy.long@owasp.org>
  */
 public class UpdateableNvdCveTest {
 
@@ -136,7 +136,7 @@ public class UpdateableNvdCveTest {
     }
 
     /**
-     * Test of iterator method, of class UpdateableNvdCve.
+     * Test of iterator method, of class UpdatableNvdCve.
      */
     @Test
     public void testIterator() throws IOException {

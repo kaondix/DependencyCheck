@@ -19,7 +19,7 @@
 package org.owasp.dependencycheck.data.update;
 
 import org.owasp.dependencycheck.data.update.exception.UpdateException;
-import java.io.IOException;
+
 import java.net.MalformedURLException;
 import java.util.Calendar;
 import org.junit.After;
@@ -32,7 +32,7 @@ import org.owasp.dependencycheck.utils.DownloadFailedException;
 
 /**
  *
- * @author Jeremy Long (jeremy.long@owasp.org)
+ * @author Jeremy Long <jeremy.long@owasp.org>
  */
 public class StandardUpdateIntegrationTest {
 
@@ -58,19 +58,6 @@ public class StandardUpdateIntegrationTest {
     public StandardUpdate getStandardUpdateTask() throws MalformedURLException, DownloadFailedException, UpdateException {
         StandardUpdate instance = new StandardUpdate();
         return instance;
-    }
-
-    /**
-     * Test of setDeleteAndRecreate method, of class StandardUpdate.
-     */
-    @Test
-    public void testSetDeleteAndRecreate() throws Exception {
-        boolean deleteAndRecreate = false;
-        boolean expResult = false;
-        StandardUpdate instance = getStandardUpdateTask();
-        instance.setDeleteAndRecreate(deleteAndRecreate);
-        boolean result = instance.shouldDeleteAndRecreate();
-        assertEquals(expResult, result);
     }
 
     /**

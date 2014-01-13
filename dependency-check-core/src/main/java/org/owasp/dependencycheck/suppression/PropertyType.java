@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
  * a regular expression or could be case insensitive. The equals method has been
  * over-ridden so that the object will correctly compare to strings.
  *
- * @author Jeremy Long (jeremy.long@owasp.org)
+ * @author Jeremy Long <jeremy.long@owasp.org>
  */
 public class PropertyType {
 
@@ -131,7 +131,7 @@ public class PropertyType {
         }
     }
 
-    //<editor-fold defaultstate="collapsed" desc="standard implmentations of hashCode, equals, and toString">
+    //<editor-fold defaultstate="collapsed" desc="standard implementations of hashCode, equals, and toString">
     /**
      * Default implementation of hashCode.
      *

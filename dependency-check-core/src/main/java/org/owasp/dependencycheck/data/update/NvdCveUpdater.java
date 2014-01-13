@@ -22,13 +22,12 @@ import org.owasp.dependencycheck.data.update.exception.UpdateException;
 import java.net.MalformedURLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.owasp.dependencycheck.data.nvdcve.DatabaseException;
 import org.owasp.dependencycheck.utils.DownloadFailedException;
 
 /**
  * Class responsible for updating the NVD CVE and CPE data stores.
  *
- * @author Jeremy Long (jeremy.long@owasp.org)
+ * @author Jeremy Long <jeremy.long@owasp.org>
  */
 public class NvdCveUpdater implements CachedWebDataSource {
 
@@ -44,15 +43,6 @@ public class NvdCveUpdater implements CachedWebDataSource {
         try {
             final StandardUpdate task = new StandardUpdate();
             if (task.isUpdateNeeded()) {
-                if (task.shouldDeleteAndRecreate()) {
-                    try {
-                        task.recreateTables();
-                    } catch (DatabaseException ex) {
-                        final String msg = "Unable to update the database schema";
-                        Logger.getLogger(NvdCveUpdater.class.getName()).log(Level.SEVERE, msg);
-                        Logger.getLogger(NvdCveUpdater.class.getName()).log(Level.FINE, null, ex);
-                    }
-                }
                 task.update();
             }
         } catch (MalformedURLException ex) {
@@ -65,16 +55,4 @@ public class NvdCveUpdater implements CachedWebDataSource {
             Logger.getLogger(NvdCveUpdater.class.getName()).log(Level.FINE, null, ex);
         }
     }
-//
-//    /**
-//     * Deletes the existing data directories.
-//     *
-//     * @throws IOException thrown if the directory cannot be deleted
-//     */
-//    protected void deleteExistingData() throws IOException {
-//        File data = Settings.getDataFile(Settings.KEYS.CVE_DATA_DIRECTORY);
-//        if (data.exists()) {
-//            FileUtils.delete(data);
-//        }
-//    }
 }

@@ -20,14 +20,12 @@ package org.owasp.dependencycheck.concurrency;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * A simple task that obtains a lock on a directory. This is used in testing of
  * the shared and exclusive locks.
  *
- * @author Jeremy Long (jeremy.long@owasp.org)
+ * @author Jeremy Long <jeremy.long@owasp.org>
  */
 public class SpinLockTask implements Runnable {
 

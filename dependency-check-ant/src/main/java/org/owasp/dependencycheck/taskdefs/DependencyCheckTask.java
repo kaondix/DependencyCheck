@@ -44,7 +44,7 @@ import org.owasp.dependencycheck.utils.Settings;
 /**
  * An Ant task definition to execute dependency-check during an Ant build.
  *
- * @author Jeremy Long (jeremy.long@owasp.org)
+ * @author Jeremy Long <jeremy.long@owasp.org>
  */
 public class DependencyCheckTask extends Task {
 
@@ -495,8 +495,8 @@ public class DependencyCheckTask extends Task {
             Logger.getLogger(DependencyCheckTask.class.getName()).log(Level.FINE, "Unable to generate dependency-check report", ex);
             throw new BuildException("Unable to generate dependency-check report", ex);
         } catch (Exception ex) {
-            Logger.getLogger(DependencyCheckTask.class.getName()).log(Level.FINE, "An exception occured; unable to continue task", ex);
-            throw new BuildException("An exception occured; unable to continue task", ex);
+            Logger.getLogger(DependencyCheckTask.class.getName()).log(Level.FINE, "An exception occurred; unable to continue task", ex);
+            throw new BuildException("An exception occurred; unable to continue task", ex);
         }
     }
 

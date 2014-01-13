@@ -48,7 +48,7 @@ import org.owasp.dependencycheck.utils.Settings;
  * <p>An analyzer that extracts files from archives and ensures any supported
  * files contained within the archive are added to the dependency list.</p>
  *
- * @author Jeremy Long (jeremy.long@owasp.org)
+ * @author Jeremy Long <jeremy.long@owasp.org>
  */
 public class ArchiveAnalyzer extends AbstractAnalyzer implements Analyzer {
 
@@ -74,7 +74,7 @@ public class ArchiveAnalyzer extends AbstractAnalyzer implements Analyzer {
      * Tracks the current scan/extraction depth for nested archives.
      */
     private int scanDepth = 0;
-    //<editor-fold defaultstate="collapsed" desc="All standard implmentation details of Analyzer">
+    //<editor-fold defaultstate="collapsed" desc="All standard implementation details of Analyzer">
     /**
      * The name of the analyzer.
      */

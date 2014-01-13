@@ -27,7 +27,7 @@ import org.xml.sax.SAXParseException;
 /**
  * An XML parsing error handler.
  *
- * @author Jeremy Long (jeremy.long@owasp.org)
+ * @author Jeremy Long <jeremy.long@owasp.org>
  */
 public class SuppressionErrorHandler implements ErrorHandler {
 
@@ -39,7 +39,7 @@ public class SuppressionErrorHandler implements ErrorHandler {
      */
     private String getPrettyParseExceptionInfo(SAXParseException ex) {
 
-        final StringBuffer sb = new StringBuffer();
+        final StringBuilder sb = new StringBuilder();
 
         if (ex.getSystemId() != null) {
             sb.append("systemId=").append(ex.getSystemId()).append(", ");

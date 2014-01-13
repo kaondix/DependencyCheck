@@ -42,7 +42,7 @@ import org.owasp.dependencycheck.utils.LogUtils;
  * <p>Note, this grouping only works on dependencies with identified CVE
  * entries</p>
  *
- * @author Jeremy Long (jeremy.long@owasp.org)
+ * @author Jeremy Long <jeremy.long@owasp.org>
  */
 public class DependencyBundlingAnalyzer extends AbstractAnalyzer implements Analyzer {
 
@@ -56,7 +56,7 @@ public class DependencyBundlingAnalyzer extends AbstractAnalyzer implements Anal
      */
     private boolean analyzed = false;
     //</editor-fold>
-    //<editor-fold defaultstate="collapsed" desc="All standard implmentation details of Analyzer">
+    //<editor-fold defaultstate="collapsed" desc="All standard implementation details of Analyzer">
     /**
      * The set of file extensions supported by this analyzer.
      */
@@ -196,7 +196,7 @@ public class DependencyBundlingAnalyzer extends AbstractAnalyzer implements Anal
 
     /**
      * Returns true if the file names (and version if it exists) of the two
-     * dependencies are sufficiently similiar.
+     * dependencies are sufficiently similar.
      *
      * @param dependency1 a dependency2 to compare
      * @param dependency2 a dependency2 to compare
@@ -286,10 +286,7 @@ public class DependencyBundlingAnalyzer extends AbstractAnalyzer implements Anal
         final File rFile = new File(dependency2.getFilePath());
         String right = rFile.getParent();
         if (left == null) {
-            if (right == null) {
-                return true;
-            }
-            return false;
+            return right == null;
         }
         if (left.equalsIgnoreCase(right)) {
             return true;
@@ -322,17 +319,13 @@ public class DependencyBundlingAnalyzer extends AbstractAnalyzer implements Anal
             /*
              * considered splitting the names up and comparing the components,
              * but decided that the file name length should be sufficient as the
-             * "core" component, if this follows a normal namming protocol should
+             * "core" component, if this follows a normal naming protocol should
              * be shorter:
              * axis2-saaj-1.4.1.jar
              * axis2-1.4.1.jar       <-----
              * axis2-kernal-1.4.1.jar
              */
-            if (leftName.length() > rightName.length()) {
-                returnVal = false;
-            } else {
-                returnVal = true;
-            }
+            returnVal = leftName.length() <= rightName.length();
         }
         if (LogUtils.isVerboseLoggingEnabled()) {
             final String msg = String.format("IsCore=%s (%s, %s)", returnVal, left.getFileName(), right.getFileName());

@@ -20,8 +20,6 @@ package org.owasp.dependencycheck;
 
 import java.util.EnumMap;
 import java.io.File;
-import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -52,7 +50,7 @@ import org.owasp.dependencycheck.utils.Settings;
  * Analyzer is associated with the file type then the file is turned into a
  * dependency.
  *
- * @author Jeremy Long (jeremy.long@owasp.org)
+ * @author Jeremy Long <jeremy.long@owasp.org>
  */
 public class Engine {
 
@@ -300,6 +298,12 @@ public class Engine {
 
         }
 
+        final String logHeader = String.format("%n"
+                + "----------------------------------------------------%n"
+                + "BEGIN ANALYSIS%n"
+                + "----------------------------------------------------");
+        Logger.getLogger(Engine.class.getName()).log(Level.FINE, logHeader);
+
         //phase one initialize
         for (AnalysisPhase phase : AnalysisPhase.values()) {
             final List<Analyzer> analyzerList = analyzers.get(phase);
@@ -335,15 +339,15 @@ public class Engine {
                 final Set<Dependency> dependencySet = new HashSet<Dependency>();
                 dependencySet.addAll(dependencies);
                 for (Dependency d : dependencySet) {
-                    final String msgFile = String.format("Begin Analysis of '%s'", d.getActualFilePath());
-                    Logger.getLogger(Engine.class.getName()).log(Level.FINE, msgFile);
                     if (a.supportsExtension(d.getFileExtension())) {
+                        final String msgFile = String.format("Begin Analysis of '%s'", d.getActualFilePath());
+                        Logger.getLogger(Engine.class.getName()).log(Level.FINE, msgFile);
                         try {
                             a.analyze(d, this);
                         } catch (AnalysisException ex) {
                             d.addAnalysisException(ex);
                         } catch (Throwable ex) {
-                            final String axMsg = String.format("An unexpected error occured during analysis of '%s'", d.getActualFilePath());
+                            final String axMsg = String.format("An unexpected error occurred during analysis of '%s'", d.getActualFilePath());
                             final AnalysisException ax = new AnalysisException(axMsg, ex);
                             d.addAnalysisException(ax);
                             Logger.getLogger(Engine.class.getName()).log(Level.SEVERE, axMsg);
@@ -367,6 +371,12 @@ public class Engine {
                 }
             }
         }
+
+        final String logFooter = String.format("%n"
+                + "----------------------------------------------------%n"
+                + "END ANALYSIS%n"
+                + "----------------------------------------------------");
+        Logger.getLogger(Engine.class.getName()).log(Level.FINE, logFooter);
     }
 
     /**
@@ -443,13 +453,7 @@ public class Engine {
             cpe.open(cve);
         } catch (IndexException ex) {
             throw new NoDataException(ex.getMessage(), ex);
-        } catch (IOException ex) {
-            throw new NoDataException(ex.getMessage(), ex);
-        } catch (SQLException ex) {
-            throw new NoDataException(ex.getMessage(), ex);
         } catch (DatabaseException ex) {
-            throw new NoDataException(ex.getMessage(), ex);
-        } catch (ClassNotFoundException ex) {
             throw new NoDataException(ex.getMessage(), ex);
         } finally {
             cve.close();

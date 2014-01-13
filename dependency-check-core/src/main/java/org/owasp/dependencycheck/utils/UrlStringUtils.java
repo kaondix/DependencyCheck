@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 
 /**
  *
- * @author Jeremy Long (jeremy.long@owasp.org)
+ * @author Jeremy Long <jeremy.long@owasp.org>
  */
 public final class UrlStringUtils {
 
@@ -67,7 +67,7 @@ public final class UrlStringUtils {
         return IS_URL_TEST.matcher(text).matches();
     }
     /**
-     * A listing of domain parts that shold not be used as evidence. Yes, this
+     * A listing of domain parts that should not be used as evidence. Yes, this
      * is an incomplete list.
      */
     private static final HashSet<String> IGNORE_LIST = new HashSet<String>(
@@ -79,7 +79,7 @@ public final class UrlStringUtils {
      * <p>Example, given the following input:</p>
      * <code>"https://www.somedomain.com/path1/path2/file.php?id=439"</code>
      * <p>The function would return:</p>
-     * <code>{"somedomain", "path1", "path2", "file"}</code>
+     * <code>{"some.domain", "path1", "path2", "file"}</code>
      *
      * @param text a URL
      * @return importantParts a list of the important parts of the URL

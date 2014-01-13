@@ -38,7 +38,7 @@ import java.util.logging.Logger;
  * the process will "spin" waiting for an opportunity to obtain the lock
  * requested.
  *
- * @author Jeremy Long (jeremy.long@owasp.org)
+ * @author Jeremy Long <jeremy.long@owasp.org>
  */
 public class DirectorySpinLock implements Closeable /*, AutoCloseable*/ {
 
@@ -258,7 +258,7 @@ public class DirectorySpinLock implements Closeable /*, AutoCloseable*/ {
             try {
                 lock.release();
             } catch (ClosedChannelException ex) {
-                Logger.getLogger(DirectorySpinLock.class.getName()).log(Level.FINEST, "Uable to release file lock", ex);
+                Logger.getLogger(DirectorySpinLock.class.getName()).log(Level.FINEST, "Unable to release file lock", ex);
             } catch (IOException ex) {
                 Logger.getLogger(DirectorySpinLock.class.getName()).log(Level.FINEST, "Unable to release file lock due to IO Exception", ex);
             }
