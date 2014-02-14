@@ -26,3 +26,9 @@ zipExtensions        | A comma-separated list of additional file extensions to b
 skipTestScope | Should be skip analysis for artifacts with Test Scope (default: true) |
 skipProvidedScope | Should be skip analysis for artifacts with Provided Scope (default: false) |
 skipRuntimeScope | Should be skip analysis for artifacts with Runtime Scope (default: false) |
+dataDirectory | Data directory to hold SQL CVEs contents |
+useDataMirroring | Sets whether data mirroring should be used (default: false) |
+cveUrl12Modified | Mirror URL for CVE 1.2 |
+cveUrl20Modified | Mirror URL for CVE 2.0 |
+cveUrl12Base | Base Mirror URL for CVE 1.2 |
+cveUrl20Base | Base Mirror URL for CVE 2.0 |
