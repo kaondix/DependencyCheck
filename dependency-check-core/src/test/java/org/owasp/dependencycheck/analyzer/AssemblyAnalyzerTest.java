@@ -75,7 +75,13 @@ public class AssemblyAnalyzerTest {
         File f = new File(AssemblyAnalyzerTest.class.getClassLoader().getResource("GrokAssembly.exe").getPath());
         Dependency d = new Dependency(f);
         analyzer.analyze(d, null);
-        assertTrue(d.getVersionEvidence().getEvidence().contains(new Evidence("grokassembly", "version", "1.0.5176.23901", Confidence.HIGHEST)));
+        boolean foundIt = false;
+        for (Evidence e : d.getEvidence().getEvidence()) {
+            if ("grokassembly".equals(e.getSource()) && "product".equals(e.getName()) && "GrokAssembly".equals(e.getValue())) {
+                foundIt = true;
+            }
+        }
+        assertTrue(foundIt);
     }
 
     @Test
