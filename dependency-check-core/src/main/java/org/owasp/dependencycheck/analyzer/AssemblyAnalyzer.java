@@ -132,7 +132,7 @@ public class AssemblyAnalyzer extends AbstractFileTypeAnalyzer {
                 } else if (rc == 2) {
                     LOG.fine(dependency.getActualFilePath() + " is not a valid .NET assembly");
                 } else if (rc != 0) {
-                    LOG.severe("Error code " + rc + " from GrokAssembly");
+                    LOG.fine("Error code " + rc + " from GrokAssembly");
                 }
             } catch (InterruptedException ie) {
                 LOG.warning("GrokAssembly was interrupted");
