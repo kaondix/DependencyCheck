@@ -17,20 +17,24 @@
  */
 package org.owasp.dependencycheck.analyzer;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
+
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.dependency.Confidence;
@@ -110,9 +114,35 @@ public class AssemblyAnalyzer extends AbstractFileTypeAnalyzer {
 
         final List<String> args = buildArgumentList();
         args.add(dependency.getActualFilePath());
+        if (LOG.isLoggable(Level.FINE)) {
+            StringBuilder sb = new StringBuilder();
+            for (String arg : args) {
+                sb.append(arg);
+                sb.append(" ");
+            }
+            LOG.log(Level.FINE, sb.toString());
+        }
         final ProcessBuilder pb = new ProcessBuilder(args);
         try {
             final Process proc = pb.start();
+            try {
+                int rc = proc.waitFor();
+                if (rc == 1) {
+                    LOG.fine("No argument passed to GrokAssembly");
+                } else if (rc == 2) {
+                    LOG.fine(dependency.getActualFilePath() + " is not a valid .NET assembly");
+                } else if (rc != 0) {
+                    LOG.fine("Error code " + rc + " from GrokAssembly");
+                }
+            } catch (InterruptedException ie) {
+                LOG.warning("GrokAssembly was interrupted");
+            }
+            BufferedReader br = new BufferedReader(new InputStreamReader(proc.getErrorStream()));
+            String line = null;
+            while ((line = br.readLine()) != null) {
+                LOG.fine(line);
+            }
+            
             final Document doc = builder.parse(proc.getInputStream());
             final XPath xpath = XPathFactory.newInstance().newXPath();
 
