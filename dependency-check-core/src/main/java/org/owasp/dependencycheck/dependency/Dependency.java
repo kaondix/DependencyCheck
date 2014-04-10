@@ -87,6 +87,8 @@ public class Dependency implements Comparable<Dependency> {
         versionEvidence = new EvidenceCollection();
         identifiers = new TreeSet<Identifier>();
         vulnerabilities = new TreeSet<Vulnerability>(new VulnerabilityComparator());
+        suppressedIdentifiers = new TreeSet<Identifier>();
+        suppressedVulnerabilities = new TreeSet<Vulnerability>(new VulnerabilityComparator());
     }
 
     /**
@@ -289,6 +291,69 @@ public class Dependency implements Comparable<Dependency> {
      */
     public void addIdentifier(Identifier identifier) {
         this.identifiers.add(identifier);
+    }
+    /**
+     * A set of identifiers that have been suppressed.
+     */
+    private Set<Identifier> suppressedIdentifiers;
+
+    /**
+     * Get the value of suppressedIdentifiers.
+     *
+     * @return the value of suppressedIdentifiers
+     */
+    public Set<Identifier> getSuppressedIdentifiers() {
+        return suppressedIdentifiers;
+    }
+
+    /**
+     * Set the value of suppressedIdentifiers.
+     *
+     * @param suppressedIdentifiers new value of suppressedIdentifiers
+     */
+    public void setSuppressedIdentifiers(Set<Identifier> suppressedIdentifiers) {
+        this.suppressedIdentifiers = suppressedIdentifiers;
+    }
+
+    /**
+     * Adds an identifier to the list of suppressed identifiers.
+     *
+     * @param identifier an identifier that was suppressed.
+     */
+    public void addSuppressedIdentifier(Identifier identifier) {
+        this.suppressedIdentifiers.add(identifier);
+    }
+
+    /**
+     * A set of vulnerabilities that have been suppressed.
+     */
+    private SortedSet<Vulnerability> suppressedVulnerabilities;
+
+    /**
+     * Get the value of suppressedVulnerabilities.
+     *
+     * @return the value of suppressedVulnerabilities
+     */
+    public SortedSet<Vulnerability> getSuppressedVulnerabilities() {
+        return suppressedVulnerabilities;
+    }
+
+    /**
+     * Set the value of suppressedVulnerabilities.
+     *
+     * @param suppressedVulnerabilities new value of suppressedVulnerabilities
+     */
+    public void setSuppressedVulnerabilities(SortedSet<Vulnerability> suppressedVulnerabilities) {
+        this.suppressedVulnerabilities = suppressedVulnerabilities;
+    }
+
+    /**
+     * Adds a vulnerability to the set of suppressed vulnerabilities.
+     *
+     * @param vulnerability the vulnerability that was suppressed
+     */
+    public void addSuppressedVulnerability(Vulnerability vulnerability) {
+        this.suppressedVulnerabilities.add(vulnerability);
     }
 
     /**
