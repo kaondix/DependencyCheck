@@ -159,8 +159,6 @@ public abstract class AbstractFileTypeAnalyzer extends AbstractAnalyzer implemen
     public final void initialize() throws Exception {
         if (filesMatched) {
             initializeFileTypeAnalyzer();
-        } else {
-            enabled = false;
         }
     }
 
