@@ -47,6 +47,7 @@ import org.owasp.dependencycheck.utils.Pair;
  */
 public class CveDB {
 
+    public static final Logger LOGGER = Logger.getLogger(DBUtils.class.getName());
     /**
      * Database connection
      */
@@ -95,12 +96,12 @@ public class CveDB {
                 conn.close();
             } catch (SQLException ex) {
                 final String msg = "There was an error attempting to close the CveDB, see the log for more details.";
-                Logger.getLogger(DBUtils.class.getName()).log(Level.SEVERE, msg);
-                Logger.getLogger(DBUtils.class.getName()).log(Level.FINE, null, ex);
+                LOGGER.log(Level.SEVERE, msg);
+                LOGGER.log(Level.FINE, null, ex);
             } catch (Throwable ex) {
                 final String msg = "There was an exception attempting to close the CveDB, see the log for more details.";
-                Logger.getLogger(DBUtils.class.getName()).log(Level.SEVERE, msg);
-                Logger.getLogger(DBUtils.class.getName()).log(Level.FINE, null, ex);
+                LOGGER.log(Level.SEVERE, msg);
+                LOGGER.log(Level.FINE, null, ex);
             }
             conn = null;
         }
@@ -135,7 +136,7 @@ public class CveDB {
     @Override
     @SuppressWarnings("FinalizeDeclaration")
     protected void finalize() throws Throwable {
-        Logger.getLogger(DBUtils.class.getName()).log(Level.FINE, "Entering finalize");
+        LOGGER.log(Level.FINE, "Entering finalize");
         close();
         super.finalize();
     }

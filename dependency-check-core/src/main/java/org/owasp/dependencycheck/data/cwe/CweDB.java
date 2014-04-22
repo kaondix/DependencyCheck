@@ -30,6 +30,8 @@ import java.util.logging.Logger;
  */
 public final class CweDB {
 
+    public static final Logger LOGGER = Logger.getLogger(CweDB.class.getName());
+
     /**
      * Empty private constructor as this is a utility class.
      */
@@ -54,17 +56,17 @@ public final class CweDB {
             oin = new ObjectInputStream(input);
             return (HashMap<String, String>) oin.readObject();
         } catch (ClassNotFoundException ex) {
-            Logger.getLogger(CweDB.class.getName()).log(Level.WARNING, "Unable to load CWE data. This should not be an issue.");
-            Logger.getLogger(CweDB.class.getName()).log(Level.FINE, null, ex);
+            LOGGER.log(Level.WARNING, "Unable to load CWE data. This should not be an issue.");
+            LOGGER.log(Level.FINE, null, ex);
         } catch (IOException ex) {
-            Logger.getLogger(CweDB.class.getName()).log(Level.WARNING, "Unable to load CWE data due to an IO Error. This should not be an issue.");
-            Logger.getLogger(CweDB.class.getName()).log(Level.FINE, null, ex);
+            LOGGER.log(Level.WARNING, "Unable to load CWE data due to an IO Error. This should not be an issue.");
+            LOGGER.log(Level.FINE, null, ex);
         } finally {
             if (oin != null) {
                 try {
                     oin.close();
                 } catch (IOException ex) {
-                    Logger.getLogger(CweDB.class.getName()).log(Level.FINEST, null, ex);
+                    LOGGER.log(Level.FINEST, null, ex);
                 }
             }
         }

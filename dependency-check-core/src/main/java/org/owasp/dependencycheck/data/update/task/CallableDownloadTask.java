@@ -38,6 +38,8 @@ import org.owasp.dependencycheck.utils.Settings;
  */
 public class CallableDownloadTask implements Callable<Future<ProcessTask>> {
 
+    public static final Logger LOGGER = Logger.getLogger(CallableDownloadTask.class.getName());
+
     /**
      * Simple constructor for the callable download task.
      *
@@ -166,27 +168,27 @@ public class CallableDownloadTask implements Callable<Future<ProcessTask>> {
             final URL url1 = new URL(nvdCveInfo.getUrl());
             final URL url2 = new URL(nvdCveInfo.getOldSchemaVersionUrl());
             String msg = String.format("Download Started for NVD CVE - %s", nvdCveInfo.getId());
-            Logger.getLogger(CallableDownloadTask.class.getName()).log(Level.INFO, msg);
+            LOGGER.log(Level.INFO, msg);
             try {
                 Downloader.fetchFile(url1, first);
                 Downloader.fetchFile(url2, second);
             } catch (DownloadFailedException ex) {
                 msg = String.format("Download Failed for NVD CVE - %s%nSome CVEs may not be reported.", nvdCveInfo.getId());
-                Logger.getLogger(CallableDownloadTask.class.getName()).log(Level.WARNING, msg);
-                Logger.getLogger(CallableDownloadTask.class.getName()).log(Level.FINE, null, ex);
+                LOGGER.log(Level.WARNING, msg);
+                LOGGER.log(Level.FINE, null, ex);
                 return null;
             }
 
             msg = String.format("Download Complete for NVD CVE - %s", nvdCveInfo.getId());
-            Logger.getLogger(CallableDownloadTask.class.getName()).log(Level.INFO, msg);
+            LOGGER.log(Level.INFO, msg);
 
             final ProcessTask task = new ProcessTask(cveDB, this);
             return this.processorService.submit(task);
 
         } catch (Throwable ex) {
             final String msg = String.format("An exception occurred downloading NVD CVE - %s%nSome CVEs may not be reported.", nvdCveInfo.getId());
-            Logger.getLogger(CallableDownloadTask.class.getName()).log(Level.WARNING, msg);
-            Logger.getLogger(CallableDownloadTask.class.getName()).log(Level.FINE, "Download Task Failed", ex);
+            LOGGER.log(Level.WARNING, msg);
+            LOGGER.log(Level.FINE, "Download Task Failed", ex);
         }
         return null;
     }

@@ -55,6 +55,7 @@ import org.owasp.dependencycheck.utils.Pair;
  */
 public final class CpeMemoryIndex {
 
+    public static final Logger LOGGER = Logger.getLogger(CpeMemoryIndex.class.getName());
     /**
      * singleton instance.
      */
@@ -197,7 +198,7 @@ public final class CpeMemoryIndex {
             try {
                 indexReader.close();
             } catch (IOException ex) {
-                Logger.getLogger(CpeMemoryIndex.class.getName()).log(Level.FINEST, null, ex);
+                LOGGER.log(Level.FINEST, null, ex);
             }
             indexReader = null;
         }
@@ -229,7 +230,7 @@ public final class CpeMemoryIndex {
                     saveEntry(pair.getLeft(), pair.getRight(), indexWriter);
                 }
             } catch (DatabaseException ex) {
-                Logger.getLogger(CpeMemoryIndex.class.getName()).log(Level.FINE, null, ex);
+                LOGGER.log(Level.FINE, null, ex);
                 throw new IndexException("Error reading CPE data", ex);
             }
         } catch (CorruptIndexException ex) {

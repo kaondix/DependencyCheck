@@ -56,7 +56,7 @@ import org.owasp.dependencycheck.utils.Settings;
 public class ArchiveAnalyzer extends AbstractFileTypeAnalyzer {
 
     /**
-     * The logger.
+     * The LOGGER.
      */
     private static final Logger LOGGER = Logger.getLogger(ArchiveAnalyzer.class.getName());
     /**

@@ -50,6 +50,8 @@ import org.owasp.dependencycheck.utils.Settings;
  */
 public class ReportGenerator {
 
+    public static final Logger LOGGER = Logger.getLogger(ReportGenerator.class.getName());
+
     /**
      * An enumeration of the report formats.
      */
@@ -208,8 +210,8 @@ public class ReportGenerator {
                 input = new FileInputStream(f);
             } catch (FileNotFoundException ex) {
                 final String msg = "Unable to generate the report, the report template file could not be found.";
-                Logger.getLogger(ReportGenerator.class.getName()).log(Level.SEVERE, msg);
-                Logger.getLogger(ReportGenerator.class.getName()).log(Level.FINE, null, ex);
+                LOGGER.log(Level.SEVERE, msg);
+                LOGGER.log(Level.FINE, null, ex);
             }
         } else {
             templatePath = "templates/" + templateName + ".vsl";
@@ -244,20 +246,20 @@ public class ReportGenerator {
                 try {
                     writer.close();
                 } catch (IOException ex) {
-                    Logger.getLogger(ReportGenerator.class.getName()).log(Level.FINEST, null, ex);
+                    LOGGER.log(Level.FINEST, null, ex);
                 }
             }
             if (outputStream != null) {
                 try {
                     outputStream.close();
                 } catch (IOException ex) {
-                    Logger.getLogger(ReportGenerator.class.getName()).log(Level.FINEST, null, ex);
+                    LOGGER.log(Level.FINEST, null, ex);
                 }
             }
             try {
                 reader.close();
             } catch (IOException ex) {
-                Logger.getLogger(ReportGenerator.class.getName()).log(Level.FINEST, null, ex);
+                LOGGER.log(Level.FINEST, null, ex);
             }
         }
     }

@@ -51,6 +51,7 @@ public final class ConnectionFactory {
      * Resource location for SQL file used to create the database schema.
      */
     public static final String DB_STRUCTURE_RESOURCE = "data/initialize.sql";
+    public static final Logger LOGGER = Logger.getLogger(CveDB.class.getName());
     /**
      * The database driver used to connect to the database.
      */
@@ -90,11 +91,11 @@ public final class ConnectionFactory {
             //load the driver if necessary
             final String driverName = Settings.getString(Settings.KEYS.DB_DRIVER_NAME, "");
             if (!driverName.isEmpty()) { //likely need to load the correct driver
-                Logger.getLogger(CveDB.class.getName()).log(Level.FINE, "Loading driver: {0}", driverName);
+                LOGGER.log(Level.FINE, "Loading driver: {0}", driverName);
                 final String driverPath = Settings.getString(Settings.KEYS.DB_DRIVER_PATH, "");
                 try {
                     if (!driverPath.isEmpty()) {
-                        Logger.getLogger(CveDB.class.getName()).log(Level.FINE, "Loading driver from: {0}", driverPath);
+                        LOGGER.log(Level.FINE, "Loading driver from: {0}", driverPath);
                         driver = DriverLoader.load(driverName, driverPath);
                     } else {
                         driver = DriverLoader.load(driverName);
@@ -118,15 +119,15 @@ public final class ConnectionFactory {
             try {
                 if (connectionString.startsWith("jdbc:h2:file:")) { //H2
                     shouldCreateSchema = !dbSchemaExists();
-                    Logger.getLogger(CveDB.class.getName()).log(Level.FINE, "Need to create DB Structure: {0}", shouldCreateSchema);
+                    LOGGER.log(Level.FINE, "Need to create DB Structure: {0}", shouldCreateSchema);
                 }
             } catch (IOException ioex) {
                 Logger.getLogger(ConnectionFactory.class.getName()).log(Level.FINE, "Unable to verify database exists", ioex);
                 throw new DatabaseException("Unable to verify database exists");
             }
-            Logger.getLogger(CveDB.class.getName()).log(Level.FINE, "Loading database connection");
-            Logger.getLogger(CveDB.class.getName()).log(Level.FINE, "Connection String: {0}", connectionString);
-            Logger.getLogger(CveDB.class.getName()).log(Level.FINE, "Database User: {0}", userName);
+            LOGGER.log(Level.FINE, "Loading database connection");
+            LOGGER.log(Level.FINE, "Connection String: {0}", connectionString);
+            LOGGER.log(Level.FINE, "Database User: {0}", userName);
 
             try {
                 conn = DriverManager.getConnection(connectionString, userName, password);

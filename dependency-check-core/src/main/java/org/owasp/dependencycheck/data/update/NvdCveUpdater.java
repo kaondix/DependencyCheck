@@ -30,6 +30,8 @@ import org.owasp.dependencycheck.utils.DownloadFailedException;
  */
 public class NvdCveUpdater implements CachedWebDataSource {
 
+    public static final Logger LOGGER = Logger.getLogger(NvdCveUpdater.class.getName());
+
     /**
      * <p>
      * Downloads the latest NVD CVE XML file from the web and imports it into the current CVE Database.</p>
@@ -44,13 +46,11 @@ public class NvdCveUpdater implements CachedWebDataSource {
                 task.update();
             }
         } catch (MalformedURLException ex) {
-            Logger.getLogger(NvdCveUpdater.class.getName()).log(Level.WARNING,
-                    "NVD CVE properties files contain an invalid URL, unable to update the data to use the most current data.");
-            Logger.getLogger(NvdCveUpdater.class.getName()).log(Level.FINE, null, ex);
+            LOGGER.log(Level.WARNING, "NVD CVE properties files contain an invalid URL, unable to update the data to use the most current data.");
+            LOGGER.log(Level.FINE, null, ex);
         } catch (DownloadFailedException ex) {
-            Logger.getLogger(NvdCveUpdater.class.getName()).log(Level.WARNING,
-                    "Unable to download the NVD CVE data, unable to update the data to use the most current data.");
-            Logger.getLogger(NvdCveUpdater.class.getName()).log(Level.FINE, null, ex);
+            LOGGER.log(Level.WARNING, "Unable to download the NVD CVE data, unable to update the data to use the most current data.");
+            LOGGER.log(Level.FINE, null, ex);
         }
     }
 }

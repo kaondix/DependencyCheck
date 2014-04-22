@@ -35,6 +35,7 @@ public class VulnerableSoftware extends IndexEntry implements Serializable, Comp
      * The serial version UID.
      */
     private static final long serialVersionUID = 307319490326651052L;
+    public static final Logger LOGGER = Logger.getLogger(VulnerableSoftware.class.getName());
 
     /**
      * Parse a CPE entry from the cpe string representation.
@@ -46,8 +47,8 @@ public class VulnerableSoftware extends IndexEntry implements Serializable, Comp
             parseName(cpe);
         } catch (UnsupportedEncodingException ex) {
             final String msg = String.format("Character encoding is unsupported for CPE '%s'.", cpe);
-            Logger.getLogger(VulnerableSoftware.class.getName()).log(Level.WARNING, msg);
-            Logger.getLogger(VulnerableSoftware.class.getName()).log(Level.FINE, null, ex);
+            LOGGER.log(Level.WARNING, msg);
+            LOGGER.log(Level.FINE, null, ex);
             setName(cpe);
         }
     }

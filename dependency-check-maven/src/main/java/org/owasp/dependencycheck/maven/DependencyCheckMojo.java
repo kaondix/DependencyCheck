@@ -69,7 +69,7 @@ import org.owasp.dependencycheck.utils.Settings;
         requiresOnline = true)
 public class DependencyCheckMojo extends AbstractMojo implements MavenMultiPageReport {
 
-    private final Logger logger = Logger.getLogger(DependencyCheckMojo.class.getName());
+    private static final Logger logger = Logger.getLogger(DependencyCheckMojo.class.getName());
 
     /**
      * The properties file location.

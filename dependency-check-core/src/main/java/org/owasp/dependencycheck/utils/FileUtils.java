@@ -54,6 +54,7 @@ public final class FileUtils {
      * The buffer size to use when extracting files from the archive.
      */
     private static final int BUFFER_SIZE = 4096;
+    public static final Logger LOGGER = Logger.getLogger(FileUtils.class.getName());
 
     /**
      * Private constructor for a utility class.
@@ -87,7 +88,7 @@ public final class FileUtils {
         if (!org.apache.commons.io.FileUtils.deleteQuietly(file)) {
             success = false;
             final String msg = String.format("Failed to delete file: %s; attempting to delete on exit.", file.getPath());
-            Logger.getLogger(FileUtils.class.getName()).log(Level.FINE, msg);
+            LOGGER.log(Level.FINE, msg);
             file.deleteOnExit();
         }
         return success;
@@ -188,7 +189,7 @@ public final class FileUtils {
         try {
             fis = new FileInputStream(archive);
         } catch (FileNotFoundException ex) {
-            Logger.getLogger(FileUtils.class.getName()).log(Level.FINE, null, ex);
+            LOGGER.log(Level.FINE, null, ex);
             throw new ExtractionException("Archive file was not found.", ex);
         }
         zis = new ZipInputStream(new BufferedInputStream(fis));
@@ -217,11 +218,11 @@ public final class FileUtils {
                             }
                             bos.flush();
                         } catch (FileNotFoundException ex) {
-                            Logger.getLogger(FileUtils.class.getName()).log(Level.FINE, null, ex);
+                            LOGGER.log(Level.FINE, null, ex);
                             final String msg = String.format("Unable to find file '%s'.", file.getName());
                             throw new ExtractionException(msg, ex);
                         } catch (IOException ex) {
-                            Logger.getLogger(FileUtils.class.getName()).log(Level.FINE, null, ex);
+                            LOGGER.log(Level.FINE, null, ex);
                             final String msg = String.format("IO Exception while parsing file '%s'.", file.getName());
                             throw new ExtractionException(msg, ex);
                         } finally {
@@ -229,7 +230,7 @@ public final class FileUtils {
                                 try {
                                     bos.close();
                                 } catch (IOException ex) {
-                                    Logger.getLogger(FileUtils.class.getName()).log(Level.FINEST, null, ex);
+                                    LOGGER.log(Level.FINEST, null, ex);
                                 }
                             }
                         }
@@ -238,13 +239,13 @@ public final class FileUtils {
             }
         } catch (IOException ex) {
             final String msg = String.format("Exception reading archive '%s'.", archive.getName());
-            Logger.getLogger(FileUtils.class.getName()).log(Level.FINE, msg, ex);
+            LOGGER.log(Level.FINE, msg, ex);
             throw new ExtractionException(msg, ex);
         } finally {
             try {
                 zis.close();
             } catch (IOException ex) {
-                Logger.getLogger(FileUtils.class.getName()).log(Level.FINEST, null, ex);
+                LOGGER.log(Level.FINEST, null, ex);
             }
         }
     }

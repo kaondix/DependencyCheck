@@ -52,8 +52,7 @@ public class NexusSearch {
     /**
      * Used for logging.
      */
-    private static final Logger LOGGER = Logger.getLogger(NexusSearch.class
-            .getName());
+    private static final Logger LOGGER = Logger.getLogger(NexusSearch.class.getName());
 
     /**
      * Creates a NexusSearch for the given repository URL.

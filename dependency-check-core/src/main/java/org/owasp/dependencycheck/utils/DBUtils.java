@@ -32,6 +32,9 @@ import org.owasp.dependencycheck.data.nvdcve.DatabaseException;
  */
 public final class DBUtils {
 
+    public static final Logger LOGGER = Logger.getLogger(CveDB.class
+            .getName());
+
     /**
      * Private constructor for a utility class.
      */
@@ -70,8 +73,7 @@ public final class DBUtils {
             try {
                 statement.close();
             } catch (SQLException ex) {
-                Logger.getLogger(CveDB.class
-                        .getName()).log(Level.FINEST, statement.toString(), ex);
+                LOGGER.log(Level.FINEST, statement.toString(), ex);
             }
         }
     }
@@ -86,8 +88,7 @@ public final class DBUtils {
             try {
                 rs.close();
             } catch (SQLException ex) {
-                Logger.getLogger(CveDB.class
-                        .getName()).log(Level.FINEST, rs.toString(), ex);
+                LOGGER.log(Level.FINEST, rs.toString(), ex);
             }
         }
     }

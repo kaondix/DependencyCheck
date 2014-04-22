@@ -83,7 +83,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
 
     //<editor-fold defaultstate="collapsed" desc="Constants and Member Variables">
     /**
-     * The logger.
+     * The LOGGER.
      */
     private static final Logger LOGGER = Logger.getLogger(JarAnalyzer.class.getName());
     /**

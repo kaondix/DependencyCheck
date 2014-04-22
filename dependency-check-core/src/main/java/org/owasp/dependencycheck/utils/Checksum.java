@@ -21,6 +21,8 @@ import java.util.logging.Logger;
  */
 public final class Checksum {
 
+    public static final Logger LOGGER = Logger.getLogger(Checksum.class.getName());
+
     /**
      * Private constructor for a utility class.
      */
@@ -57,7 +59,7 @@ public final class Checksum {
                 try {
                     fis.close();
                 } catch (IOException ex) {
-                    Logger.getLogger(Checksum.class.getName()).log(Level.FINEST, "Error closing file '" + file.getName() + "'.", ex);
+                    LOGGER.log(Level.FINEST, "Error closing file '" + file.getName() + "'.", ex);
                 }
             }
         }

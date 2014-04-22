@@ -17,6 +17,7 @@
  */
 package org.owasp.dependencycheck.data.nvdcve;
 
+import com.hazelcast.logging.ILogger;
 import com.hazelcast.logging.Logger;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -51,6 +52,7 @@ public class DatabaseProperties {
      * modified file within 7 days of the last update.
      */
     public static final String LAST_UPDATED_BASE = "NVD CVE ";
+    public static final ILogger LOGGER = Logger.getLogger(DatabaseProperties.class.getName());
     /**
      * A collection of properties about the data.
      */
@@ -151,7 +153,7 @@ public class DatabaseProperties {
                         final String formatted = format.format(date);
                         map.put(key, formatted);
                     } catch (Throwable ex) { //deliberatly being broad in this catch clause
-                        Logger.getLogger(DatabaseProperties.class.getName()).log(Level.FINE, "Unable to parse timestamp from DB", ex);
+                        LOGGER.log(Level.FINE, "Unable to parse timestamp from DB", ex);
                         map.put(key, entry.getValue());
                     }
                 } else {

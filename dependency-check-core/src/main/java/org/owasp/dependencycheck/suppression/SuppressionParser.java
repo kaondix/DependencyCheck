@@ -53,6 +53,7 @@ public class SuppressionParser {
      * JAXP Schema Source. Source: http://docs.oracle.com/javase/tutorial/jaxp/sax/validation.html
      */
     public static final String JAXP_SCHEMA_SOURCE = "http://java.sun.com/xml/jaxp/properties/schemaSource";
+    public static final Logger LOGGER = Logger.getLogger(SuppressionParser.class.getName());
 
     /**
      * Parses the given xml file and returns a list of the suppression rules contained.
@@ -85,16 +86,16 @@ public class SuppressionParser {
 
             return handler.getSuppressionRules();
         } catch (ParserConfigurationException ex) {
-            Logger.getLogger(SuppressionParser.class.getName()).log(Level.FINE, null, ex);
+            LOGGER.log(Level.FINE, null, ex);
             throw new SuppressionParseException(ex);
         } catch (SAXException ex) {
-            Logger.getLogger(SuppressionParser.class.getName()).log(Level.FINE, null, ex);
+            LOGGER.log(Level.FINE, null, ex);
             throw new SuppressionParseException(ex);
         } catch (FileNotFoundException ex) {
-            Logger.getLogger(SuppressionParser.class.getName()).log(Level.FINE, null, ex);
+            LOGGER.log(Level.FINE, null, ex);
             throw new SuppressionParseException(ex);
         } catch (IOException ex) {
-            Logger.getLogger(SuppressionParser.class.getName()).log(Level.FINE, null, ex);
+            LOGGER.log(Level.FINE, null, ex);
             throw new SuppressionParseException(ex);
         }
     }
