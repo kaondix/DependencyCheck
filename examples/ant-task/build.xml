@@ -1,0 +1,18 @@
+<project name="testDepCheck" default="dependency-check" basedir=".">
+  <description>
+    Test build for dependencyCheck
+  </description>
+
+  <!--<taskdef name="dependency-check" classname="org.owasp.dependencycheck.taskdefs.DependencyCheckTask" classpath="dependency-check-ant-1.2.1-SNAPSHOT.jar" />-->
+  <taskdef name="dependency-check" classname="org.owasp.dependencycheck.taskdefs.DependencyCheckTask" classpath="dependency-check-ant-1.2.0.jar" />
+  <target name="dependency-check" description="Dependency-Check Analysis">
+    <dependency-check applicationname = "test"
+                      reportoutputdirectory = "${basedir}/reports/"
+                      autoupdate = "true"
+                      failBuildOnCVSS = "9"
+                      reportformat = "ALL">
+      <fileset dir="test"/>
+    </dependency-check>
+  </target>
+
+</project>

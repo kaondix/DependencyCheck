@@ -1,0 +1,41 @@
+
+configurations {
+  depCheck
+}
+
+repositories {
+  mavenLocal()
+  mavenCentral()
+}
+
+dependencies {
+  depCheck 'org.owasp:dependency-check-ant:1.2.1-SNAPSHOT'
+}
+
+task dependencyCheck << {
+  def props = new Properties()
+  new File('../../ant/dev/build.properties').withInputStream {
+    stream -> props.load(stream)
+  }
+  props.load
+
+
+  ant.taskdef(name: 'dependencycheck', classname: 'org.owasp.dependencycheck.taskdefs.DependencyCheckTask', classpath: configurations.depCheck.asPath)
+  ant.dependencycheck(
+      applicationname:'DOD EMALL',
+      reportoutputdirectory: "${projectDir}/reports",
+      reportformat: "ALL",
+      //suppressionFile: 'suppress.xml',
+      //failBuildOnCVSS:'1', //MEDIUM severity to HIGH severity: http://nvd.nist.gov/cvss.cfm
+      //zipExtensions:'jar,war,ear,ejb,zip',
+      //dataDirectory: "${projectDir}/data",
+      //autoupdate: 'true',
+      ) {
+      //fileset(dir:'/home/cmorris/Oracle/domains/emall-dev/autodeploy')
+      fileset(dir:'test')
+      {
+        //include(name:"**/*.jar,**/*.war,**/*.ear,**/*.ejb")
+        include(name:'*.jar')
+      }
+  }
+}
