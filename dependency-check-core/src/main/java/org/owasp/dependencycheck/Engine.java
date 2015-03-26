@@ -468,7 +468,7 @@ public class Engine {
     /**
      * Cycles through the cached web data sources and calls update on all of them.
      */
-    private void doUpdates() {
+    public void doUpdates() {
         LOGGER.info("Checking for updates");
         final UpdateService service = new UpdateService(serviceClassLoader);
         final Iterator<CachedWebDataSource> iterator = service.getDataSources();
@@ -533,7 +533,7 @@ public class Engine {
      * @throws NoDataException thrown if no data exists in the CPE Index
      * @throws DatabaseException thrown if there is an exception opening the database
      */
-    private void ensureDataExists() throws NoDataException, DatabaseException {
+    public void ensureDataExists() throws NoDataException, DatabaseException {
         final CveDB cve = new CveDB();
         try {
             cve.open();
