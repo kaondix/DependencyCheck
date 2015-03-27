@@ -39,7 +39,6 @@ import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.io.filefilter.NameFileFilter;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
-import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.input.AutoCloseInputStream;
 import org.apache.commons.lang.StringUtils;
 import org.owasp.dependencycheck.Engine;
@@ -161,7 +160,7 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
 		LOGGER.fine(String.format("%s exists? %b", tmpWheelFolder,
 				tmpWheelFolder.exists()));
 		extractFiles(new File(dependency.getActualFilePath()), tmpWheelFolder,
-				TrueFileFilter.INSTANCE);
+				METADATA_FILTER);
 		collectWheelMetadata(dependency, tmpWheelFolder);
 	}
 
@@ -393,7 +392,7 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
 					}
 				} else {
 					final File file = new File(destination, entry.getName());
-					if (filter.accept(destination, entry.getName())) {
+					if (filter.accept(file.getParentFile(), file.getName())) {
 						final String extracting = String.format(
 								"Extracting '%s'", file.getPath());
 						LOGGER.fine(extracting);
