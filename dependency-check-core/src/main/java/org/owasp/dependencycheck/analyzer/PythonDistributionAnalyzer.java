@@ -40,8 +40,8 @@ import org.owasp.dependencycheck.utils.FileUtils;
 import org.owasp.dependencycheck.utils.Settings;
 
 /**
- * Used to load a Wheel distriution file and collect information that can be used to determine
- * the associated CPE.
+ * Used to load a Wheel distriution file and collect information that can be
+ * used to determine the associated CPE.
  *
  * @author Dale Visser <dvisser@ida.org>
  */
@@ -207,11 +207,11 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
 	 * @param dependency
 	 *            the dependency being analyzed
 	 */
-	private void collectWheelMetadata(Dependency dependency, File wheelFolder) {
+	private static void collectWheelMetadata(Dependency dependency, File wheelFolder) {
 		Properties p = getManifestProperties(wheelFolder);
-		this.addPropertyToEvidence(p, dependency.getVersionEvidence(),
-				"Version", Confidence.HIGHEST);
-		this.addPropertyToEvidence(p, dependency.getProductEvidence(), "Name",
+		addPropertyToEvidence(p, dependency.getVersionEvidence(), "Version",
+				Confidence.HIGHEST);
+		addPropertyToEvidence(p, dependency.getProductEvidence(), "Name",
 				Confidence.HIGHEST);
 		String url = p.getProperty("Home-page");
 		EvidenceCollection vendorEvidence = dependency.getVendorEvidence();
@@ -222,7 +222,7 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
 						Confidence.MEDIUM);
 			}
 		}
-		this.addPropertyToEvidence(p, vendorEvidence, "Author", Confidence.LOW);
+		addPropertyToEvidence(p, vendorEvidence, "Author", Confidence.LOW);
 		String summary = p.getProperty("Summary");
 		if (StringUtils.isNotBlank(summary)) {
 			JarAnalyzer
@@ -230,7 +230,7 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
 		}
 	}
 
-	private void addPropertyToEvidence(Properties properties,
+	private static void addPropertyToEvidence(Properties properties,
 			EvidenceCollection evidence, String property, Confidence confidence) {
 		String value = properties.getProperty(property);
 		if (StringUtils.isNotBlank(value)) {
@@ -239,33 +239,41 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
 		}
 	}
 
-	private Properties getManifestProperties(File wheelFolder) {
-		Properties p = new Properties();
-		File[] dist_info = wheelFolder.listFiles(new FilenameFilter() {
-			public boolean accept(File dir, String name) {
-				return name.endsWith(".dist-info");
-			}
-		});
-		if (null != dist_info && 1 == dist_info.length) {
-			File dist_info_file = dist_info[0];
-			if (dist_info_file.isDirectory()) {
-				File[] manifest = dist_info_file
-						.listFiles(new FilenameFilter() {
-							public boolean accept(File dir, String name) {
-								return name.equals(MANIFEST);
-							}
-						});
-				if (null != manifest && 1 == manifest.length) {
-					File manifest_file = manifest[0];
-					try {
-						p.load(new FileReader(manifest_file));
-					} catch (IOException e) {
-						LOGGER.log(Level.WARNING, e.getMessage(), e);
-					}
+	private static final FilenameFilter DIST_INFO_FILTER = new FilenameFilter() {
+		public boolean accept(File dir, String name) {
+			return name.endsWith(".dist-info");
+		}
+	};
+
+	private static final FilenameFilter MANIFEST_FILTER = new FilenameFilter() {
+		public boolean accept(File dir, String name) {
+			return name.equals(MANIFEST);
+		}
+	};
+
+	private static final File getMatchingFile(File folder, FilenameFilter filter) {
+		File result = null;
+		File[] matches = folder.listFiles(filter);
+		if (null != matches && 1 == matches.length) {
+			result = matches[0];
+		}
+		return result;
+	}
+
+	private static Properties getManifestProperties(File wheelFolder) {
+		Properties properties = new Properties();
+		File dist_info = getMatchingFile(wheelFolder, DIST_INFO_FILTER);
+		if (null != dist_info && dist_info.isDirectory()) {
+			File manifest = getMatchingFile(dist_info, MANIFEST_FILTER);
+			if (null != manifest) {
+				try {
+					properties.load(new FileReader(manifest));
+				} catch (IOException e) {
+					LOGGER.log(Level.WARNING, e.getMessage(), e);
 				}
 			}
 		}
-		return p;
+		return properties;
 	}
 
 	/**
