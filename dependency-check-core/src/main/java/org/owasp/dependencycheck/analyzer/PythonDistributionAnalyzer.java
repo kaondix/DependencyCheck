@@ -209,7 +209,7 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
 		}
 	}
 
-	private static final Pattern vendorCapture = Pattern
+	private static final Pattern HOMEPAGE_VENDOR = Pattern
 			.compile("^[a-zA-Z]+://.*\\.(.+)\\.[a-zA-Z]+/?.*$");
 
 	/**
@@ -228,7 +228,7 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
 		String url = headers.getHeader("Home-page", null);
 		EvidenceCollection vendorEvidence = dependency.getVendorEvidence();
 		if (StringUtils.isNotBlank(url)) {
-			Matcher m = vendorCapture.matcher(url);
+			Matcher m = HOMEPAGE_VENDOR.matcher(url);
 			if (m.matches()) {
 				vendorEvidence.addEvidence(METADATA, "vendor", m.group(1),
 						Confidence.MEDIUM);
@@ -332,7 +332,7 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
 	 * @throws AnalysisException
 	 *             thrown if the archive is not found
 	 */
-	private void extractFiles(File archive, File destination,
+	private static void extractFiles(File archive, File destination,
 			FilenameFilter filter) throws AnalysisException {
 		if (archive == null || destination == null) {
 			return;
@@ -375,7 +375,7 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
 	 *             thrown if there is an exception extracting files from the
 	 *             archive
 	 */
-	private void extractArchive(ArchiveInputStream input, File destination,
+	private static void extractArchive(ArchiveInputStream input, File destination,
 			FilenameFilter filter) throws ArchiveExtractionException {
 		ArchiveEntry entry;
 		try {
