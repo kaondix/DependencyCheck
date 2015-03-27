@@ -17,17 +17,23 @@
  */
 package org.owasp.dependencycheck.analyzer;
 
+import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
-import java.io.IOException;
-import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.mail.MessagingException;
+import javax.mail.internet.InternetHeaders;
+
+import org.apache.commons.io.filefilter.NameFileFilter;
+import org.apache.commons.io.filefilter.SuffixFileFilter;
+import org.apache.commons.io.input.AutoCloseInputStream;
 import org.apache.commons.lang.StringUtils;
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
@@ -207,13 +213,14 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
 	 * @param dependency
 	 *            the dependency being analyzed
 	 */
-	private static void collectWheelMetadata(Dependency dependency, File wheelFolder) {
-		Properties p = getManifestProperties(wheelFolder);
-		addPropertyToEvidence(p, dependency.getVersionEvidence(), "Version",
+	private static void collectWheelMetadata(Dependency dependency,
+			File wheelFolder) {
+		InternetHeaders headers = getManifestProperties(wheelFolder);
+		addPropertyToEvidence(headers, dependency.getVersionEvidence(),
+				"Version", Confidence.HIGHEST);
+		addPropertyToEvidence(headers, dependency.getProductEvidence(), "Name",
 				Confidence.HIGHEST);
-		addPropertyToEvidence(p, dependency.getProductEvidence(), "Name",
-				Confidence.HIGHEST);
-		String url = p.getProperty("Home-page");
+		String url = headers.getHeader("Home-page", null);
 		EvidenceCollection vendorEvidence = dependency.getVendorEvidence();
 		if (StringUtils.isNotBlank(url)) {
 			Matcher m = vendorCapture.matcher(url);
@@ -222,34 +229,27 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
 						Confidence.MEDIUM);
 			}
 		}
-		addPropertyToEvidence(p, vendorEvidence, "Author", Confidence.LOW);
-		String summary = p.getProperty("Summary");
+		addPropertyToEvidence(headers, vendorEvidence, "Author", Confidence.LOW);
+		String summary = headers.getHeader("Summary", null);
 		if (StringUtils.isNotBlank(summary)) {
 			JarAnalyzer
 					.addDescription(dependency, summary, MANIFEST, "summary");
 		}
 	}
 
-	private static void addPropertyToEvidence(Properties properties,
+	private static void addPropertyToEvidence(InternetHeaders headers,
 			EvidenceCollection evidence, String property, Confidence confidence) {
-		String value = properties.getProperty(property);
+		String value = headers.getHeader(property, null);
 		if (StringUtils.isNotBlank(value)) {
-			evidence.addEvidence(MANIFEST, property.toLowerCase(), value,
-					confidence);
+			evidence.addEvidence(MANIFEST, property, value, confidence);
 		}
 	}
 
-	private static final FilenameFilter DIST_INFO_FILTER = new FilenameFilter() {
-		public boolean accept(File dir, String name) {
-			return name.endsWith(".dist-info");
-		}
-	};
+	private static final FilenameFilter DIST_INFO_FILTER = new SuffixFileFilter(
+			".dist-info");
 
-	private static final FilenameFilter MANIFEST_FILTER = new FilenameFilter() {
-		public boolean accept(File dir, String name) {
-			return name.equals(MANIFEST);
-		}
-	};
+	private static final FilenameFilter MANIFEST_FILTER = new NameFileFilter(
+			MANIFEST);
 
 	private static final File getMatchingFile(File folder, FilenameFilter filter) {
 		File result = null;
@@ -260,20 +260,24 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
 		return result;
 	}
 
-	private static Properties getManifestProperties(File wheelFolder) {
-		Properties properties = new Properties();
+	private static InternetHeaders getManifestProperties(File wheelFolder) {
+		InternetHeaders result = new InternetHeaders();
 		File dist_info = getMatchingFile(wheelFolder, DIST_INFO_FILTER);
 		if (null != dist_info && dist_info.isDirectory()) {
 			File manifest = getMatchingFile(dist_info, MANIFEST_FILTER);
 			if (null != manifest) {
 				try {
-					properties.load(new FileReader(manifest));
-				} catch (IOException e) {
+					result.load(new AutoCloseInputStream(
+							new BufferedInputStream(new FileInputStream(
+									manifest))));
+				} catch (MessagingException e) {
+					LOGGER.log(Level.WARNING, e.getMessage(), e);
+				} catch (FileNotFoundException e) {
 					LOGGER.log(Level.WARNING, e.getMessage(), e);
 				}
 			}
 		}
-		return properties;
+		return result;
 	}
 
 	/**
