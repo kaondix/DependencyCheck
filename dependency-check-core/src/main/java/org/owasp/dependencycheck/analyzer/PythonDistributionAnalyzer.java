@@ -98,7 +98,7 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
 	/**
 	 * The set of file extensions supported by this analyzer.
 	 */
-	private static final Set<String> EXTENSIONS = newHashSet("whl", "");
+	private static final Set<String> EXTENSIONS = newHashSet("whl", "METADATA");
 
 	/**
 	 * Returns a list of file EXTENSIONS supported by this analyzer.
@@ -157,6 +157,7 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
 	public void analyzeFileType(Dependency dependency, Engine engine)
 			throws AnalysisException {
 		final File actualFile = dependency.getActualFile();
+		LOGGER.fine("actualFile = " + actualFile);
 		if ("whl".equals(dependency.getFileExtension())) {
 			final File tmpWheelFolder = getNextTempDirectory();
 			LOGGER.fine(String.format("%s exists? %b", tmpWheelFolder,
@@ -164,9 +165,12 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
 			extractFiles(new File(dependency.getActualFilePath()),
 					tmpWheelFolder, METADATA_FILTER);
 			collectWheelMetadata(dependency, tmpWheelFolder, false);
-		} else if (actualFile.getName().endsWith("METADATA")) {
+		} else if ("METADATA".equals(actualFile.getName())) {
 			File parent = actualFile.getParentFile();
-			if (parent.isDirectory() && parent.getName().endsWith(".dist-info")) {
+			final String parentName = parent.getName();
+			LOGGER.fine(String.format("parentName = " + parentName));
+			dependency.setDisplayFileName(parentName + "/METADATA");
+			if (parent.isDirectory() && parentName.endsWith(".dist-info")) {
 				collectWheelMetadata(dependency, parent, true);
 			}
 		}
@@ -274,11 +278,13 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
 		return result;
 	}
 
-	private static InternetHeaders getManifestProperties(File container, boolean isDistInfo) {
+	private static InternetHeaders getManifestProperties(File container,
+			boolean isDistInfo) {
 		InternetHeaders result = new InternetHeaders();
 		LOGGER.fine(String.format("%s has %d entries.", container,
 				container.list().length));
-		File dist_info = isDistInfo ? container : getMatchingFile(container, DIST_INFO_FILTER);
+		File dist_info = isDistInfo ? container : getMatchingFile(container,
+				DIST_INFO_FILTER);
 		if (null != dist_info && dist_info.isDirectory()) {
 			LOGGER.fine(String.format("%s has %d entries.", dist_info,
 					dist_info.list().length));

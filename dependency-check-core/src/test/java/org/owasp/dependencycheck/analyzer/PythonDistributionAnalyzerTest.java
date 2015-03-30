@@ -55,8 +55,11 @@ public class PythonDistributionAnalyzerTest extends BaseTest {
 	 */
 	@Test
 	public void testAnalyzeSitePackage() throws Exception {
-		djangoAssertions(new Dependency(BaseTest.getResourceAsFile(this,
-				"site-packages/Django-1.7.2.dist-info/METADATA")));
+		final Dependency result = new Dependency(BaseTest.getResourceAsFile(
+				this, "site-packages/Django-1.7.2.dist-info/METADATA"));
+		djangoAssertions(result);
+		assertEquals("Django-1.7.2.dist-info/METADATA",
+				result.getDisplayFileName());
 	}
 
 	private void djangoAssertions(final Dependency result)
@@ -79,8 +82,9 @@ public class PythonDistributionAnalyzerTest extends BaseTest {
 	 */
 	@Test
 	public void testGetSupportedExtensions() {
-		assertEquals("Supported extensions should just be \"whl\" and \"\".",
-				new HashSet<String>(Arrays.asList("whl", "")),
+		assertEquals(
+				"Supported extensions should just be \"whl\" and \"METADATA\".",
+				new HashSet<String>(Arrays.asList("whl", "METADATA")),
 				new PythonDistributionAnalyzer().getSupportedExtensions());
 	}
 
@@ -101,8 +105,8 @@ public class PythonDistributionAnalyzerTest extends BaseTest {
 		final PythonDistributionAnalyzer analyzer = new PythonDistributionAnalyzer();
 		assertTrue("Should support \"whl\" extension.",
 				analyzer.supportsExtension("whl"));
-		assertTrue("Should support empty extension.",
-				analyzer.supportsExtension(""));
+		assertTrue("Should support \"METADATA\" extension.",
+				analyzer.supportsExtension("METADATA"));
 
 	}
 }
