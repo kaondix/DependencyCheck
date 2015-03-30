@@ -98,7 +98,7 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
 	/**
 	 * The set of file extensions supported by this analyzer.
 	 */
-	private static final Set<String> EXTENSIONS = newHashSet("whl");
+	private static final Set<String> EXTENSIONS = newHashSet("whl", "");
 
 	/**
 	 * Returns a list of file EXTENSIONS supported by this analyzer.
@@ -159,9 +159,11 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
 		final File tmpWheelFolder = getNextTempDirectory();
 		LOGGER.fine(String.format("%s exists? %b", tmpWheelFolder,
 				tmpWheelFolder.exists()));
-		extractFiles(new File(dependency.getActualFilePath()), tmpWheelFolder,
-				METADATA_FILTER);
-		collectWheelMetadata(dependency, tmpWheelFolder);
+		if ("whl".equals(dependency.getFileExtension())) {
+			extractFiles(new File(dependency.getActualFilePath()),
+					tmpWheelFolder, METADATA_FILTER);
+			collectWheelMetadata(dependency, tmpWheelFolder);
+		}
 	}
 
 	/**
@@ -375,8 +377,9 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
 	 *             thrown if there is an exception extracting files from the
 	 *             archive
 	 */
-	private static void extractArchive(ArchiveInputStream input, File destination,
-			FilenameFilter filter) throws ArchiveExtractionException {
+	private static void extractArchive(ArchiveInputStream input,
+			File destination, FilenameFilter filter)
+			throws ArchiveExtractionException {
 		ArchiveEntry entry;
 		try {
 			while ((entry = input.getNextEntry()) != null) {
