@@ -53,6 +53,8 @@ import org.owasp.dependencycheck.utils.Settings;
  */
 public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
 
+	private static final String PKG_INFO = "PKG-INFO";
+
 	/**
 	 * Name of wheel metadata files to analyze.
 	 */
@@ -82,7 +84,8 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
 	/**
 	 * The set of file extensions supported by this analyzer.
 	 */
-	private static final Set<String> EXTENSIONS = newHashSet("whl", "METADATA");
+	private static final Set<String> EXTENSIONS = newHashSet("whl", METADATA,
+			PKG_INFO);
 
 	/**
 	 * Pattern that captures the vendor from a home page URL.
@@ -158,9 +161,8 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
 	}
 
 	@Override
-	public void analyzeFileType(Dependency dependency, Engine engine)
+	protected void analyzeFileType(Dependency dependency, Engine engine)
 			throws AnalysisException {
-		final File actualFile = dependency.getActualFile();
 		if ("whl".equals(dependency.getFileExtension())) {
 			final File tmpWheelFolder = getNextTempDirectory();
 			LOGGER.fine(String.format("%s exists? %b", tmpWheelFolder,
@@ -172,13 +174,25 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
 			} catch (ExtractionException ex) {
 				throw new AnalysisException(ex);
 			}
-			collectWheelMetadata(dependency, tmpWheelFolder, false);
-		} else if (METADATA.equals(actualFile.getName())) {
-			final File parent = actualFile.getParentFile();
-			final String parentName = parent.getName();
-			dependency.setDisplayFileName(parentName + "/METADATA");
-			if (parent.isDirectory() && parentName.endsWith(".dist-info")) {
-				collectWheelMetadata(dependency, parent, true);
+
+			collectWheelMetadata(
+					dependency,
+					getMatchingFile(
+							getMatchingFile(tmpWheelFolder, DIST_INFO_FILTER),
+							METADATA_FILTER));
+		} else {
+			final File actualFile = dependency.getActualFile();
+			final String name = actualFile.getName();
+			final boolean metadata = METADATA.equals(name);
+			if (metadata || PKG_INFO.equals(name)) {
+				final File parent = actualFile.getParentFile();
+				final String parentName = parent.getName();
+				dependency.setDisplayFileName(parentName + "/" + name);
+				if (parent.isDirectory()
+						&& ((metadata && parentName.endsWith(".dist-info")) || parentName
+								.endsWith(".egg-info"))) {
+					collectWheelMetadata(dependency, actualFile);
+				}
 			}
 		}
 	}
@@ -225,10 +239,8 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
 	 * @param dependency
 	 *            the dependency being analyzed
 	 */
-	private static void collectWheelMetadata(Dependency dependency,
-			File container, boolean isDistInfo) {
-		final InternetHeaders headers = getManifestProperties(container,
-				isDistInfo);
+	private static void collectWheelMetadata(Dependency dependency, File file) {
+		final InternetHeaders headers = getManifestProperties(file);
 		addPropertyToEvidence(headers, dependency.getVersionEvidence(),
 				"Version", Confidence.HIGHEST);
 		addPropertyToEvidence(headers, dependency.getProductEvidence(), "Name",
@@ -269,32 +281,18 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
 		return result;
 	}
 
-	private static InternetHeaders getManifestProperties(File container,
-			boolean isDistInfo) {
+	private static InternetHeaders getManifestProperties(File manifest) {
 		final InternetHeaders result = new InternetHeaders();
-		LOGGER.fine(String.format("%s has %d entries.", container,
-				container.list().length));
-		final File dist_info = isDistInfo ? container : getMatchingFile(
-				container, DIST_INFO_FILTER);
-		if (null != dist_info && dist_info.isDirectory()) {
-			LOGGER.fine(String.format("%s has %d entries.", dist_info,
-					dist_info.list().length));
-			final File manifest = getMatchingFile(dist_info, METADATA_FILTER);
-			LOGGER.fine(String.format("METADATA file found? %b",
-					null != manifest));
-			if (null == manifest) {
-				LOGGER.fine(String.format("%s contents: %s", dist_info,
-						StringUtils.join(dist_info.list(), ";")));
-			} else {
-				try {
-					result.load(new AutoCloseInputStream(
-							new BufferedInputStream(new FileInputStream(
-									manifest))));
-				} catch (MessagingException e) {
-					LOGGER.log(Level.WARNING, e.getMessage(), e);
-				} catch (FileNotFoundException e) {
-					LOGGER.log(Level.WARNING, e.getMessage(), e);
-				}
+		if (null == manifest) {
+			LOGGER.fine("Manifest file not found.");
+		} else {
+			try {
+				result.load(new AutoCloseInputStream(new BufferedInputStream(
+						new FileInputStream(manifest))));
+			} catch (MessagingException e) {
+				LOGGER.log(Level.WARNING, e.getMessage(), e);
+			} catch (FileNotFoundException e) {
+				LOGGER.log(Level.WARNING, e.getMessage(), e);
 			}
 		}
 		return result;

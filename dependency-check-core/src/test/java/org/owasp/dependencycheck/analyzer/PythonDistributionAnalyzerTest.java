@@ -42,7 +42,7 @@ public class PythonDistributionAnalyzerTest extends BaseTest {
 	 *             is thrown when an exception occurs.
 	 */
 	@Test
-	public void testAnalyzeWheel() throws Exception {
+	public void testAnalyzeWheel() throws AnalysisException {
 		djangoAssertions(new Dependency(BaseTest.getResourceAsFile(this,
 				"Django-1.7.2-py2.py3-none-any.whl")));
 	}
@@ -54,7 +54,7 @@ public class PythonDistributionAnalyzerTest extends BaseTest {
 	 *             is thrown when an exception occurs.
 	 */
 	@Test
-	public void testAnalyzeSitePackage() throws Exception {
+	public void testAnalyzeSitePackage() throws AnalysisException {
 		final Dependency result = new Dependency(BaseTest.getResourceAsFile(
 				this, "site-packages/Django-1.7.2.dist-info/METADATA"));
 		djangoAssertions(result);
@@ -77,14 +77,32 @@ public class PythonDistributionAnalyzerTest extends BaseTest {
 		assertTrue("Version 1.7.2 not found in Django dependency.", found);
 	}
 
+	@Test
+	public void testAnalyzeEggInfo() throws AnalysisException {
+		final Dependency result = new Dependency(BaseTest.getResourceAsFile(
+				this, "site-packages/eggutils-0.0.2-py2.7.egg-info/PKG-INFO"));
+		new PythonDistributionAnalyzer().analyze(result, null);
+		assertTrue("Expected vendor evidence to contain \"python\".", result
+				.getVendorEvidence().toString().contains("python"));
+		boolean found = false;
+		for (final Evidence e : result.getVersionEvidence()) {
+			if ("Version".equals(e.getName()) && "0.0.2".equals(e.getValue())) {
+				found = true;
+				break;
+			}
+		}
+		assertTrue("Version 0.0.2 not found in eggutils dependency.", found);
+	}
+
 	/**
 	 * Test of getSupportedExtensions method, of class JarAnalyzer.
 	 */
 	@Test
 	public void testGetSupportedExtensions() {
 		assertEquals(
-				"Supported extensions should just be \"whl\" and \"METADATA\".",
-				new HashSet<String>(Arrays.asList("whl", "METADATA")),
+				"Supported extensions should just be \"whl\", \"METADATA\" and \"PKG-INFO\".",
+				new HashSet<String>(Arrays
+						.asList("whl", "METADATA", "PKG-INFO")),
 				new PythonDistributionAnalyzer().getSupportedExtensions());
 	}
 
@@ -107,6 +125,7 @@ public class PythonDistributionAnalyzerTest extends BaseTest {
 				analyzer.supportsExtension("whl"));
 		assertTrue("Should support \"METADATA\" extension.",
 				analyzer.supportsExtension("METADATA"));
-
+		assertTrue("Should support \"METADATA\" extension.",
+				analyzer.supportsExtension("PKG-INFO"));
 	}
 }
