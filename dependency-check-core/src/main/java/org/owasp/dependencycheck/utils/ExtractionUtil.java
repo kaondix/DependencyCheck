@@ -149,11 +149,11 @@ public final class ExtractionUtil {
 	 *            a directory to extract the contents to
 	 * @param filter
 	 *            determines which files get extracted
-	 * @throws AnalysisException
+	 * @throws ExtractionException
 	 *             thrown if the archive is not found
 	 */
 	public static void extractFilesUsingFilter(File archive, File destination,
-			FilenameFilter filter) throws AnalysisException {
+			FilenameFilter filter) throws ExtractionException {
 		if (archive == null || destination == null) {
 			return;
 		}
@@ -163,7 +163,7 @@ public final class ExtractionUtil {
 			fis = new FileInputStream(archive);
 		} catch (FileNotFoundException ex) {
 			LOGGER.log(Level.FINE, null, ex);
-			throw new AnalysisException("Archive file was not found.", ex);
+			throw new ExtractionException("Archive file was not found.", ex);
 		}
 		try {
 			extractArchive(new ZipArchiveInputStream(new BufferedInputStream(

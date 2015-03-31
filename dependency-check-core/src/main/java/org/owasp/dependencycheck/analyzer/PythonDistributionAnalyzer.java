@@ -40,6 +40,7 @@ import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.dependency.Confidence;
 import org.owasp.dependencycheck.dependency.Dependency;
 import org.owasp.dependencycheck.dependency.EvidenceCollection;
+import org.owasp.dependencycheck.utils.ExtractionException;
 import org.owasp.dependencycheck.utils.ExtractionUtil;
 import org.owasp.dependencycheck.utils.FileUtils;
 import org.owasp.dependencycheck.utils.Settings;
@@ -164,8 +165,13 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
 			final File tmpWheelFolder = getNextTempDirectory();
 			LOGGER.fine(String.format("%s exists? %b", tmpWheelFolder,
 					tmpWheelFolder.exists()));
-			ExtractionUtil.extractFilesUsingFilter(new File(dependency.getActualFilePath()),
-					tmpWheelFolder, METADATA_FILTER);
+			try {
+				ExtractionUtil.extractFilesUsingFilter(
+						new File(dependency.getActualFilePath()),
+						tmpWheelFolder, METADATA_FILTER);
+			} catch (ExtractionException ex) {
+				throw new AnalysisException(ex);
+			}
 			collectWheelMetadata(dependency, tmpWheelFolder, false);
 		} else if (METADATA.equals(actualFile.getName())) {
 			final File parent = actualFile.getParentFile();
