@@ -190,6 +190,10 @@ public final class Settings {
          */
         public static final String ANALYZER_AUTOCONF_ENABLED = "analyzer.autoconf.enabled";
         /**
+         * The properties key for whether the Python Package analyzer is enabled.
+         */
+        public static final String ANALYZER_CMAKE_ENABLED = "analyzer.cmake.enabled";
+        /**
          * The properties key for whether the .NET Assembly analyzer is enabled.
          */
         public static final String ANALYZER_ASSEMBLY_ENABLED = "analyzer.assembly.enabled";
