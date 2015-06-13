@@ -34,6 +34,9 @@ import org.owasp.dependencycheck.dependency.Confidence;
 import org.owasp.dependencycheck.dependency.Dependency;
 import org.owasp.dependencycheck.dependency.Evidence;
 import org.owasp.dependencycheck.utils.Settings;
+import org.slf4j.LoggerFactory;
+import org.slf4j.impl.SimpleLogger;
+import org.slf4j.impl.SimpleLoggerFactory;
 
 /**
  * Tests for the AssemblyAnalyzer.
@@ -44,6 +47,7 @@ import org.owasp.dependencycheck.utils.Settings;
 public class AssemblyAnalyzerTest extends BaseTest {
 
     private static final Logger LOGGER = Logger.getLogger(AssemblyAnalyzerTest.class.getName());
+    private static final String LOG_KEY = "org.slf4j.simpleLogger.org.owasp.dependencycheck.analyzer.AssemblyAnalyzer";
 
     AssemblyAnalyzer analyzer;
 
@@ -116,7 +120,7 @@ public class AssemblyAnalyzerTest extends BaseTest {
         Level oldLevel = Logger.getLogger(AssemblyAnalyzer.class.getName()).getLevel();
         Level oldDependency = Logger.getLogger(Dependency.class.getName()).getLevel();
         // Tweak the log level so the warning doesn't show in the console
-        Logger.getLogger(AssemblyAnalyzer.class.getName()).setLevel(Level.OFF);
+        String oldProp = System.getProperty(LOG_KEY, "info");
         Logger.getLogger(Dependency.class.getName()).setLevel(Level.OFF);
         //File f = new File(AssemblyAnalyzerTest.class.getClassLoader().getResource("log4net.dll").getPath());
         File f = BaseTest.getResourceAsFile(this, "log4net.dll");
@@ -129,6 +133,7 @@ public class AssemblyAnalyzerTest extends BaseTest {
         } catch (AnalysisException ae) {
             assertEquals("File does not exist", ae.getMessage());
         } finally {
+            System.setProperty(LOG_KEY, oldProp);
             Logger.getLogger(AssemblyAnalyzer.class.getName()).setLevel(oldLevel);
             Logger.getLogger(Dependency.class.getName()).setLevel(oldDependency);
         }
@@ -152,8 +157,10 @@ public class AssemblyAnalyzerTest extends BaseTest {
         }
 
         Level oldLevel = Logger.getLogger(AssemblyAnalyzer.class.getName()).getLevel();
+        String oldProp = System.getProperty(LOG_KEY, "info");
         try {
             // Tweak the logging to swallow the warning when testing
+            System.setProperty(LOG_KEY, "error");
             Logger.getLogger(AssemblyAnalyzer.class.getName()).setLevel(Level.OFF);
             // Have to make a NEW analyzer because during setUp, it would have gotten the correct one
             AssemblyAnalyzer aanalyzer = new AssemblyAnalyzer();
@@ -163,6 +170,7 @@ public class AssemblyAnalyzerTest extends BaseTest {
         } catch (AnalysisException ae) {
             assertEquals("An error occured with the .NET AssemblyAnalyzer", ae.getMessage());
         } finally {
+            System.setProperty(LOG_KEY, oldProp);
             // Recover the logger
             Logger.getLogger(AssemblyAnalyzer.class.getName()).setLevel(oldLevel);
             // Now recover the way we came in. If we had to set a System property, delete it. Otherwise,

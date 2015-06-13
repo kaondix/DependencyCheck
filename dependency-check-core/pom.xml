@@ -374,6 +374,13 @@ Copyright (c) 2012 Jeremy Long. All Rights Reserved.
             <version>1.7.12</version>
             <scope>test</scope>
         </dependency>
+        <!-- For the CAL10N support -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-ext</artifactId>
+            <version>1.7.12</version>
+            <scope>compile</scope>
+        </dependency>
         <dependency>
             <groupId>org.owasp</groupId>
             <artifactId>dependency-check-utils</artifactId>
