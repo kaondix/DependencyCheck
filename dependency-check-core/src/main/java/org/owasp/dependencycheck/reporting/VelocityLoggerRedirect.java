@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * <p>
- * DependencyCheck uses {@link java.util.logging.Logger} as a logging framework, and Apache Velocity uses a custom
+ * DependencyCheck uses {@link org.slf4j.Logger} as a logging framework, and Apache Velocity uses a custom
  * logging implementation that outputs to a file named velocity.log by default. This class is an implementation of a
  * custom Velocity logger that redirects all velocity logging to the Java Logger class.
  * </p><p>
