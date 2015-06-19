@@ -22,13 +22,17 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.owasp.dependencycheck.BaseTest;
+import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
+import org.owasp.dependencycheck.data.nvdcve.DatabaseException;
 import org.owasp.dependencycheck.dependency.Dependency;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.regex.Pattern;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
 
 /**
@@ -137,19 +141,20 @@ public class CMakeAnalyzerTest extends BaseTest {
      * @throws AnalysisException is thrown when an exception occurs.
      */
     @Test
-    public void testAnalyzeCMakeListsOpenCV3rdParty() throws AnalysisException {
+    public void testAnalyzeCMakeListsOpenCV3rdParty() throws AnalysisException, DatabaseException {
         final Dependency result = new Dependency(BaseTest.getResourceAsFile(
                 this, "cmake/opencv/3rdparty/ffmpeg/ffmpeg_version.cmake"));
-        analyzer.analyze(result, null);
-        final String product = "libavutil";
+        final Engine engine = new Engine();
+        analyzer.analyze(result, engine);
+        final String product = "libavcodec";
         final String productString = result.getProductEvidence().toString();
         assertTrue("Expected product evidence to contain \"" + product + "\".",
                 productString.contains(product));
-        final String version = "52.38.100";
+        final String version = "55.18.102";
         assertTrue("Expected version evidence to contain \"" + version + "\".",
                 result.getVersionEvidence().toString().contains(version));
         assertFalse("ALIASOF_ prefix shouldn't be present.",
                 Pattern.compile("\\bALIASOF_\\w+").matcher(productString).find());
+        assertEquals("Number of additional dependencies should be 4.", 4, engine.getDependencies().size());
     }
-
 }

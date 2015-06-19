@@ -121,10 +121,9 @@ public class CMakeAnalyzer extends AbstractFileTypeAnalyzer {
     protected void analyzeFileType(Dependency dependency, Engine engine)
             throws AnalysisException {
         final File file = dependency.getActualFile();
-        final File parent = file.getParentFile();
-        final String parentName = parent.getName();
+        final String parentName = file.getParentFile().getName();
         final String name = file.getName();
-        dependency.setDisplayFileName(parentName + "/" + name);
+        dependency.setDisplayFileName(String.format("%s%c%s", parentName, File.pathSeparatorChar, name));
         String contents;
         try {
             contents = FileUtils.readFileToString(file).trim();
@@ -148,30 +147,39 @@ public class CMakeAnalyzer extends AbstractFileTypeAnalyzer {
                         group, Confidence.HIGH);
             }
             LOGGER.fine(String.format("Found %d matches.", count));
-            LOGGER.fine(SET_VERSION.pattern());
-            m = SET_VERSION.matcher(contents);
-            count = 0;
-            while (m.find()) {
-                count++;
-                LOGGER.fine(String.format(
-                        "Found project command match with %d groups: %s",
-                        m.groupCount(), m.group(0)));
-                String product = m.group(1);
-                final String version = m.group(2);
-                LOGGER.fine("Group 1: " + product);
-                LOGGER.fine("Group 2: " + version);
-                final String alias_prefix = "ALIASOF_";
-                if (product.startsWith(alias_prefix)) {
-                    product = product.replaceFirst(alias_prefix, "");
-                }
-                dependency.getProductEvidence().addEvidence(name, "Product",
-                        product, Confidence.MEDIUM);
-                dependency.getVersionEvidence().addEvidence(name, "Version",
-                        version, Confidence.MEDIUM);
-            }
-            LOGGER.fine(String.format("Found %d matches.", count));
-
+            analyzeSetVersionCommand(dependency, engine, name, contents);
         }
+    }
+
+    private void analyzeSetVersionCommand(Dependency dependency, Engine engine, String name, String contents) {
+        final Dependency orig = dependency;
+        Matcher m = SET_VERSION.matcher(contents);
+        int count = 0;
+        LOGGER.fine(SET_VERSION.pattern());
+        while (m.find()) {
+            count++;
+            LOGGER.fine(String.format(
+                    "Found project command match with %d groups: %s",
+                    m.groupCount(), m.group(0)));
+            String product = m.group(1);
+            final String version = m.group(2);
+            LOGGER.fine("Group 1: " + product);
+            LOGGER.fine("Group 2: " + version);
+            final String alias_prefix = "ALIASOF_";
+            if (product.startsWith(alias_prefix)) {
+                product = product.replaceFirst(alias_prefix, "");
+            }
+            if (count > 1) {
+                dependency = new Dependency(orig.getActualFile());
+                dependency.setDisplayFileName(String.format("%s:%s", orig.getDisplayFileName(), product));
+                engine.getDependencies().add(dependency);
+            }
+            dependency.getProductEvidence().addEvidence(name, "Product",
+                    product, Confidence.MEDIUM);
+            dependency.getVersionEvidence().addEvidence(name, "Version",
+                    version, Confidence.MEDIUM);
+        }
+        LOGGER.fine(String.format("Found %d matches.", count));
     }
 
     @Override
