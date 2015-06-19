@@ -75,8 +75,7 @@ public class CMakeAnalyzerTest extends BaseTest {
      */
     @Test
     public void testGetName() {
-        assertEquals("Analyzer name wrong.", "CMake Analyzer",
-                analyzer.getName());
+        assertThat(analyzer.getName(), is(equalTo("CMake Analyzer")));
     }
 
     /**
@@ -156,5 +155,15 @@ public class CMakeAnalyzerTest extends BaseTest {
         assertFalse("ALIASOF_ prefix shouldn't be present.",
                 Pattern.compile("\\bALIASOF_\\w+").matcher(productString).find());
         assertEquals("Number of additional dependencies should be 4.", 4, engine.getDependencies().size());
+    }
+
+    @Test
+    public void testDeletesTxtNotCmakeListsDependencies() throws DatabaseException, AnalysisException {
+        final Dependency result = new Dependency(BaseTest.getResourceAsFile(
+                this, "cmake/red_herring.txt"));
+        final Engine engine = new Engine();
+        engine.getDependencies().add(result);
+        analyzer.analyze(result, engine);
+        assertThat(engine.getDependencies().size(), is(equalTo(0)));
     }
 }

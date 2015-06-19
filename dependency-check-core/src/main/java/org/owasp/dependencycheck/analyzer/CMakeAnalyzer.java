@@ -18,6 +18,10 @@
 package org.owasp.dependencycheck.analyzer;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.io.filefilter.NameFileFilter;
+import org.apache.commons.io.filefilter.OrFileFilter;
+import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.apache.commons.lang.StringUtils;
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
@@ -27,7 +31,9 @@ import org.owasp.dependencycheck.utils.Settings;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -70,10 +76,22 @@ public class CMakeAnalyzer extends AbstractFileTypeAnalyzer {
             .unmodifiableSet(newHashSet("txt", "cmake"));
 
     /**
-     * Returns the name of the Python Package Analyzer.
+     * Detects *.txt files.
+     */
+    private static final IOFileFilter TXT_FILTER = new SuffixFileFilter(".txt");
+
+    /**
+     * Detects files that can be analyzed.
+     */
+    private static final OrFileFilter FILTER = new OrFileFilter(new SuffixFileFilter(
+            ".cmake"), new NameFileFilter(
+            "CMakeLists.txt"));
+
+    /**
+     * Returns the name of the CMake analyzer.
      *
      * @return the name of the analyzer
-     */
+     **/
     @Override
     public String getName() {
         return "CMake Analyzer";
@@ -121,33 +139,40 @@ public class CMakeAnalyzer extends AbstractFileTypeAnalyzer {
     protected void analyzeFileType(Dependency dependency, Engine engine)
             throws AnalysisException {
         final File file = dependency.getActualFile();
-        final String parentName = file.getParentFile().getName();
-        final String name = file.getName();
-        dependency.setDisplayFileName(String.format("%s%c%s", parentName, File.separatorChar, name));
-        String contents;
-        try {
-            contents = FileUtils.readFileToString(file).trim();
-        } catch (IOException e) {
-            throw new AnalysisException(
-                    "Problem occurred while reading dependency file.", e);
-        }
-
-        if (StringUtils.isNotBlank(contents)) {
-            LOGGER.fine(PROJECT.pattern());
-            Matcher m = PROJECT.matcher(contents);
-            int count = 0;
-            while (m.find()) {
-                count++;
-                LOGGER.fine(String.format(
-                        "Found project command match with %d groups: %s",
-                        m.groupCount(), m.group(0)));
-                final String group = m.group(1);
-                LOGGER.fine("Group 1: " + group);
-                dependency.getProductEvidence().addEvidence(name, "Project",
-                        group, Confidence.HIGH);
+        if (FILTER.accept(file)) {
+            final String parentName = file.getParentFile().getName();
+            final String name = file.getName();
+            dependency.setDisplayFileName(String.format("%s%c%s", parentName, File.separatorChar, name));
+            String contents;
+            try {
+                contents = FileUtils.readFileToString(file).trim();
+            } catch (IOException e) {
+                throw new AnalysisException(
+                        "Problem occurred while reading dependency file.", e);
             }
-            LOGGER.fine(String.format("Found %d matches.", count));
-            analyzeSetVersionCommand(dependency, engine, name, contents);
+
+            if (StringUtils.isNotBlank(contents)) {
+                LOGGER.fine(PROJECT.pattern());
+                Matcher m = PROJECT.matcher(contents);
+                int count = 0;
+                while (m.find()) {
+                    count++;
+                    LOGGER.fine(String.format(
+                            "Found project command match with %d groups: %s",
+                            m.groupCount(), m.group(0)));
+                    final String group = m.group(1);
+                    LOGGER.fine("Group 1: " + group);
+                    dependency.getProductEvidence().addEvidence(name, "Project",
+                            group, Confidence.HIGH);
+                }
+                LOGGER.fine(String.format("Found %d matches.", count));
+                analyzeSetVersionCommand(dependency, engine, name, contents);
+            }
+        } else if (TXT_FILTER.accept(file)) {
+            // copy, alter and set in case some other thread is iterating over
+            final List<Dependency> dependencies = new ArrayList<Dependency>(engine.getDependencies());
+            dependencies.remove(dependency);
+            engine.setDependencies(dependencies);
         }
     }
 
