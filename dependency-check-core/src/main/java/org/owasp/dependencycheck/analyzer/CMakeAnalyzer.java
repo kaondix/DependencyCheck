@@ -123,7 +123,7 @@ public class CMakeAnalyzer extends AbstractFileTypeAnalyzer {
         final File file = dependency.getActualFile();
         final String parentName = file.getParentFile().getName();
         final String name = file.getName();
-        dependency.setDisplayFileName(String.format("%s%c%s", parentName, File.pathSeparatorChar, name));
+        dependency.setDisplayFileName(String.format("%s%c%s", parentName, File.separatorChar, name));
         String contents;
         try {
             contents = FileUtils.readFileToString(file).trim();
