@@ -497,6 +497,15 @@ public final class CliParser {
     }
 
     /**
+     * Returns true if the disableCmake command line argument was specified.
+     *
+     * @return true if the disableCmake command line argument was specified; otherwise false
+     */
+    public boolean isCmakeDisabled() {
+        return (line != null) && line.hasOption(ARGUMENT.DISABLE_CMAKE);
+    }
+
+    /**
      * Returns true if the disableAutoconf command line argument was specified.
      *
      * @return true if the disableAutoconf command line argument was specified; otherwise false
