@@ -28,6 +28,8 @@ import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.dependency.Confidence;
 import org.owasp.dependencycheck.dependency.Dependency;
 import org.owasp.dependencycheck.utils.Settings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,7 +37,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,7 +51,7 @@ public class CMakeAnalyzer extends AbstractFileTypeAnalyzer {
     /**
      * The logger.
      */
-    private static final Logger LOGGER = Logger.getLogger(CMakeAnalyzer.class
+    private static final Logger LOGGER = LoggerFactory.getLogger(CMakeAnalyzer.class
             .getName());
 
     /**
@@ -152,20 +153,19 @@ public class CMakeAnalyzer extends AbstractFileTypeAnalyzer {
             }
 
             if (StringUtils.isNotBlank(contents)) {
-                LOGGER.fine(PROJECT.pattern());
                 Matcher m = PROJECT.matcher(contents);
                 int count = 0;
                 while (m.find()) {
                     count++;
-                    LOGGER.fine(String.format(
+                    LOGGER.debug(String.format(
                             "Found project command match with %d groups: %s",
                             m.groupCount(), m.group(0)));
                     final String group = m.group(1);
-                    LOGGER.fine("Group 1: " + group);
+                    LOGGER.debug("Group 1: " + group);
                     dependency.getProductEvidence().addEvidence(name, "Project",
                             group, Confidence.HIGH);
                 }
-                LOGGER.fine(String.format("Found %d matches.", count));
+                LOGGER.debug(String.format("Found %d matches.", count));
                 analyzeSetVersionCommand(dependency, engine, name, contents);
             }
         } else if (TXT_FILTER.accept(file)) {
@@ -180,16 +180,15 @@ public class CMakeAnalyzer extends AbstractFileTypeAnalyzer {
         final Dependency orig = dependency;
         Matcher m = SET_VERSION.matcher(contents);
         int count = 0;
-        LOGGER.fine(SET_VERSION.pattern());
         while (m.find()) {
             count++;
-            LOGGER.fine(String.format(
+            LOGGER.debug(String.format(
                     "Found project command match with %d groups: %s",
                     m.groupCount(), m.group(0)));
             String product = m.group(1);
             final String version = m.group(2);
-            LOGGER.fine("Group 1: " + product);
-            LOGGER.fine("Group 2: " + version);
+            LOGGER.debug("Group 1: " + product);
+            LOGGER.debug("Group 2: " + version);
             final String alias_prefix = "ALIASOF_";
             if (product.startsWith(alias_prefix)) {
                 product = product.replaceFirst(alias_prefix, "");
@@ -197,14 +196,18 @@ public class CMakeAnalyzer extends AbstractFileTypeAnalyzer {
             if (count > 1) {
                 dependency = new Dependency(orig.getActualFile());
                 dependency.setDisplayFileName(String.format("%s:%s", orig.getDisplayFileName(), product));
-                engine.getDependencies().add(dependency);
+                dependency.setFilePath(String.format("%s:%s", orig.getFilePath(), product));
+                // copy, alter and set in case some other thread is iterating over
+                final List<Dependency> dependencies = new ArrayList<Dependency>(engine.getDependencies());
+                dependencies.add(dependency);
+                engine.setDependencies(dependencies);
             }
             dependency.getProductEvidence().addEvidence(name, "Product",
                     product, Confidence.MEDIUM);
             dependency.getVersionEvidence().addEvidence(name, "Version",
                     version, Confidence.MEDIUM);
         }
-        LOGGER.fine(String.format("Found %d matches.", count));
+        LOGGER.debug(String.format("Found %d matches.", count));
     }
 
     @Override

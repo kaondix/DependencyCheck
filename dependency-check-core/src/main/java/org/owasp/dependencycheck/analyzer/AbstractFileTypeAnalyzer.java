@@ -17,9 +17,6 @@
  */
 package org.owasp.dependencycheck.analyzer;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.dependency.Dependency;
@@ -27,6 +24,10 @@ import org.owasp.dependencycheck.utils.InvalidSettingException;
 import org.owasp.dependencycheck.utils.Settings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * The base FileTypeAnalyzer that all analyzers that have specific file types they analyze should extend.
@@ -204,7 +205,7 @@ public abstract class AbstractFileTypeAnalyzer extends AbstractAnalyzer implemen
         } else {
             final boolean match = ext.contains(extension);
             if (match) {
-                filesMatched = match;
+                filesMatched = true;
             }
             return match;
         }
