@@ -27,12 +27,15 @@ import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.dependency.Confidence;
 import org.owasp.dependencycheck.dependency.Dependency;
+import org.owasp.dependencycheck.utils.Checksum;
 import org.owasp.dependencycheck.utils.Settings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -87,6 +90,16 @@ public class CMakeAnalyzer extends AbstractFileTypeAnalyzer {
     private static final OrFileFilter FILTER = new OrFileFilter(new SuffixFileFilter(
             ".cmake"), new NameFileFilter(
             "CMakeLists.txt"));
+
+    private static MessageDigest sha1 = null;
+
+    static {
+        try {
+            sha1 = MessageDigest.getInstance("SHA1");
+        } catch (NoSuchAlgorithmException e) {
+            LOGGER.error(e.getMessage());
+        }
+    }
 
     /**
      * Returns the name of the CMake analyzer.
@@ -169,10 +182,7 @@ public class CMakeAnalyzer extends AbstractFileTypeAnalyzer {
                 analyzeSetVersionCommand(dependency, engine, name, contents);
             }
         } else if (TXT_FILTER.accept(file)) {
-            // copy, alter and set in case some other thread is iterating over
-            final List<Dependency> dependencies = new ArrayList<Dependency>(engine.getDependencies());
-            dependencies.remove(dependency);
-            engine.setDependencies(dependencies);
+            engine.getDependencies().remove(dependency);
         }
     }
 
@@ -196,11 +206,12 @@ public class CMakeAnalyzer extends AbstractFileTypeAnalyzer {
             if (count > 1) {
                 dependency = new Dependency(orig.getActualFile());
                 dependency.setDisplayFileName(String.format("%s:%s", orig.getDisplayFileName(), product));
-                dependency.setFilePath(String.format("%s:%s", orig.getFilePath(), product));
-                // copy, alter and set in case some other thread is iterating over
-                final List<Dependency> dependencies = new ArrayList<Dependency>(engine.getDependencies());
-                dependencies.add(dependency);
-                engine.setDependencies(dependencies);
+                final String filePath = String.format("%s:%s", orig.getFilePath(), product);
+                dependency.setFilePath(filePath);
+
+                // prevents coalescing into the dependency provided by engine
+                dependency.setSha1sum(Checksum.getHex(sha1.digest(filePath.getBytes())));
+                engine.getDependencies().add(dependency);
             }
             dependency.getProductEvidence().addEvidence(name, "Product",
                     product, Confidence.MEDIUM);
