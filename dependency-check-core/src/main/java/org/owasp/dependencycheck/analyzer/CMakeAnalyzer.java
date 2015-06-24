@@ -179,14 +179,14 @@ public class CMakeAnalyzer extends AbstractFileTypeAnalyzer {
                             group, Confidence.HIGH);
                 }
                 LOGGER.debug(String.format("Found %d matches.", count));
-                analyzeSetVersionCommand(dependency, engine, name, contents);
+                analyzeSetVersionCommand(dependency, engine, contents);
             }
         } else if (TXT_FILTER.accept(file)) {
             engine.getDependencies().remove(dependency);
         }
     }
 
-    private void analyzeSetVersionCommand(Dependency dependency, Engine engine, String name, String contents) {
+    private void analyzeSetVersionCommand(Dependency dependency, Engine engine, String contents) {
         final Dependency orig = dependency;
         Matcher m = SET_VERSION.matcher(contents);
         int count = 0;
@@ -213,9 +213,10 @@ public class CMakeAnalyzer extends AbstractFileTypeAnalyzer {
                 dependency.setSha1sum(Checksum.getHex(sha1.digest(filePath.getBytes())));
                 engine.getDependencies().add(dependency);
             }
-            dependency.getProductEvidence().addEvidence(name, "Product",
+            final String source = dependency.getDisplayFileName();
+            dependency.getProductEvidence().addEvidence(source, "Product",
                     product, Confidence.MEDIUM);
-            dependency.getVersionEvidence().addEvidence(name, "Version",
+            dependency.getVersionEvidence().addEvidence(source, "Version",
                     version, Confidence.MEDIUM);
         }
         LOGGER.debug(String.format("Found %d matches.", count));

@@ -29,6 +29,7 @@ import org.owasp.dependencycheck.dependency.Dependency;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -112,8 +113,7 @@ public class CMakeAnalyzerTest extends BaseTest {
                 this, "cmake/opencv/CMakeLists.txt"));
         analyzer.analyze(result, null);
         final String product = "OpenCV";
-        assertTrue("Expected product evidence to contain \"" + product + "\".",
-                result.getProductEvidence().toString().contains(product));
+        assertProductEvidence(result, product);
     }
 
     /**
@@ -127,11 +127,13 @@ public class CMakeAnalyzerTest extends BaseTest {
                 this, "cmake/zlib/CMakeLists.txt"));
         analyzer.analyze(result, null);
         final String product = "zlib";
+        assertProductEvidence(result, product);
+    }
+
+    private void assertProductEvidence(Dependency result, String product) {
         assertTrue("Expected product evidence to contain \"" + product + "\".",
                 result.getProductEvidence().toString().contains(product));
     }
-
-    // libavutil_VERSION 52.38.100
 
     /**
      * Test whether expected version evidence is gathered from OpenCV's third
@@ -145,16 +147,20 @@ public class CMakeAnalyzerTest extends BaseTest {
                 this, "cmake/opencv/3rdparty/ffmpeg/ffmpeg_version.cmake"));
         final Engine engine = new Engine();
         analyzer.analyze(result, engine);
-        final String product = "libavcodec";
-        final String productString = result.getProductEvidence().toString();
-        assertTrue("Expected product evidence to contain \"" + product + "\".",
-                productString.contains(product));
-        final String version = "55.18.102";
+        assertProductEvidence(result, "libavcodec");
+        assertVersionEvidence(result, "55.18.102");
+        assertFalse("ALIASOF_ prefix shouldn't be present.",
+                Pattern.compile("\\bALIASOF_\\w+").matcher(result.getProductEvidence().toString()).find());
+        final List<Dependency> dependencies = engine.getDependencies();
+        assertEquals("Number of additional dependencies should be 4.", 4, dependencies.size());
+        final Dependency last = dependencies.get(3);
+        assertProductEvidence(last, "libavresample");
+        assertVersionEvidence(last, "1.0.1");
+    }
+
+    private void assertVersionEvidence(Dependency result, String version) {
         assertTrue("Expected version evidence to contain \"" + version + "\".",
                 result.getVersionEvidence().toString().contains(version));
-        assertFalse("ALIASOF_ prefix shouldn't be present.",
-                Pattern.compile("\\bALIASOF_\\w+").matcher(productString).find());
-        assertEquals("Number of additional dependencies should be 4.", 4, engine.getDependencies().size());
     }
 
     @Test
