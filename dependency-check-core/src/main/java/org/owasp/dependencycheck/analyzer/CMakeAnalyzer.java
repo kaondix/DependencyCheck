@@ -36,16 +36,19 @@ import java.io.File;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Used to analyze a Python package, and collect information that can be used to
- * determine the associated CPE.
+ * <p>Used to analyze CMake build files, and collect information that can be used to
+ * determine the associated CPE.</p>
+ *
+ * <p>Note: This analyzer catches straightforward invocations of the project command, plus some other observed
+ * patterns of version inclusion in real CMake projects. Many projects make use of older versions of CMake and/or
+ * use custom "homebrew" ways to insert version information. Hopefully as the newer CMake call pattern grows in usage,
+ * this analyzer allow more CPEs to be identified.</p>
  *
  * @author Dale Visser <dvisser@ida.org>
  */
@@ -54,8 +57,7 @@ public class CMakeAnalyzer extends AbstractFileTypeAnalyzer {
     /**
      * The logger.
      */
-    private static final Logger LOGGER = LoggerFactory.getLogger(CMakeAnalyzer.class
-            .getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(CMakeAnalyzer.class);
 
     /**
      * Used when compiling file scanning regex patterns.
