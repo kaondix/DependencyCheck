@@ -18,33 +18,29 @@
 package org.owasp.dependencycheck.analyzer;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.commons.io.filefilter.NameFileFilter;
-import org.apache.commons.io.filefilter.OrFileFilter;
-import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.apache.commons.lang.StringUtils;
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.dependency.Confidence;
 import org.owasp.dependencycheck.dependency.Dependency;
 import org.owasp.dependencycheck.utils.Checksum;
+import org.owasp.dependencycheck.utils.FileFilterBuilder;
 import org.owasp.dependencycheck.utils.Settings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Collections;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * <p>Used to analyze CMake build files, and collect information that can be used to
  * determine the associated CPE.</p>
- *
+ * <p/>
  * <p>Note: This analyzer catches straightforward invocations of the project command, plus some other observed
  * patterns of version inclusion in real CMake projects. Many projects make use of older versions of CMake and/or
  * use custom "homebrew" ways to insert version information. Hopefully as the newer CMake call pattern grows in usage,
@@ -76,22 +72,10 @@ public class CMakeAnalyzer extends AbstractFileTypeAnalyzer {
                     REGEX_OPTIONS);
 
     /**
-     * Filename extensions for files to be analyzed.
-     */
-    private static final Set<String> EXTENSIONS = Collections
-            .unmodifiableSet(newHashSet("txt", "cmake"));
-
-    /**
-     * Detects *.txt files.
-     */
-    private static final IOFileFilter TXT_FILTER = new SuffixFileFilter(".txt");
-
-    /**
      * Detects files that can be analyzed.
      */
-    private static final OrFileFilter FILTER = new OrFileFilter(new SuffixFileFilter(
-            ".cmake"), new NameFileFilter(
-            "CMakeLists.txt"));
+    private static final FileFilter FILTER = FileFilterBuilder.newInstance().addExtensions(".cmake")
+            .addFilenames("CMakeLists.txt").build();
 
     private static MessageDigest sha1 = null;
 
@@ -129,8 +113,8 @@ public class CMakeAnalyzer extends AbstractFileTypeAnalyzer {
      * @return the set of supported file extensions
      */
     @Override
-    protected Set<String> getSupportedExtensions() {
-        return EXTENSIONS;
+    protected FileFilter getFileFilter() {
+        return FILTER;
     }
 
     /**
@@ -155,36 +139,32 @@ public class CMakeAnalyzer extends AbstractFileTypeAnalyzer {
     protected void analyzeFileType(Dependency dependency, Engine engine)
             throws AnalysisException {
         final File file = dependency.getActualFile();
-        if (FILTER.accept(file)) {
-            final String parentName = file.getParentFile().getName();
-            final String name = file.getName();
-            dependency.setDisplayFileName(String.format("%s%c%s", parentName, File.separatorChar, name));
-            String contents;
-            try {
-                contents = FileUtils.readFileToString(file).trim();
-            } catch (IOException e) {
-                throw new AnalysisException(
-                        "Problem occurred while reading dependency file.", e);
-            }
+        final String parentName = file.getParentFile().getName();
+        final String name = file.getName();
+        dependency.setDisplayFileName(String.format("%s%c%s", parentName, File.separatorChar, name));
+        String contents;
+        try {
+            contents = FileUtils.readFileToString(file).trim();
+        } catch (IOException e) {
+            throw new AnalysisException(
+                    "Problem occurred while reading dependency file.", e);
+        }
 
-            if (StringUtils.isNotBlank(contents)) {
-                Matcher m = PROJECT.matcher(contents);
-                int count = 0;
-                while (m.find()) {
-                    count++;
-                    LOGGER.debug(String.format(
-                            "Found project command match with %d groups: %s",
-                            m.groupCount(), m.group(0)));
-                    final String group = m.group(1);
-                    LOGGER.debug("Group 1: " + group);
-                    dependency.getProductEvidence().addEvidence(name, "Project",
-                            group, Confidence.HIGH);
-                }
-                LOGGER.debug(String.format("Found %d matches.", count));
-                analyzeSetVersionCommand(dependency, engine, contents);
+        if (StringUtils.isNotBlank(contents)) {
+            Matcher m = PROJECT.matcher(contents);
+            int count = 0;
+            while (m.find()) {
+                count++;
+                LOGGER.debug(String.format(
+                        "Found project command match with %d groups: %s",
+                        m.groupCount(), m.group(0)));
+                final String group = m.group(1);
+                LOGGER.debug("Group 1: " + group);
+                dependency.getProductEvidence().addEvidence(name, "Project",
+                        group, Confidence.HIGH);
             }
-        } else if (TXT_FILTER.accept(file)) {
-            engine.getDependencies().remove(dependency);
+            LOGGER.debug(String.format("Found %d matches.", count));
+            analyzeSetVersionCommand(dependency, engine, contents);
         }
     }
 

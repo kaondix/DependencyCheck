@@ -27,6 +27,7 @@ import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.data.nvdcve.DatabaseException;
 import org.owasp.dependencycheck.dependency.Dependency;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -80,26 +81,14 @@ public class CMakeAnalyzerTest extends BaseTest {
     }
 
     /**
-     * Test of getSupportedExtensions method, of class PythonPackageAnalyzer.
-     */
-    @Test
-    public void testGetSupportedExtensions() {
-        final String[] expected = {"txt", "cmake"};
-        assertEquals("Supported extensions should just have the following: "
-                        + StringUtils.join(expected, ", "),
-                new HashSet<String>(Arrays.asList(expected)),
-                analyzer.getSupportedExtensions());
-    }
-
-    /**
      * Test of supportsExtension method, of class PythonPackageAnalyzer.
      */
     @Test
-    public void testSupportsExtension() {
-        assertTrue("Should support \"txt\" extension.",
-                analyzer.supportsExtension("txt"));
+    public void testAccept() {
+        assertTrue("Should support \"CMakeLists.txt\" name.",
+                analyzer.accept(new File("CMakeLists.txt")));
         assertTrue("Should support \"cmake\" extension.",
-                analyzer.supportsExtension("txt"));
+                analyzer.accept(new File("test.cmake")));
     }
 
     /**
@@ -161,15 +150,5 @@ public class CMakeAnalyzerTest extends BaseTest {
     private void assertVersionEvidence(Dependency result, String version) {
         assertTrue("Expected version evidence to contain \"" + version + "\".",
                 result.getVersionEvidence().toString().contains(version));
-    }
-
-    @Test
-    public void testDeletesTxtNotCmakeListsDependencies() throws DatabaseException, AnalysisException {
-        final Dependency result = new Dependency(BaseTest.getResourceAsFile(
-                this, "cmake/red_herring.txt"));
-        final Engine engine = new Engine();
-        engine.getDependencies().add(result);
-        analyzer.analyze(result, engine);
-        assertThat(engine.getDependencies().size(), is(equalTo(0)));
     }
 }
