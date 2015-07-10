@@ -251,6 +251,7 @@ public class App {
         final boolean jarDisabled = cli.isJarDisabled();
         final boolean archiveDisabled = cli.isArchiveDisabled();
         final boolean pyDistDisabled = cli.isPythonDistributionDisabled();
+        final boolean cMakeDisabled = cli.isCmakeDisabled();
         final boolean pyPkgDisabled = cli.isPythonPackageDisabled();
         final boolean autoconfDisabled = cli.isAutoconfDisabled();
         final boolean assemblyDisabled = cli.isAssemblyDisabled();
@@ -323,6 +324,7 @@ public class App {
         Settings.setBoolean(Settings.KEYS.ANALYZER_PYTHON_DISTRIBUTION_ENABLED, !pyDistDisabled);
         Settings.setBoolean(Settings.KEYS.ANALYZER_PYTHON_PACKAGE_ENABLED, !pyPkgDisabled);
         Settings.setBoolean(Settings.KEYS.ANALYZER_AUTOCONF_ENABLED, !autoconfDisabled);
+        Settings.setBoolean(Settings.KEYS.ANALYZER_CMAKE_ENABLED, !cMakeDisabled);
         Settings.setBoolean(Settings.KEYS.ANALYZER_NUSPEC_ENABLED, !nuspecDisabled);
         Settings.setBoolean(Settings.KEYS.ANALYZER_ASSEMBLY_ENABLED, !assemblyDisabled);
 
