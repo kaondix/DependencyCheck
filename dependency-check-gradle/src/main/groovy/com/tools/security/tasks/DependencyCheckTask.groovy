@@ -105,17 +105,17 @@ class DependencyCheckTask extends DefaultTask {
 
     def overrideProxySetting() {
         if (isProxySettingExist()) {
-            logger.lifecycle("Using proxy ${proxyServer}:${proxyPort}")
+            logger.lifecycle("Using proxy ${getProxyServer()}:${getProxyPort()}")
 
-            setString(Settings.KEYS.PROXY_SERVER, proxyServer)
-            setString(Settings.KEYS.PROXY_PORT, "${proxyPort}")
-            setString(Settings.KEYS.PROXY_USERNAME, proxyUsername)
-            setString(Settings.KEYS.PROXY_PASSWORD, proxyPassword)
+            setString(Settings.KEYS.PROXY_SERVER, getProxyServer())
+            setString(Settings.KEYS.PROXY_PORT, "${getProxyPort()}")
+            setString(Settings.KEYS.PROXY_USERNAME, getProxyUsername())
+            setString(Settings.KEYS.PROXY_PASSWORD, getProxyPassword())
         }
     }
 
     def isProxySettingExist() {
-        proxyServer != null && proxyPort != null
+        getProxyServer() != null && getProxyPort() != null
     }
 
     def getAllDependencies(project) {
@@ -127,10 +127,10 @@ class DependencyCheckTask extends DefaultTask {
     }
 
     def overrideCveUrlSetting() {
-        setString(Settings.KEYS.CVE_MODIFIED_20_URL, cveUrl20Modified)
-        setString(Settings.KEYS.CVE_MODIFIED_12_URL, cveUrl12Modified)
-        setString(Settings.KEYS.CVE_START_YEAR, "${cveStartYear}")
-        setString(Settings.KEYS.CVE_SCHEMA_2_0, cveUrl20Base)
-        setString(Settings.KEYS.CVE_SCHEMA_1_2, cveUrl12Base)
+        setString(Settings.KEYS.CVE_MODIFIED_20_URL, getCveUrl20Modified())
+        setString(Settings.KEYS.CVE_MODIFIED_12_URL, getCveUrl12Modified())
+        setString(Settings.KEYS.CVE_START_YEAR, "${getCveStartYear()}")
+        setString(Settings.KEYS.CVE_SCHEMA_2_0, getCveUrl20Base())
+        setString(Settings.KEYS.CVE_SCHEMA_1_2, getCveUrl12Base())
     }
 }
