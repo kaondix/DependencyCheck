@@ -7,6 +7,7 @@ to extract identification information from the files analyzed.
 - [Assembly Analyzer](./assembly-analyzer.html)
 - [Autoconf Analyzer](./autoconf-analyzer.html)
 - [Central Analyzer](./central-analyzer.html)
+- [Embedded ID Analyzer](./embedded-id-analyzer.html)
 - [Jar Analyzer](./jar-analyzer.html)
 - [Nexus Analyzer](./nexus-analyzer.html)
 - [Nuspec Analyzer](./nuspec-analyzer.html)

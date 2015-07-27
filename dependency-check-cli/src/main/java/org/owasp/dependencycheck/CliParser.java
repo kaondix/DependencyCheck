@@ -387,6 +387,9 @@ public final class CliParser {
         final Option disableCmakeAnalyzer = OptionBuilder.withLongOpt(ARGUMENT.DISABLE_CMAKE).
                 withDescription("Disable the Cmake Analyzer.").create();
 
+        final Option disableEmbeddedIDAnalyzer = OptionBuilder.withLongOpt(ARGUMENT.DISABLE_EMBEDDED_ID)
+                .withDescription("Disable the Embedded ID Analyzer.").create();
+
         final Option disableCentralAnalyzer = OptionBuilder.withLongOpt(ARGUMENT.DISABLE_CENTRAL)
                 .withDescription("Disable the Central Analyzer. If this analyzer is disabled it is likely you also want to disable "
                         + "the Nexus Analyzer.").create();
@@ -418,6 +421,7 @@ public final class CliParser {
                 .addOption(disablePythonPackageAnalyzer)
                 .addOption(disableAutoconfAnalyzer)
                 .addOption(disableOpenSSLAnalyzer)
+                .addOption(disableEmbeddedIDAnalyzer)
                 .addOption(disableNuspecAnalyzer)
                 .addOption(disableCentralAnalyzer)
                 .addOption(disableNexusAnalyzer)
@@ -577,6 +581,15 @@ public final class CliParser {
      */
     public boolean isOpenSSLDisabled() {
         return (line != null) && line.hasOption(ARGUMENT.DISABLE_OPENSSL);
+    }
+
+    /**
+     * Returns true if the disableEmbeddedID command line argument was specified.
+     *
+     * @return true if the disableEmbeddedID command line argument was specified; otherwise false
+     */
+    public boolean isEmbeddedIDDisabled() {
+        return (null != line) && line.hasOption(ARGUMENT.DISABLE_EMBEDDED_ID);
     }
 
     /**
@@ -1105,6 +1118,10 @@ public final class CliParser {
          * Disables the OpenSSL Analyzer.
          */
         public static final String DISABLE_OPENSSL = "disableOpenSSL";
+        /**
+         * Disables the Embedded ID Analyzer.
+         */
+        public static final String DISABLE_EMBEDDED_ID = "disableEmbeddedID";
         /**
          * The URL of the nexus server.
          */
