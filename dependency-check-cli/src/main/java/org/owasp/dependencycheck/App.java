@@ -38,6 +38,7 @@ import org.owasp.dependencycheck.utils.Settings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ch.qos.logback.core.FileAppender;
+import java.util.logging.Level;
 import org.slf4j.impl.StaticLoggerBinder;
 
 /**
@@ -99,7 +100,8 @@ public class App {
         } else if (cli.isRunScan()) {
             populateSettings(cli);
             try {
-                runScan(cli.getReportDirectory(), cli.getReportFormat(), cli.getApplicationName(), cli.getScanFiles(), cli.getExcludeList());
+                runScan(cli.getReportDirectory(), cli.getReportFormat(), cli.getApplicationName(), cli.getScanFiles(),
+                        cli.getExcludeList(), cli.getSymLinkDepth());
             } catch (InvalidScanPathException ex) {
                 LOGGER.error("An invalid scan path was detected; unable to scan '//*' paths");
             }
@@ -116,55 +118,60 @@ public class App {
      * @param applicationName the application name for the report
      * @param files the files/directories to scan
      * @param excludes the patterns for files/directories to exclude
+     * @param symLinkDepth the depth that symbolic links will be followed
      *
      * @throws InvalidScanPathException thrown if the path to scan starts with "//"
      */
     private void runScan(String reportDirectory, String outputFormat, String applicationName, String[] files,
-            String[] excludes) throws InvalidScanPathException {
+            String[] excludes, int symLinkDepth) throws InvalidScanPathException {
         Engine engine = null;
         try {
             engine = new Engine();
             List<String> antStylePaths = new ArrayList<String>();
-            if (excludes == null || excludes.length == 0) {
-                for (String file : files) {
-                    if (file.contains("*") || file.contains("?")) {
-                        antStylePaths.add(file);
-                    } else {
-                        engine.scan(file);
-                    }
+            //TODO remove and treating everything as an ant style path to ensure sym links are handled correctly.
+//            for (String file : files) {
+//                if (file.contains("*") || file.contains("?")) {
+//                    antStylePaths.add(file);
+//                } else {
+//                    engine.scan(file);
+//                }
+//            }
+            for (String file : files) {
+                File f = new File(file);
+                if (f.exists() && f.isFile()) {
+                    engine.scan(f);
+                } else {
+                    String antPath = ensureCanonicalPath(file);
+                    antStylePaths.add(antPath);
                 }
-            } else {
-                antStylePaths = Arrays.asList(files);
             }
 
             final Set<File> paths = new HashSet<File>();
             for (String file : antStylePaths) {
+                LOGGER.debug("Scanning {}", file);
                 final DirectoryScanner scanner = new DirectoryScanner();
                 String include = file.replace('\\', '/');
                 File baseDir;
 
                 if (include.startsWith("//")) {
                     throw new InvalidScanPathException("Unable to scan paths specified by //");
-                } else if (include.startsWith("./")) {
-                    baseDir = new File(".");
-                    include = include.substring(2);
-                } else if (include.startsWith("/")) {
-                    baseDir = new File("/");
-                    include = include.substring(1);
-                } else if (include.contains("/")) {
-                    final int pos = include.indexOf('/');
-                    final String tmp = include.substring(0, pos);
-                    if (tmp.contains("*") || tmp.contains("?")) {
-                        baseDir = new File(".");
+                } else {
+                    final int pos = getLastFileSeparator(include);
+                    final String tmpBase = include.substring(0, pos);
+                    final String tmpInclude = include.substring(pos + 1);
+                    if (tmpInclude.indexOf('*') >= 0 || tmpInclude.indexOf('?') >= 0) {
+                        baseDir = new File(tmpBase);
+                        include = tmpInclude;
                     } else {
-                        baseDir = new File(tmp);
-                        include = include.substring(pos + 1);
+                        baseDir = new File(tmpBase, tmpInclude);
+                        include = "**/*";
                     }
-                } else { //no path info - must just be a file in the working directory
-                    baseDir = new File(".");
                 }
+                //LOGGER.debug("baseDir: {}", baseDir);
+                //LOGGER.debug("include: {}", include);
                 scanner.setBasedir(baseDir);
                 scanner.setIncludes(include);
+                scanner.setMaxLevelsOfSymlinks(symLinkDepth);
                 if (excludes != null && excludes.length > 0) {
                     scanner.addExcludes(excludes);
                 }
@@ -172,6 +179,7 @@ public class App {
                 if (scanner.getIncludedFilesCount() > 0) {
                     for (String s : scanner.getIncludedFiles()) {
                         final File f = new File(baseDir, s);
+                        LOGGER.debug("Found file {}", f.toString());
                         paths.add(f);
                     }
                 }
@@ -250,6 +258,10 @@ public class App {
         final String suppressionFile = cli.getSuppressionFile();
         final boolean jarDisabled = cli.isJarDisabled();
         final boolean archiveDisabled = cli.isArchiveDisabled();
+        final boolean pyDistDisabled = cli.isPythonDistributionDisabled();
+        final boolean cMakeDisabled = cli.isCmakeDisabled();
+        final boolean pyPkgDisabled = cli.isPythonPackageDisabled();
+        final boolean autoconfDisabled = cli.isAutoconfDisabled();
         final boolean assemblyDisabled = cli.isAssemblyDisabled();
         final boolean nuspecDisabled = cli.isNuspecDisabled();
         final boolean centralDisabled = cli.isCentralDisabled();
@@ -317,9 +329,10 @@ public class App {
         //File Type Analyzer Settings
         Settings.setBoolean(Settings.KEYS.ANALYZER_JAR_ENABLED, !jarDisabled);
         Settings.setBoolean(Settings.KEYS.ANALYZER_ARCHIVE_ENABLED, !archiveDisabled);
-        Settings.setBoolean(Settings.KEYS.ANALYZER_PYTHON_DISTRIBUTION_ENABLED, !cli.isPythonDistributionDisabled());
-        Settings.setBoolean(Settings.KEYS.ANALYZER_PYTHON_PACKAGE_ENABLED, !cli.isPythonPackageDisabled());
-        Settings.setBoolean(Settings.KEYS.ANALYZER_AUTOCONF_ENABLED, !cli.isAutoconfDisabled());
+        Settings.setBoolean(Settings.KEYS.ANALYZER_PYTHON_DISTRIBUTION_ENABLED, !pyDistDisabled);
+        Settings.setBoolean(Settings.KEYS.ANALYZER_PYTHON_PACKAGE_ENABLED, !pyPkgDisabled);
+        Settings.setBoolean(Settings.KEYS.ANALYZER_AUTOCONF_ENABLED, !autoconfDisabled);
+        Settings.setBoolean(Settings.KEYS.ANALYZER_CMAKE_ENABLED, !cMakeDisabled);
         Settings.setBoolean(Settings.KEYS.ANALYZER_NUSPEC_ENABLED, !nuspecDisabled);
         Settings.setBoolean(Settings.KEYS.ANALYZER_ASSEMBLY_ENABLED, !assemblyDisabled);
         Settings.setBoolean(Settings.KEYS.ANALYZER_OPENSSL_ENABLED, !cli.isOpenSSLDisabled());
@@ -387,5 +400,55 @@ public class App {
         fa.start();
         final ch.qos.logback.classic.Logger rootLogger = context.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
         rootLogger.addAppender(fa);
+    }
+
+    protected String ensureCanonicalPath(String path) {
+        String basePath = null;
+        String wildCards = null;
+        String file = path.replace('\\', '/');
+        if (file.contains("*") || file.contains("?")) {
+
+            int pos = getLastFileSeparator(file);
+            if (pos < 0) {
+                return file;
+            }
+            pos += 1;
+            basePath = file.substring(0, pos);
+            wildCards = file.substring(pos);
+        } else {
+            basePath = file;
+        }
+
+        File f = new File(basePath);
+        try {
+            f = f.getCanonicalFile();
+            if (wildCards != null) {
+                f = new File(f, wildCards);
+            }
+        } catch (IOException ex) {
+            LOGGER.warn("Invalid path '{}' was provided.", path);
+            LOGGER.debug("Invalid path provided", ex);
+        }
+        return f.getAbsolutePath().replace('\\', '/');
+    }
+
+    /**
+     * Returns the position of the last file separator.
+     *
+     * @param file a file path
+     * @return the position of the last file separator
+     */
+    private int getLastFileSeparator(String file) {
+        if (file.contains("*") || file.contains("?")) {
+            int p1 = file.indexOf('*');
+            int p2 = file.indexOf('?');
+            p1 = p1 > 0 ? p1 : file.length();
+            p2 = p2 > 0 ? p2 : file.length();
+            int pos = p1 < p2 ? p1 : p2;
+            pos = file.lastIndexOf('/', pos);
+            return pos;
+        } else {
+            return file.lastIndexOf('/');
+        }
     }
 }

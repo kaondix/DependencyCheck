@@ -115,6 +115,16 @@ public final class CliParser {
                 final String msg = "If one of the CVE URLs is specified they must all be specified; please add the missing CVE URL.";
                 throw new ParseException(msg);
             }
+            if (line.hasOption((ARGUMENT.SYM_LINK_DEPTH))) {
+                try {
+                    int i = Integer.parseInt(line.getOptionValue(ARGUMENT.SYM_LINK_DEPTH));
+                    if (i < 0) {
+                        throw new ParseException("Symbolic Link Depth (symLink) must be greater than zero.");
+                    }
+                } catch (NumberFormatException ex) {
+                    throw new ParseException("Symbolic Link Depth (symLink) is not a number.");
+                }
+            }
         }
     }
 
@@ -238,6 +248,10 @@ public final class CliParser {
                 .withDescription("The file path to write verbose logging information.")
                 .create(ARGUMENT.VERBOSE_LOG_SHORT);
 
+        final Option symLinkDepth = OptionBuilder.withArgName("depth").hasArg().withLongOpt(ARGUMENT.SYM_LINK_DEPTH)
+                .withDescription("Sets how deep nested symbolic links will be followed; 0 indicates symbolic links will not be followed.")
+                .create();
+
         final Option suppressionFile = OptionBuilder.withArgName("file").hasArg().withLongOpt(ARGUMENT.SUPPRESSION_FILE)
                 .withDescription("The file path to the suppression XML file.")
                 .create();
@@ -258,6 +272,7 @@ public final class CliParser {
                 .addOption(help)
                 .addOption(advancedHelp)
                 .addOption(noUpdate)
+                .addOption(symLinkDepth)
                 .addOption(props)
                 .addOption(verboseLog)
                 .addOption(suppressionFile);
@@ -369,6 +384,8 @@ public final class CliParser {
 
         final Option disableOpenSSLAnalyzer = OptionBuilder.withLongOpt(ARGUMENT.DISABLE_OPENSSL)
                 .withDescription("Disable the OpenSSL Analyzer.").create();
+        final Option disableCmakeAnalyzer = OptionBuilder.withLongOpt(ARGUMENT.DISABLE_CMAKE).
+                withDescription("Disable the Cmake Analyzer.").create();
 
         final Option disableCentralAnalyzer = OptionBuilder.withLongOpt(ARGUMENT.DISABLE_CENTRAL)
                 .withDescription("Disable the Central Analyzer. If this analyzer is disabled it is likely you also want to disable "
@@ -397,6 +414,7 @@ public final class CliParser {
                 .addOption(disableArchiveAnalyzer)
                 .addOption(disableAssemblyAnalyzer)
                 .addOption(disablePythonDistributionAnalyzer)
+                .addOption(disableCmakeAnalyzer)
                 .addOption(disablePythonPackageAnalyzer)
                 .addOption(disableAutoconfAnalyzer)
                 .addOption(disableOpenSSLAnalyzer)
@@ -416,7 +434,7 @@ public final class CliParser {
      * @param options a collection of command line arguments
      * @throws IllegalArgumentException thrown if there is an exception
      */
-    @SuppressWarnings("static-access")
+    @SuppressWarnings({"static-access", "deprecation"})
     private void addDeprecatedOptions(final Options options) throws IllegalArgumentException {
 
         final Option proxyServer = OptionBuilder.withArgName("url").hasArg().withLongOpt(ARGUMENT.PROXY_URL)
@@ -451,6 +469,24 @@ public final class CliParser {
      */
     public boolean isRunScan() {
         return (line != null) && isValid && line.hasOption(ARGUMENT.SCAN);
+    }
+
+    /**
+     * Returns the symbolic link depth (how deeply symbolic links will be followed).
+     *
+     * @return the symbolic link depth
+     */
+    public int getSymLinkDepth() {
+        int value = 0;
+        try {
+            value = Integer.parseInt(line.getOptionValue(ARGUMENT.SYM_LINK_DEPTH, "0"));
+            if (value < 0) {
+                value = 0;
+            }
+        } catch (NumberFormatException ex) {
+            LOGGER.debug("Symbolic link was not a number");
+        }
+        return value;
     }
 
     /**
@@ -505,6 +541,15 @@ public final class CliParser {
      */
     public boolean isPythonPackageDisabled() {
         return (line != null) && line.hasOption(ARGUMENT.DISABLE_PY_PKG);
+    }
+
+    /**
+     * Returns true if the disableCmake command line argument was specified.
+     *
+     * @return true if the disableCmake command line argument was specified; otherwise false
+     */
+    public boolean isCmakeDisabled() {
+        return (line != null) && line.hasOption(ARGUMENT.DISABLE_CMAKE);
     }
 
     /**
@@ -702,6 +747,7 @@ public final class CliParser {
      *
      * @return the proxy server
      */
+    @SuppressWarnings("deprecation")
     public String getProxyServer() {
 
         String server = line.getOptionValue(ARGUMENT.PROXY_SERVER);
@@ -946,7 +992,7 @@ public final class CliParser {
         /**
          * The CLI argument name indicating the proxy url.
          *
-         * @deprecated use {@link org.owasp.dependencycheck.cli.CliParser.ArgumentName#PROXY_SERVER} instead
+         * @deprecated use {@link #PROXY_SERVER} instead
          */
         @Deprecated
         public static final String PROXY_URL = "proxyurl";
@@ -1006,6 +1052,11 @@ public final class CliParser {
          * The short CLI argument name for setting the location of the data directory.
          */
         public static final String VERBOSE_LOG_SHORT = "l";
+
+        /**
+         * The CLI argument name for setting the depth of symbolic links that will be followed.
+         */
+        public static final String SYM_LINK_DEPTH = "symLink";
         /**
          * The CLI argument name for setting the location of the suppression file.
          */
@@ -1030,6 +1081,10 @@ public final class CliParser {
          * Disables the Autoconf Analyzer.
          */
         public static final String DISABLE_AUTOCONF = "disableAutoconf";
+        /**
+         * Disables the Cmake Analyzer.
+         */
+        public static final String DISABLE_CMAKE = "disableCmake";
         /**
          * Disables the Assembly Analyzer.
          */

@@ -7,7 +7,8 @@ Short  | Argument&nbsp;Name&nbsp;&nbsp; | Parameter       | Description | Requir
 -------|-----------------------|-----------------|-------------|------------
  \-a   | \-\-app               | \<name\>        | The name of the application being scanned. This is a required argument. | Required
  \-s   | \-\-scan              | \<path\>        | The path to scan \- this option can be specified multiple times. It is also possible to specify Ant style paths (e.g. directory/**/*.jar). | Required
-       | \-\-exclude           | \<pattern\>     | The path patterns to exclude from the scan \- this option can be specified multiple times. This accepts Ant style path patterns (e.g. **/exclude/**) . | Optional
+       | \-\-exclude           | \<pattern\>     | The path patterns to exclude from the scan \- this option can be specified multiple times. This accepts Ant style path patterns (e.g. **/exclude/**). | Optional
+       | \-\-symLink           | \<depth\>       | The depth that symbolic links will be followed; the default is 0 meaning symbolic links will not be followed. | Optional
  \-o   | \-\-out               | \<path\>        | The folder to write reports to. This defaults to the current directory. If the format is not set to ALL one could specify a specific file name. | Optional
  \-f   | \-\-format            | \<format\>      | The output format to write to (XML, HTML, VULN, ALL). The default is HTML. | Required
  \-l   | \-\-log               | \<file\>        | The file path to write verbose logging information. | Optional
@@ -31,6 +32,7 @@ Short  | Argument&nbsp;Name&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Paramete
        | \-\-disablePyPkg      |                 | Sets whether the Python Package Analyzer will be used.                           | false
        | \-\-disableAutoconf   |                 | Sets whether the Autoconf Analyzer will be used.                                 | false
        | \-\-disableOpenSSL    |                 | Sets whether the OpenSSL Analyzer will be used.                                  | false
+       | \-\-disableCmake      |                 | Sets whether the Cmake Analyzer will be used.                                    | false
        | \-\-disableArchive    |                 | Sets whether the Archive Analyzer will be used.                                  | false
        | \-\-zipExtensions     | \<strings\>     | A comma-separated list of additional file extensions to be treated like a ZIP file, the contents will be extracted and analyzed. | &nbsp;
        | \-\-disableJar        |                 | Sets whether the Jar Analyzer will be used.                                      | false
