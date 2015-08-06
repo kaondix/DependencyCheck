@@ -17,7 +17,7 @@ Current latest version is `0.0.6`
 
 Please refer to either one of the solution
 
-#### Solution 1，Install from Maven Central
+#### Solution 1，Install from Maven Central (Recommended)
 
 ```groovy
 buildscript {
@@ -58,7 +58,7 @@ buildscript {
   }
 }
 
-apply plugin: "dependency.check"
+apply plugin: "dependency-check"
 ```
 
 #### Solution 3，Install from Bintray
