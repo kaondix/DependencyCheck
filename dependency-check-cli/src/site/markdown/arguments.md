@@ -33,6 +33,7 @@ Short  | Argument&nbsp;Name&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; | Paramete
        | \-\-disableAutoconf   |                 | Sets whether the Autoconf Analyzer will be used.                                 | false
        | \-\-disableOpenSSL    |                 | Sets whether the OpenSSL Analyzer will be used.                                  | false
        | \-\-disableCmake      |                 | Sets whether the Cmake Analyzer will be used.                                    | false
+       | \-\-disableEmbeddedID |                 | Sets whether the Embedded ID Analyzer will be used.                              | false
        | \-\-disableArchive    |                 | Sets whether the Archive Analyzer will be used.                                  | false
        | \-\-zipExtensions     | \<strings\>     | A comma-separated list of additional file extensions to be treated like a ZIP file, the contents will be extracted and analyzed. | &nbsp;
        | \-\-disableJar        |                 | Sets whether the Jar Analyzer will be used.                                      | false

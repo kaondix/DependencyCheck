@@ -4,9 +4,11 @@ OWASP dependency-check is an open source solution the OWASP Top 10 2013 entry:
 [A9 - Using Components with Known Vulnerabilities](https://www.owasp.org/index.php/Top_10_2013-A9-Using_Components_with_Known_Vulnerabilities).
 Dependency-check can currently be used to scan Java, .NET, and Python
 applications (and their dependent libraries) to identify known vulnerable
-components. In addition, Dependency-check can be used to scan some source
+components. Dependency-check can also be used to scan some source
 code, including OpenSSL source code and source code for projects that use
-Autoconf.
+Autoconf. In additions, C/C++ developers may embed product identifier
+information directly into their binary artifacts, such that Dependency-check
+can detect it using its "embedded ID" analyzer.
 
 The problem with using known vulnerable components was covered in a paper by
 Jeff Williams and Arshan Dabirsiaghi titled, "[The Unfortunate Reality of
