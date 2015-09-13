@@ -106,7 +106,7 @@ public final class VectorSet<E> extends Vector<E> {
      * if any of them are already contained in the collection.
      */
     public synchronized boolean addAll(int index, Collection<? extends E> c) {
-        LinkedList toAdd = new LinkedList();
+        LinkedList<E> toAdd = new LinkedList<E>();
         for (E e : c) {
             if (set.add(e)) {
                 toAdd.add(e);
