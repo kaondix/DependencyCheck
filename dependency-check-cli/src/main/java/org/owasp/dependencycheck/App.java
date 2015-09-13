@@ -27,11 +27,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.cli.ParseException;
+import org.apache.tools.ant.DirectoryScanner;
 import org.owasp.dependencycheck.data.nvdcve.CveDB;
 import org.owasp.dependencycheck.data.nvdcve.DatabaseException;
 import org.owasp.dependencycheck.data.nvdcve.DatabaseProperties;
 import org.owasp.dependencycheck.dependency.Dependency;
-import org.owasp.dependencycheck.org.apache.tools.ant.DirectoryScanner;
 import org.owasp.dependencycheck.reporting.ReportGenerator;
 import org.owasp.dependencycheck.utils.Settings;
 import org.slf4j.Logger;
@@ -175,10 +175,11 @@ public class App {
                         include = "**/*";
                     }
                 }
+                final String includes[] = {include};
                 //LOGGER.debug("baseDir: {}", baseDir);
                 //LOGGER.debug("include: {}", include);
                 scanner.setBasedir(baseDir);
-                scanner.setIncludes(include);
+                scanner.setIncludes(includes);
                 scanner.setMaxLevelsOfSymlinks(symLinkDepth);
                 if (symLinkDepth <= 0) {
                     scanner.setFollowSymlinks(false);
