@@ -76,7 +76,7 @@ task integTest(type: Test) {
 }
 
 group = 'com.thoughtworks.tools'
-version = '0.0.8'
+version = '0.0.9'
 
 targetCompatibility = 1.7
 

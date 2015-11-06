@@ -84,7 +84,11 @@ class DependencyCheckTask extends DefaultTask {
 
     def verifyDependencies(engine) {
         logger.lifecycle("Verifying dependencies for project ${currentProjectName}")
-        getAllDependencies(project).each { engine.scan(it) }
+        if(config.configurationName == "all"){
+            getAllDependencies(project).each { engine.scan(it) }
+        } else {
+            getConfigurationDependencies(project, config.configurationName).each { engine.scan(it) }
+        }
     }
 
     def analyzeDependencies(Engine engine) {
@@ -127,12 +131,34 @@ class DependencyCheckTask extends DefaultTask {
         config.proxy.server != null && config.proxy.port != null
     }
 
+    /**
+     * Return a list of all artifacts used by the Gradle project
+     *
+     * @param project
+     * @return all artifacts for all configurations in the project
+     */
     def getAllDependencies(project) {
         return project.getConfigurations().collect { Configuration configuration ->
             configuration.getResolvedConfiguration().getResolvedArtifacts().collect { ResolvedArtifact artifact ->
+                logger.info "Artifact name: ${artifact.file.name}"
                 artifact.getFile()
             }
         }.flatten();
+    }
+
+    /**
+     * Return a list of all artifacts for a given configuration
+     *
+     * @param project
+     * @param configurationName
+     * @return all artifacts for a give configuration
+     */
+    def getConfigurationDependencies(project, configurationName) {
+        Configuration givenConfiguration = project.configurations.getByName(configurationName)
+        return givenConfiguration.resolvedConfiguration.resolvedArtifacts.collect(){ ResolvedArtifact artifact ->
+            logger.info "Artifact name: ${artifact.file.name}"
+            artifact.getFile()
+        }.flatten()
     }
 
     def overrideCveUrlSetting() {
