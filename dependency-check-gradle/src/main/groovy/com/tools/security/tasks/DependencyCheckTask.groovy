@@ -139,7 +139,7 @@ class DependencyCheckTask extends DefaultTask {
      */
     def getAllDependencies(project) {
         return project.getConfigurations().collect { Configuration configuration ->
-            configuration.getResolvedConfiguration().getResolvedArtifacts().collect { ResolvedArtifact artifact ->
+            configuration?.resolvedConfiguration?.resolvedArtifacts.collect { ResolvedArtifact artifact ->
                 logger.info "Artifact name: ${artifact.file.name}"
                 artifact.getFile()
             }
@@ -155,7 +155,7 @@ class DependencyCheckTask extends DefaultTask {
      */
     def getConfigurationDependencies(project, configurationName) {
         Configuration givenConfiguration = project.configurations.getByName(configurationName)
-        return givenConfiguration.resolvedConfiguration.resolvedArtifacts.collect(){ ResolvedArtifact artifact ->
+        return givenConfiguration?.resolvedConfiguration?.resolvedArtifacts.collect(){ ResolvedArtifact artifact ->
             logger.info "Artifact name: ${artifact.file.name}"
             artifact.getFile()
         }.flatten()
