@@ -31,4 +31,62 @@ class DependencyCheckGradlePluginIntegSpec extends IntegrationSpec {
         then:
         fileExists('build/dependencyCheckReport')
     }
+
+    def "plugin defaults to analysing all configs"() {
+        setup:
+        buildFile << '''
+            configurations {
+              myConfig
+              myConfigTwo
+            }
+
+            repositories {
+              mavenCentral()
+            }
+
+            dependencies {
+              myConfig group: 'commons-collections', name: 'commons-collections', version: '3.2\'
+              myConfigTwo group: 'junit', name: 'junit', version: '4.+\'
+            }
+
+            apply plugin: 'dependency-check\'
+            '''.stripIndent()
+
+        when:
+        ExecutionResult result = runTasksSuccessfully('dependencyCheck')
+
+        then:
+        result.standardOutput.contains('Artifact name: commons-collections-3.2.jar')
+        result.standardOutput.contains('Artifact name: junit-4.12.jar')
+    }
+
+    def "Only user defined configuration is analysed"() {
+        setup:
+        buildFile << '''
+            configurations {
+              myConfig
+              myConfigTwo
+            }
+
+            repositories {
+              mavenCentral()
+            }
+
+            dependencies {
+              myConfig group: 'commons-collections', name: 'commons-collections', version: '3.2\'
+              myConfigTwo group: 'junit', name: 'junit', version: '4.+\'
+            }
+
+            apply plugin: 'dependency-check\'
+
+            dependencyCheck {
+              configurationName = "myConfig"
+            }'''.stripIndent()
+
+        when:
+        ExecutionResult result = runTasksSuccessfully('dependencyCheck')
+
+        then: "log should not contain other configuration artifact"
+        !result.standardOutput.contains('Artifact name: junit-4.12.jar')
+    }
 }

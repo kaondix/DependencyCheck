@@ -10,7 +10,7 @@ Dependency-Check is a utility that attempts to detect publicly disclosed vulnera
 =========
 
 ## What's New
-Current latest version is `0.0.8`
+Current latest version is `0.0.9`
 
 ## Usage
 
@@ -49,6 +49,7 @@ If your project includes multiple sub-projects, the report will be generated for
 > - What if I'm behind a proxy?
 > - What if my project includes multiple sub-project? How can I use this plugin for each of them including the root project?
 > - How to customize the report directory?
+> - How to customize which configuration to analyse?
 
 ### What if I'm behind a proxy?
 
@@ -132,3 +133,18 @@ subprojects {
     }
 }
 ```
+
+### How to customize which configuration to analyse?
+
+By default, `all` configurations will be analysed by dependency check. If you want to specify which configuration,
+override the `configurationName` property:
+
+```groovy
+apply plugin: "dependency-check"
+
+dependencyCheck {
+  configurationName = "myConfig" // e.g. "compile" if used with java/groovy
+}
+```
+
+Note* the plugin does not support lists of configurations.

@@ -23,6 +23,7 @@ class DependencyCheckExtension {
     CveExtension cveExtension
 
     String outputDirectory = "./reports"
-    String suppressionFile;
-    Boolean quickQueryTimestamp;
+    String suppressionFile
+    Boolean quickQueryTimestamp
+    String configurationName = "all"
 }
