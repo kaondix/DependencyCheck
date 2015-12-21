@@ -133,8 +133,6 @@ public class EngineVersionCheck implements CachedWebDataSource {
                     updateToVersion = v.toString();
                     if (!currentRelease.equals(updateToVersion)) {
                         properties.save(CURRENT_ENGINE_RELEASE, updateToVersion);
-                    } else {
-                        properties.save(CURRENT_ENGINE_RELEASE, "");
                     }
                     properties.save(ENGINE_VERSION_CHECKED_ON, Long.toString(now));
                 }
