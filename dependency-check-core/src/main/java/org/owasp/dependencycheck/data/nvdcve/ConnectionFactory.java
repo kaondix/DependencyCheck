@@ -134,7 +134,7 @@ public final class ConnectionFactory {
             boolean shouldCreateSchema = false;
             try {
                 if (connectionString.startsWith("jdbc:h2:file:")) { //H2
-                    shouldCreateSchema = !h2DataFileExists();
+                    shouldCreateSchema = !h2DataFileExists(connectionString);
                     LOGGER.debug("Need to create DB Structure: {}", shouldCreateSchema);
                 }
             } catch (IOException ioex) {
@@ -237,14 +237,27 @@ public final class ConnectionFactory {
      * Determines if the H2 database file exists. If it does not exist then the
      * data structure will need to be created.
      *
+     * @param connectionString the connectionString (assumed to be a jdbc:h2:file: string)
      * @return true if the H2 database file does not exist; otherwise false
      * @throws IOException thrown if the data directory does not exist and
      * cannot be created
      */
-    private static boolean h2DataFileExists() throws IOException {
-        final File dir = Settings.getDataDirectory();
-        final String fileName = Settings.getString(Settings.KEYS.DB_FILE_NAME);
-        final File file = new File(dir, fileName);
+    private static boolean h2DataFileExists(final String connectionString) throws IOException {
+        if (!connectionString.startsWith("jdbc:h2:file:")) {
+            return false;
+        }
+        // file path is beetween jdbc:h2:file: and the first semi-colon (if any),
+        // may be relative to the user's homedir ("~/something"), and is missing
+        // the ".h2.db" extension.
+        String h2FilePath = connectionString.substring("jdbc:h2:file:".length());
+        if (h2FilePath .indexOf(';') >= 0) {
+            h2FilePath = h2FilePath.substring(0, h2FilePath .indexOf(';'));
+        }
+        h2FilePath += ".h2.db";
+        final File file = h2FilePath.startsWith("~/")
+                ? new File(System.getProperty("user.home"), h2FilePath.substring("~/".length()))
+                : new File(h2FilePath);
+        LOGGER.debug("H2 DB file path from connection string: {}", file.getPath());
         return file.exists();
     }
 
