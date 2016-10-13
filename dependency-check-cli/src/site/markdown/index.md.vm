@@ -12,7 +12,7 @@ Extract the zip file to a location on your computer and put the 'bin' directory 
 path environment variable. On \*nix systems you will likely need to make the shell
 script executable:
 
-    $ chmod +777 dependency-check.sh
+    $ chmod +755 dependency-check.sh
 
 #set( $H = '#' )
 
