@@ -193,6 +193,10 @@ public class NexusSearch {
 
         return true;
     }
+
+    public boolean isUseProxy() {
+        return useProxy;
+    }
 }
 
 // vim: cc=120:sw=4:ts=4:sts=4
