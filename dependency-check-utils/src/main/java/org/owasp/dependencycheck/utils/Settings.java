@@ -293,7 +293,8 @@ public final class Settings {
          */
         public static final String ANALYZER_COCOAPODS_ENABLED = "analyzer.cocoapods.enabled";
         /**
-         * The properties key for whether the SWIFT package manager analyzer is enabled.
+         * The properties key for whether the SWIFT package manager analyzer is
+         * enabled.
          */
         public static final String ANALYZER_SWIFT_PACKAGE_MANAGER_ENABLED = "analyzer.swift.package.manager.enabled";
         /**
@@ -338,6 +339,10 @@ public final class Settings {
          * The HTTP request method for query last modified date.
          */
         public static final String DOWNLOADER_QUICK_QUERY_TIMESTAMP = "downloader.quick.query.timestamp";
+        /**
+         * The HTTP protocol list to use.
+         */
+        public static final String DOWNLOADER_TLS_PROTOCOL_LIST = "downloader.tls.protocols";
     }
     //</editor-fold>
 
@@ -422,17 +427,10 @@ public final class Settings {
      * @param deleteTemporary flag indicating whether any temporary directories
      * generated should be removed
      */
-    public static void cleanup(boolean deleteTemporary) {
+    public static synchronized void cleanup(boolean deleteTemporary) {
         if (deleteTemporary && tempDirectory != null && tempDirectory.exists()) {
             FileUtils.delete(tempDirectory);
-            if (tempDirectory.exists()) {
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException ex) {
-                    LOGGER.trace("ignore", ex);
-                }
-                FileUtils.delete(tempDirectory);
-            }
+            tempDirectory = null;
         }
         try {
             LOCAL_SETTINGS.remove();
@@ -746,14 +744,12 @@ public final class Settings {
      * @throws java.io.IOException thrown if the temporary directory does not
      * exist and cannot be created
      */
-    public static File getTempDirectory() throws IOException {
-        final File tmpDir = new File(Settings.getString(Settings.KEYS.TEMP_DIRECTORY, System.getProperty("java.io.tmpdir")), "dctemp");
-        if (!tmpDir.exists() && !tmpDir.mkdirs()) {
-            final String msg = String.format("Unable to make a temporary folder '%s'", tmpDir.getPath());
-            throw new IOException(msg);
+    public static synchronized File getTempDirectory() throws IOException {
+        if (tempDirectory == null) {
+            final File baseTemp = new File(Settings.getString(Settings.KEYS.TEMP_DIRECTORY, System.getProperty("java.io.tmpdir")));
+            tempDirectory = FileUtils.createTempDirectory(baseTemp);
         }
-        tempDirectory = tmpDir;
-        return tmpDir;
+        return tempDirectory;
     }
 
     /**

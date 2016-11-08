@@ -25,10 +25,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -248,26 +246,42 @@ public class ArchiveAnalyzer extends AbstractFileTypeAnalyzer {
         extractFiles(f, tmpDir, engine);
 
         //make a copy
-        final Set<Dependency> dependencySet = findMoreDependencies(engine, tmpDir);
+        final List<Dependency> dependencySet = findMoreDependencies(engine, tmpDir);
 
         if (!dependencySet.isEmpty()) {
             for (Dependency d : dependencySet) {
-                //fix the dependency's display name and path
-                final String displayPath = String.format("%s%s",
-                        dependency.getFilePath(),
-                        d.getActualFilePath().substring(tmpDir.getAbsolutePath().length()));
-                final String displayName = String.format("%s: %s",
-                        dependency.getFileName(),
-                        d.getFileName());
-                d.setFilePath(displayPath);
-                d.setFileName(displayName);
+                if (d.getFilePath().startsWith(tmpDir.getAbsolutePath())) {
+                    //fix the dependency's display name and path
+                    final String displayPath = String.format("%s%s",
+                            dependency.getFilePath(),
+                            d.getActualFilePath().substring(tmpDir.getAbsolutePath().length()));
+                    final String displayName = String.format("%s: %s",
+                            dependency.getFileName(),
+                            d.getFileName());
+                    d.setFilePath(displayPath);
+                    d.setFileName(displayName);
+                    d.setProjectReferences(dependency.getProjectReferences());
 
-                //TODO - can we get more evidence from the parent? EAR contains module name, etc.
-                //analyze the dependency (i.e. extract files) if it is a supported type.
-                if (this.accept(d.getActualFile()) && scanDepth < MAX_SCAN_DEPTH) {
-                    scanDepth += 1;
-                    analyze(d, engine);
-                    scanDepth -= 1;
+                    //TODO - can we get more evidence from the parent? EAR contains module name, etc.
+                    //analyze the dependency (i.e. extract files) if it is a supported type.
+                    if (this.accept(d.getActualFile()) && scanDepth < MAX_SCAN_DEPTH) {
+                        scanDepth += 1;
+                        analyze(d, engine);
+                        scanDepth -= 1;
+                    }
+                } else {
+                    for (Dependency sub : dependencySet) {
+                        if (sub.getFilePath().startsWith(tmpDir.getAbsolutePath())) {
+                            final String displayPath = String.format("%s%s",
+                                    dependency.getFilePath(),
+                                    sub.getActualFilePath().substring(tmpDir.getAbsolutePath().length()));
+                            final String displayName = String.format("%s: %s",
+                                    dependency.getFileName(),
+                                    sub.getFileName());
+                            sub.setFilePath(displayPath);
+                            sub.setFileName(displayName);
+                        }
+                    }
                 }
             }
         }
@@ -292,30 +306,37 @@ public class ArchiveAnalyzer extends AbstractFileTypeAnalyzer {
             final String fileName = dependency.getFileName();
 
             LOGGER.info("The zip file '{}' appears to be a JAR file, making a copy and analyzing it as a JAR.", fileName);
-
             final File tmpLoc = new File(tdir, fileName.substring(0, fileName.length() - 3) + "jar");
+            //store the archives sha1 and change it so that the engine doesn't think the zip and jar file are the same
+            // and add it is a related dependency.
+            final String archiveSha1 = dependency.getSha1sum();
             try {
-                org.apache.commons.io.FileUtils.copyFile(tdir, tmpLoc);
-                final Set<Dependency> dependencySet = findMoreDependencies(engine, tmpLoc);
+                dependency.setSha1sum("");
+                org.apache.commons.io.FileUtils.copyFile(dependency.getActualFile(), tmpLoc);
+                final List<Dependency> dependencySet = findMoreDependencies(engine, tmpLoc);
                 if (!dependencySet.isEmpty()) {
-                    if (dependencySet.size() != 1) {
-                        LOGGER.info("Deep copy of ZIP to JAR file resulted in more than one dependency?");
-                    }
                     for (Dependency d : dependencySet) {
                         //fix the dependency's display name and path
-                        d.setFilePath(dependency.getFilePath());
-                        d.setDisplayFileName(dependency.getFileName());
+                        if (d.getActualFile().equals(tmpLoc)) {
+                            d.setFilePath(dependency.getFilePath());
+                            d.setDisplayFileName(dependency.getFileName());
+                        } else {
+                            for (Dependency sub : d.getRelatedDependencies()) {
+                                if (sub.getActualFile().equals(tmpLoc)) {
+                                    sub.setFilePath(dependency.getFilePath());
+                                    sub.setDisplayFileName(dependency.getFileName());
+                                }
+                            }
+                        }
                     }
                 }
             } catch (IOException ex) {
                 LOGGER.debug("Unable to perform deep copy on '{}'", dependency.getActualFile().getPath(), ex);
+            } finally {
+                dependency.setSha1sum(archiveSha1);
             }
         }
     }
-    /**
-     * An empty dependency set.
-     */
-    private static final Set<Dependency> EMPTY_DEPENDENCY_SET = Collections.emptySet();
 
     /**
      * Scan the given file/folder, and return any new dependencies found.
@@ -324,20 +345,9 @@ public class ArchiveAnalyzer extends AbstractFileTypeAnalyzer {
      * @param file target of scanning
      * @return any dependencies that weren't known to the engine before
      */
-    private static Set<Dependency> findMoreDependencies(Engine engine, File file) {
-        final List<Dependency> before = new ArrayList<Dependency>(engine.getDependencies());
-        engine.scan(file);
-        final List<Dependency> after = engine.getDependencies();
-        final boolean sizeChanged = before.size() != after.size();
-        final Set<Dependency> newDependencies;
-        if (sizeChanged) {
-            //get the new dependencies
-            newDependencies = new HashSet<Dependency>(after);
-            newDependencies.removeAll(before);
-        } else {
-            newDependencies = EMPTY_DEPENDENCY_SET;
-        }
-        return newDependencies;
+    private static List<Dependency> findMoreDependencies(Engine engine, File file) {
+        final List<Dependency> added = engine.scan(file);
+        return added;
     }
 
     /**
