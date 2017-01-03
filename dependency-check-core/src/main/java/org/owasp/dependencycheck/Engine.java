@@ -515,18 +515,19 @@ public class Engine implements FileFilter {
 
             for (final Analyzer analyzer : analyzerList) {
                 final long analyzerStart = System.currentTimeMillis();
+                Analyzer analyzerInitialized = null;
                 try {
-                    initializeAnalyzer(analyzer);
+                    analyzerInitialized = initializeAnalyzer(analyzer);
                 } catch (InitializationException ex) {
                     exceptions.add(ex);
                     continue;
                 }
 
-                executeAnalysisTasks(analyzer, exceptions);
+                executeAnalysisTasks(analyzerInitialized, exceptions);
 
                 final long analyzerDurationMillis = System.currentTimeMillis() - analyzerStart;
                 final long analyzerDurationSeconds = TimeUnit.MILLISECONDS.toSeconds(analyzerDurationMillis);
-                LOGGER.info("Finished {} ({} seconds)", analyzer.getName(), analyzerDurationSeconds);
+                LOGGER.info("Finished {} ({} seconds)", analyzerInitialized.getName(), analyzerDurationSeconds);
             }
         }
         for (AnalysisPhase phase : AnalysisPhase.values()) {
