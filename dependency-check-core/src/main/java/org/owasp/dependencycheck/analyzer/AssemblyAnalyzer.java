@@ -71,7 +71,7 @@ public class AssemblyAnalyzer extends AbstractFileTypeAnalyzer {
     /**
      * The temp value for GrokAssembly.exe
      */
-    private File grokAssemblyExe = null;
+    private File grokAssemblyExe, grokAssemblyExeConfig = null;
     /**
      * Logger
      */
@@ -199,24 +199,28 @@ public class AssemblyAnalyzer extends AbstractFileTypeAnalyzer {
     @Override
     public void initializeFileTypeAnalyzer() throws InitializationException {
         final File tempFile;
+        final File grokAssemblyExeConfig;
         try {
             tempFile = File.createTempFile("GKA", ".exe", Settings.getTempDirectory());
+            grokAssemblyExeConfig = new File(tempFile.getAbsolutePath() + ".config");
         } catch (IOException ex) {
             setEnabled(false);
             throw new InitializationException("Unable to create temporary file for the assembly analyzer", ex);
         }
         try {
-            URL fileUrl = getClass().getClassLoader().getResource("GrokAssembly.exe");
-            if (fileUrl == null) {
-                throw new IOException("GrokAssembly.exe not found in jar file");
+            URL grokUrl = getClass().getClassLoader().getResource("GrokAssembly.exe");
+            URL grokCfgUrl = getClass().getClassLoader().getResource("GrokAssembly.exe.config");
+            if (grokUrl == null || grokCfgUrl == null) {
+                throw new IOException("GrokAssembly not found in jar file");
             }
-            FileUtils.copyURLToFile(fileUrl, tempFile);
+            FileUtils.copyURLToFile(grokUrl, tempFile);
+            FileUtils.copyURLToFile(grokCfgUrl, grokAssemblyExeConfig);
             grokAssemblyExe = tempFile;
             LOGGER.debug("Extracted GrokAssembly.exe to {}", grokAssemblyExe.getPath());
         } catch (IOException ioe) {
             this.setEnabled(false);
-            LOGGER.warn("Could not extract GrokAssembly.exe: {}", ioe.getMessage());
-            throw new InitializationException("Could not extract GrokAssembly.exe", ioe);
+            LOGGER.warn("Could not extract GrokAssembly: {}", ioe.getMessage());
+            throw new InitializationException("Could not extract GrokAssembly", ioe);
         }
 
         // Now, need to see if GrokAssembly actually runs from this location.
@@ -274,14 +278,19 @@ public class AssemblyAnalyzer extends AbstractFileTypeAnalyzer {
      */
     @Override
     public void closeAnalyzer() throws Exception {
+        lazyDelFile(grokAssemblyExe, "GrokAssembly.exe");
+        lazyDelFile(grokAssemblyExeConfig, "GrokAssembly.exe.config");
+    }
+
+    private void lazyDelFile(File tmpFile, String label) throws Exception {
         try {
-            if (grokAssemblyExe != null && !grokAssemblyExe.delete()) {
-                LOGGER.debug("Unable to delete temporary GrokAssembly.exe; attempting delete on exit");
-                grokAssemblyExe.deleteOnExit();
+            if (tmpFile != null && !tmpFile.delete()) {
+                LOGGER.debug("Unable to delete temporary {}; attempting delete on exit", label);
+                tmpFile.deleteOnExit();
             }
         } catch (SecurityException se) {
-            LOGGER.debug("Can't delete temporary GrokAssembly.exe");
-            grokAssemblyExe.deleteOnExit();
+            LOGGER.debug("Can't delete temporary {}", label);
+            tmpFile.deleteOnExit();
         }
     }
 
