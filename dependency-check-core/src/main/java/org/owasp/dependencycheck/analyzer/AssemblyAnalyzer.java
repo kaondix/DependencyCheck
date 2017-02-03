@@ -19,9 +19,9 @@ package org.owasp.dependencycheck.analyzer;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.net.URL;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.NullOutputStream;
 import org.owasp.dependencycheck.Engine;
@@ -203,36 +203,20 @@ public class AssemblyAnalyzer extends AbstractFileTypeAnalyzer {
             tempFile = File.createTempFile("GKA", ".exe", Settings.getTempDirectory());
         } catch (IOException ex) {
             setEnabled(false);
-            throw new InitializationException("Unable to create temporary file for the assembly analyzerr", ex);
+            throw new InitializationException("Unable to create temporary file for the assembly analyzer", ex);
         }
-        FileOutputStream fos = null;
-        InputStream is = null;
         try {
-            fos = new FileOutputStream(tempFile);
-            is = AssemblyAnalyzer.class.getClassLoader().getResourceAsStream("GrokAssembly.exe");
-            IOUtils.copy(is, fos);
-
+            URL fileUrl = getClass().getClassLoader().getResource("GrokAssembly.exe");
+            if (fileUrl == null) {
+                throw new IOException("GrokAssembly.exe not found in jar file");
+            }
+            FileUtils.copyURLToFile(fileUrl, tempFile);
             grokAssemblyExe = tempFile;
             LOGGER.debug("Extracted GrokAssembly.exe to {}", grokAssemblyExe.getPath());
         } catch (IOException ioe) {
             this.setEnabled(false);
             LOGGER.warn("Could not extract GrokAssembly.exe: {}", ioe.getMessage());
             throw new InitializationException("Could not extract GrokAssembly.exe", ioe);
-        } finally {
-            if (fos != null) {
-                try {
-                    fos.close();
-                } catch (Throwable e) {
-                    LOGGER.debug("Error closing output stream");
-                }
-            }
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (Throwable e) {
-                    LOGGER.debug("Error closing input stream");
-                }
-            }
         }
 
         // Now, need to see if GrokAssembly actually runs from this location.
