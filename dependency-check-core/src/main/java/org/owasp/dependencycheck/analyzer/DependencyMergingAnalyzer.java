@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.Set;
+
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.dependency.Dependency;
@@ -134,6 +135,24 @@ public class DependencyMergingAnalyzer extends AbstractAnalyzer {
             //for (Dependency nextDependency : engine.getDependencies()) {
             while (mainIterator.hasNext()) {
                 final Dependency dependency = mainIterator.next();
+                
+            	//pre-merge, check existing relatedDependencies from duplicates, populating evidence because they were not analyzed
+                //see Engine#scanFile():
+//                if (existing.getActualFilePath() != null && dependency.getActualFilePath() != null
+//                        && !existing.getActualFilePath().equals(dependency.getActualFilePath())) {
+//                    existing.addRelatedDependency(dependency);
+//                }
+                final Iterator<Dependency> duplicates = dependency.getRelatedDependencies().iterator();
+            	while(duplicates.hasNext()) {
+            		final Dependency dup = duplicates.next();
+            		if(dup.getProductEvidence().size() == 0)
+            			dup.getProductEvidence().getEvidence().addAll(dependency.getProductEvidence().getEvidence());
+            		if(dup.getVersionEvidence().size() == 0)
+            			dup.getVersionEvidence().getEvidence().addAll(dependency.getVersionEvidence().getEvidence());
+            		if(dup.getVendorEvidence().size() == 0)
+            			dup.getVendorEvidence().getEvidence().addAll(dependency.getVendorEvidence().getEvidence());
+            	}
+                
                 if (mainIterator.hasNext() && !dependenciesToRemove.contains(dependency)) {
                     final ListIterator<Dependency> subIterator = engine.getDependencies().listIterator(mainIterator.nextIndex());
                     while (subIterator.hasNext()) {
@@ -153,7 +172,7 @@ public class DependencyMergingAnalyzer extends AbstractAnalyzer {
                                 mergeDependencies(nextDependency, dependency, dependenciesToRemove);
                                 break; //since we merged into the next dependency - skip forward to the next in mainIterator
                             }
-                        } else if ( (main = getMainNodeDependency(dependency, nextDependency)) != null) {
+                        } else if ( (main = getMainCoLocatedDependency(dependency, nextDependency)) != null) {
                         	if (main == dependency) {
                         		mergeDependencies(dependency, nextDependency, dependenciesToRemove);
                         	} else {
@@ -288,7 +307,7 @@ public class DependencyMergingAnalyzer extends AbstractAnalyzer {
     /**
      * Bundling same swift dependencies with the same packagePath but identified by different analyzers.
      */
-    private boolean isSameNodePackage(Dependency dependency1, Dependency dependency2) {
+    private boolean isCoLocatedPackage(Dependency dependency1, Dependency dependency2) {
     	if (dependency1 == null || dependency2 == null ||
     		dependency1.getPackagePath() == null ||
     		dependency2.getPackagePath() == null) {
@@ -299,8 +318,8 @@ public class DependencyMergingAnalyzer extends AbstractAnalyzer {
 
        	return false;
     }
-    private Dependency getMainNodeDependency(Dependency dependency1, Dependency dependency2) {
-    	if (isSameNodePackage(dependency1, dependency2)) {
+    private Dependency getMainCoLocatedDependency(Dependency dependency1, Dependency dependency2) {
+    	if (isCoLocatedPackage(dependency1, dependency2)) {
     		if(dependency1.getFileName().equalsIgnoreCase(NodePackageAnalyzer.PACKAGE_JSON))
     			return dependency1;
             return dependency2;
