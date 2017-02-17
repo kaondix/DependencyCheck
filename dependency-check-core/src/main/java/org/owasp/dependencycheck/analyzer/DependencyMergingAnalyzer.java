@@ -313,10 +313,8 @@ public class DependencyMergingAnalyzer extends AbstractAnalyzer {
     		dependency2.getPackagePath() == null) {
             return false;
         }
-        if (dependency1.getPackagePath().equalsIgnoreCase(dependency2.getPackagePath()))
-        	return true;
-
-       	return false;
+    	
+        return dependency1.getPackagePath().equalsIgnoreCase(dependency2.getPackagePath());
     }
     private Dependency getMainCoLocatedDependency(Dependency dependency1, Dependency dependency2) {
     	if (isCoLocatedPackage(dependency1, dependency2)) {

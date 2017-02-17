@@ -18,6 +18,7 @@
 package org.owasp.dependencycheck.analyzer;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 import java.util.Iterator;
 import java.util.List;
@@ -168,17 +169,17 @@ public class AnalyzersIntegrationTest extends BaseTest {
     	assertTrue(depd.getFilePath() + " does not have any evidence." , totalEvidences > 0);
     	
     	if(sourceNotExpected != null) {
-    		validateEvidenceSource(depd, depd.getProductEvidence(), sourceNotExpected);
-    		validateEvidenceSource(depd, depd.getVersionEvidence(), sourceNotExpected);
-    		validateEvidenceSource(depd, depd.getVendorEvidence(), sourceNotExpected);
+    		validateEvidenceSource(depd.getProductEvidence(), sourceNotExpected);
+    		validateEvidenceSource(depd.getVersionEvidence(), sourceNotExpected);
+    		validateEvidenceSource(depd.getVendorEvidence(), sourceNotExpected);
     	}
     }
     
-    private void validateEvidenceSource(Dependency depd, EvidenceCollection evidenceColl, String sourceNotExpected) {
+    private void validateEvidenceSource(EvidenceCollection evidenceColl, String sourceNotExpected) {
     	Iterator<Evidence> evidences = evidenceColl.iterator();
     	while(evidences.hasNext()) {
     		Evidence evd = evidences.next();
-        	assertTrue(evd.toString() + " is from unexpected source " + sourceNotExpected, !evd.getSource().equals(sourceNotExpected));
+        	assertFalse(evd.toString() + " is from unexpected source " + sourceNotExpected, evd.getSource().equals(sourceNotExpected));
         }
     }
 
