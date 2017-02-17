@@ -17,15 +17,10 @@
  */
 package org.owasp.dependencycheck.data.nvdcve;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import org.owasp.dependencycheck.BaseDBTestCase;
 import java.util.Properties;
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 import org.owasp.dependencycheck.data.update.nvd.NvdCveInfo;
@@ -46,8 +41,7 @@ public class DatabasePropertiesIntegrationTest extends BaseDBTestCase {
             cveDB = new CveDB();
             cveDB.open();
             DatabaseProperties instance = cveDB.getDatabaseProperties();
-            boolean expResult = false;
-            boolean result = instance.isEmpty();
+            assertNotNull(instance);
             //no exception means the call worked... whether or not it is empty depends on if the db is new
             //assertEquals(expResult, result);
         } finally {

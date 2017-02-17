@@ -20,9 +20,11 @@ package org.owasp.dependencycheck.data.nvdcve;
 import java.io.File;
 import java.sql.Driver;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import org.junit.Test;
 import org.owasp.dependencycheck.BaseTest;
@@ -35,13 +37,18 @@ public class DriverLoaderTest extends BaseTest {
 
     /**
      * Test of load method, of class DriverLoader.
+     *
+     * @throws java.sql.SQLException thrown if there is an error de-registering
+     * the driver
      */
     @Test
-    public void testLoad_String() throws Exception {
+    public void testLoad_String() throws SQLException {
         String className = "org.h2.Driver";
         Driver d = null;
         try {
             d = DriverLoader.load(className);
+        } catch (DriverLoadException ex) {
+            fail(ex.getMessage());
         } finally {
             if (d != null) {
                 DriverManager.deregisterDriver(d);
@@ -55,8 +62,8 @@ public class DriverLoaderTest extends BaseTest {
      */
     @Test(expected = DriverLoadException.class)
     public void testLoad_String_ex() throws Exception {
-        String className = "bad.Driver";
-        Driver d = DriverLoader.load(className);
+        final String className = "bad.Driver";
+        DriverLoader.load(className);
     }
 
     /**
@@ -87,7 +94,7 @@ public class DriverLoaderTest extends BaseTest {
      * Test of load method, of class DriverLoader.
      */
     @Test
-    public void testLoad_String_String_multiple_paths() throws Exception {
+    public void testLoad_String_String_multiple_paths()  {
         final String className = "com.mysql.jdbc.Driver";
         //we know this is in target/test-classes
         //final File testClassPath = (new File(this.getClass().getClassLoader().getResource("org.mortbay.jetty.jar").getPath())).getParentFile();
@@ -99,9 +106,15 @@ public class DriverLoaderTest extends BaseTest {
         Driver d = null;
         try {
             d = DriverLoader.load(className, paths);
+        } catch (DriverLoadException ex) {
+            fail(ex.getMessage());
         } finally {
             if (d != null) {
-                DriverManager.deregisterDriver(d);
+                try {
+                    DriverManager.deregisterDriver(d);
+                } catch (SQLException ex) {
+                    fail(ex.getMessage());
+                }
             }
         }
     }

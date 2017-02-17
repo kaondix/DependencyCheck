@@ -24,6 +24,15 @@ package org.owasp.dependencycheck.xml.pom;
 public class License {
 
     /**
+     * The url to the license.
+     */
+    private String url;
+    /**
+     * The name of the license.
+     */
+    private String name;
+
+    /**
      * Constructs a new license object.
      */
     public License() {
@@ -42,11 +51,6 @@ public class License {
     }
 
     /**
-     * The url to the license.
-     */
-    private String url;
-
-    /**
      * Get the value of url.
      *
      * @return the value of url
@@ -63,11 +67,6 @@ public class License {
     public void setUrl(String url) {
         this.url = url;
     }
-
-    /**
-     * The name of the license.
-     */
-    private String name;
 
     /**
      * Get the value of name.
@@ -118,10 +117,7 @@ public class License {
         if ((this.url == null) ? (other.url != null) : !this.url.equals(other.url)) {
             return false;
         }
-        if ((this.name == null) ? (other.name != null) : !this.name.equals(other.name)) {
-            return false;
-        }
-        return true;
+        return !((this.name == null) ? (other.name != null) : !this.name.equals(other.name));
     }
 
     /**

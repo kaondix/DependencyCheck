@@ -17,36 +17,40 @@
  */
 package org.owasp.dependencycheck.data.update;
 
-import java.net.MalformedURLException;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 import org.junit.Test;
 import org.owasp.dependencycheck.BaseTest;
 import org.owasp.dependencycheck.data.update.exception.UpdateException;
 import org.owasp.dependencycheck.data.update.nvd.UpdateableNvdCve;
-import org.owasp.dependencycheck.utils.DownloadFailedException;
 
 /**
  *
  * @author Jeremy Long
  */
-public class NvdCveUpdaterIntegrationTest extends BaseTest {
+    public class NvdCveUpdaterIntegrationTest extends BaseTest {
 
-    public NvdCveUpdater getUpdater() throws MalformedURLException, DownloadFailedException, UpdateException {
+    public NvdCveUpdater getUpdater() {
         NvdCveUpdater instance = new NvdCveUpdater();
+        instance.initializeExecutorServices();
         return instance;
     }
 
-// test removed as it is duplicative of the EngineIntegrationTest and the NvdCveUpdaterIntergraionTest
-//    /**
-//     * Test of update method, of class StandardUpdate.
-//     */
-    @Test
-    public void testUpdate() throws Exception {
-        NvdCveUpdater instance = getUpdater();
-        instance.update();
-    }
     /**
-     * Test of updatesNeeded method, of class StandardUpdate.
+     * Test of update method.
+     */
+    @Test
+    public void testUpdate() {
+        try {
+            NvdCveUpdater instance = getUpdater();
+            instance.update();
+        } catch (UpdateException ex) {
+            fail(ex.getMessage());
+        }
+    }
+
+    /**
+     * Test of updatesNeeded method.
      */
     @Test
     public void testUpdatesNeeded() throws Exception {

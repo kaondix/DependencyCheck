@@ -48,9 +48,10 @@ public class ModelTest extends BaseTest {
      */
     @Test
     public void testSetName() {
-        String name = "";
+        String name = "name";
         Model instance = new Model();
         instance.setName(name);
+        assertEquals("name", instance.getName());
     }
 
     /**
@@ -92,9 +93,11 @@ public class ModelTest extends BaseTest {
      */
     @Test
     public void testSetDescription() {
-        String description = "";
+        String description = "description";
+        String expected = "description";
         Model instance = new Model();
         instance.setDescription(description);
+        assertEquals(expected, instance.getDescription());
     }
 
     /**
@@ -114,9 +117,11 @@ public class ModelTest extends BaseTest {
      */
     @Test
     public void testSetGroupId() {
-        String groupId = "";
+        String groupId = "aaa";
+        String expected = "aaa";
         Model instance = new Model();
         instance.setGroupId(groupId);
+        assertEquals(expected, instance.getGroupId());
     }
 
     /**
@@ -136,9 +141,11 @@ public class ModelTest extends BaseTest {
      */
     @Test
     public void testSetArtifactId() {
-        String artifactId = "";
+        String artifactId = "aaa";
+        String expected = "aaa";
         Model instance = new Model();
         instance.setArtifactId(artifactId);
+        assertEquals(expected, instance.getArtifactId());
     }
 
     /**
@@ -161,6 +168,7 @@ public class ModelTest extends BaseTest {
         String version = "";
         Model instance = new Model();
         instance.setVersion(version);
+        assertNotNull(instance.getVersion());
     }
 
     /**
@@ -202,9 +210,10 @@ public class ModelTest extends BaseTest {
      */
     @Test
     public void testSetParentArtifactId() {
-        String parentArtifactId = "";
+        String parentArtifactId = "something";
         Model instance = new Model();
         instance.setParentArtifactId(parentArtifactId);
+        assertNotNull(instance.getParentArtifactId());
     }
 
     /**
@@ -224,9 +233,10 @@ public class ModelTest extends BaseTest {
      */
     @Test
     public void testSetParentVersion() {
-        String parentVersion = "";
+        String parentVersion = "1.0";
         Model instance = new Model();
         instance.setParentVersion(parentVersion);
+        assertNotNull(instance.getParentVersion());
     }
 
     /**
@@ -250,6 +260,7 @@ public class ModelTest extends BaseTest {
         License license = new License("name", "url");
         Model instance = new Model();
         instance.addLicense(license);
+        assertNotNull(instance.getLicenses());
     }
 
     /**

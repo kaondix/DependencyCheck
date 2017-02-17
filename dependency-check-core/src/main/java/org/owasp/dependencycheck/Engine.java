@@ -557,7 +557,7 @@ public class Engine implements FileFilter {
      * @param analyzer the analyzer to execute
      * @throws ExceptionCollection thrown if exceptions occurred during analysis
      */
-    void executeAnalysisTasks(Analyzer analyzer, List<Throwable> exceptions) throws ExceptionCollection {
+    protected void executeAnalysisTasks(Analyzer analyzer, List<Throwable> exceptions) throws ExceptionCollection {
         LOGGER.debug("Starting {}", analyzer.getName());
         final List<AnalysisTask> analysisTasks = getAnalysisTasks(analyzer, exceptions);
         final ExecutorService executorService = getExecutorService(analyzer);
@@ -589,8 +589,8 @@ public class Engine implements FileFilter {
      * @param exceptions the collection of exceptions to collect
      * @return a collection of analysis tasks
      */
-    List<AnalysisTask> getAnalysisTasks(Analyzer analyzer, List<Throwable> exceptions) {
-        final List<AnalysisTask> result = new ArrayList<AnalysisTask>();
+    protected List<AnalysisTask> getAnalysisTasks(Analyzer analyzer, List<Throwable> exceptions) {
+        final List<AnalysisTask> result = new ArrayList<>();
         synchronized (dependencies) {
             for (final Dependency dependency : dependencies) {
                 final AnalysisTask task = new AnalysisTask(analyzer, dependency, this, exceptions, Settings.getInstance());

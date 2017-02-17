@@ -26,7 +26,6 @@ import java.io.File;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Level;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -58,7 +57,7 @@ public class RubyBundleAuditAnalyzerTest extends BaseDBTestCase {
     /**
      * The analyzer to test.
      */
-    RubyBundleAuditAnalyzer analyzer;
+    private RubyBundleAuditAnalyzer analyzer;
 
     /**
      * Correctly setup the analyzer for testing.

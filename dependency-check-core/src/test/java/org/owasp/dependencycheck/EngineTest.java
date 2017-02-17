@@ -41,14 +41,16 @@ import static org.junit.Assert.assertTrue;
 public class EngineTest extends BaseDBTestCase {
 
     @Mocked
-    Analyzer analyzer;
+    private Analyzer analyzer;
 
     @Mocked
-    AnalysisTask analysisTask;
-
+    private AnalysisTask analysisTask;
 
     /**
      * Test of scanFile method, of class Engine.
+     *
+     * @throws org.owasp.dependencycheck.data.nvdcve.DatabaseException thrown is
+     * there is an exception
      */
     @Test
     public void testScanFile() throws DatabaseException {
@@ -64,30 +66,34 @@ public class EngineTest extends BaseDBTestCase {
         Dependency secondDwr = instance.scanFile(file);
 
         assertEquals(2, instance.getDependencies().size());
-        assertTrue(dwr == secondDwr);
+        assertEquals(dwr, secondDwr);
     }
 
     @Test(expected = ExceptionCollection.class)
     public void exceptionDuringAnalysisTaskExecutionIsFatal() throws DatabaseException, ExceptionCollection {
         final ExecutorService executorService = Executors.newFixedThreadPool(3);
         final Engine instance = new Engine();
-        final List<Throwable> exceptions = new ArrayList<Throwable>();
+        final List<Throwable> exceptions = new ArrayList<>();
 
-        new Expectations() {{
-            analysisTask.call();
-            result = new IllegalStateException("Analysis task execution threw an exception");
-        }};
+        new Expectations() {
+            {
+                analysisTask.call();
+                result = new IllegalStateException("Analysis task execution threw an exception");
+            }
+        };
 
-        final List<AnalysisTask> failingAnalysisTask = new ArrayList<AnalysisTask>();
+        final List<AnalysisTask> failingAnalysisTask = new ArrayList<>();
         failingAnalysisTask.add(analysisTask);
 
-        new Expectations(instance) {{
-            instance.getExecutorService(analyzer);
-            result = executorService;
+        new Expectations(instance) {
+            {
+                instance.getExecutorService(analyzer);
+                result = executorService;
 
-            instance.getAnalysisTasks(analyzer, exceptions);
-            result = failingAnalysisTask;
-        }};
+                instance.getAnalysisTasks(analyzer, exceptions);
+                result = failingAnalysisTask;
+            }
+        };
 
         instance.executeAnalysisTasks(analyzer, exceptions);
 
