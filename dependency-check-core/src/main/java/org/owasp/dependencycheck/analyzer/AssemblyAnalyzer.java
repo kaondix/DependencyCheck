@@ -19,9 +19,9 @@ package org.owasp.dependencycheck.analyzer;
 
 import java.io.File;
 import java.io.FileFilter;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.net.URL;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.NullOutputStream;
 import org.owasp.dependencycheck.Engine;
@@ -71,7 +71,7 @@ public class AssemblyAnalyzer extends AbstractFileTypeAnalyzer {
     /**
      * The temp value for GrokAssembly.exe
      */
-    private File grokAssemblyExe = null;
+    private File grokAssemblyExe, grokAssemblyExeConfig = null;
     /**
      * Logger
      */
@@ -199,40 +199,28 @@ public class AssemblyAnalyzer extends AbstractFileTypeAnalyzer {
     @Override
     public void initializeFileTypeAnalyzer() throws InitializationException {
         final File tempFile;
+        final File grokAssemblyExeConfig;
         try {
             tempFile = File.createTempFile("GKA", ".exe", Settings.getTempDirectory());
+            grokAssemblyExeConfig = new File(tempFile.getAbsolutePath() + ".config");
         } catch (IOException ex) {
             setEnabled(false);
-            throw new InitializationException("Unable to create temporary file for the assembly analyzerr", ex);
+            throw new InitializationException("Unable to create temporary file for the assembly analyzer", ex);
         }
-        FileOutputStream fos = null;
-        InputStream is = null;
         try {
-            fos = new FileOutputStream(tempFile);
-            is = AssemblyAnalyzer.class.getClassLoader().getResourceAsStream("GrokAssembly.exe");
-            IOUtils.copy(is, fos);
-
+            URL grokUrl = getClass().getClassLoader().getResource("GrokAssembly.exe");
+            URL grokCfgUrl = getClass().getClassLoader().getResource("GrokAssembly.exe.config");
+            if (grokUrl == null || grokCfgUrl == null) {
+                throw new IOException("GrokAssembly not found in jar file");
+            }
+            FileUtils.copyURLToFile(grokUrl, tempFile);
+            FileUtils.copyURLToFile(grokCfgUrl, grokAssemblyExeConfig);
             grokAssemblyExe = tempFile;
             LOGGER.debug("Extracted GrokAssembly.exe to {}", grokAssemblyExe.getPath());
         } catch (IOException ioe) {
             this.setEnabled(false);
-            LOGGER.warn("Could not extract GrokAssembly.exe: {}", ioe.getMessage());
-            throw new InitializationException("Could not extract GrokAssembly.exe", ioe);
-        } finally {
-            if (fos != null) {
-                try {
-                    fos.close();
-                } catch (Throwable e) {
-                    LOGGER.debug("Error closing output stream");
-                }
-            }
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (Throwable e) {
-                    LOGGER.debug("Error closing input stream");
-                }
-            }
+            LOGGER.warn("Could not extract GrokAssembly: {}", ioe.getMessage());
+            throw new InitializationException("Could not extract GrokAssembly", ioe);
         }
 
         // Now, need to see if GrokAssembly actually runs from this location.
@@ -290,14 +278,19 @@ public class AssemblyAnalyzer extends AbstractFileTypeAnalyzer {
      */
     @Override
     public void closeAnalyzer() throws Exception {
+        lazyDelFile(grokAssemblyExe, "GrokAssembly.exe");
+        lazyDelFile(grokAssemblyExeConfig, "GrokAssembly.exe.config");
+    }
+
+    private void lazyDelFile(File tmpFile, String label) throws Exception {
         try {
-            if (grokAssemblyExe != null && !grokAssemblyExe.delete()) {
-                LOGGER.debug("Unable to delete temporary GrokAssembly.exe; attempting delete on exit");
-                grokAssemblyExe.deleteOnExit();
+            if (tmpFile != null && !tmpFile.delete()) {
+                LOGGER.debug("Unable to delete temporary {}; attempting delete on exit", label);
+                tmpFile.deleteOnExit();
             }
         } catch (SecurityException se) {
-            LOGGER.debug("Can't delete temporary GrokAssembly.exe");
-            grokAssemblyExe.deleteOnExit();
+            LOGGER.debug("Can't delete temporary {}", label);
+            tmpFile.deleteOnExit();
         }
     }
 
