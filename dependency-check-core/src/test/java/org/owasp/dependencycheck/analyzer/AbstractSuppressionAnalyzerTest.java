@@ -30,7 +30,6 @@ import org.owasp.dependencycheck.BaseTest;
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.dependency.Dependency;
-import org.owasp.dependencycheck.exception.InitializationException;
 import org.owasp.dependencycheck.utils.Settings;
 import org.owasp.dependencycheck.utils.Settings.KEYS;
 
@@ -106,9 +105,15 @@ public class AbstractSuppressionAnalyzerTest extends BaseTest {
         assertThat("Expected suppressions from both files", instance.getRuleCount(), is(expectedSize));
     }
 
-    @Test(expected = InitializationException.class)
-    public void testFailureToLocateSuppressionFileAnywhere() throws Exception {
+    @Test
+    public void testFailureToLocateSuppressionFileAnywhereOnDisk() throws Exception {
         Settings.setString(Settings.KEYS.SUPPRESSION_FILE, "doesnotexist.xml");
+        instance.initialize();
+    }
+    
+    @Test
+    public void testFailureToLocateSuppressionFileAnywhereOnWeb() throws Exception {
+        Settings.setString(Settings.KEYS.SUPPRESSION_FILE, "https://jeremylong.github.io/DependencyCheck/doesnotexist.xml");
         instance.initialize();
     }
 

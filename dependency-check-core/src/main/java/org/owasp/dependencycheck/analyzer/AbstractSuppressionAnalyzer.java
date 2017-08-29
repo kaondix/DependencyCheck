@@ -135,7 +135,7 @@ public abstract class AbstractSuppressionAnalyzer extends AbstractAnalyzer {
      * @throws SuppressionParseException thrown if the suppression file cannot
      * be loaded and parsed.
      */
-    private synchronized void loadSuppressionFile(final SuppressionParser parser, final String suppressionFilePath) throws SuppressionParseException {
+    private synchronized void loadSuppressionFile(final SuppressionParser parser, final String suppressionFilePath)  {
         LOGGER.debug("Loading suppression rules from '{}'", suppressionFilePath);
 
         File file = null;
@@ -145,11 +145,19 @@ public abstract class AbstractSuppressionAnalyzer extends AbstractAnalyzer {
             if (uriRx.matcher(suppressionFilePath).matches()) {
                 deleteTempFile = true;
                 file = FileUtils.getTempFile("suppression", "xml");
-                final URL url = new URL(suppressionFilePath);
-                try {
-                    Downloader.fetchFile(url, file, false);
+                try{
+	                final URL url = new URL(suppressionFilePath);
+	                try {
+	                    Downloader.fetchFile(url, file, false);
+	                } catch (DownloadFailedException ex) {
+	                    Downloader.fetchFile(url, file, true);
+	                }
                 } catch (DownloadFailedException ex) {
-                    Downloader.fetchFile(url, file, true);
+                	final String msg = String.format("Unable to fetch the configured suppression file '%s'", suppressionFilePath);
+                	throw new SuppressionParseException(msg, ex);
+                } catch (MalformedURLException ex) {
+                	final String msg = String.format("Configured suppression file '%s' has an invalid URL", suppressionFilePath);
+                	throw new SuppressionParseException(msg, ex);
                 }
             } else {
                 file = new File(suppressionFilePath);
@@ -162,7 +170,8 @@ public abstract class AbstractSuppressionAnalyzer extends AbstractAnalyzer {
                             try {
                                 org.apache.commons.io.FileUtils.copyInputStreamToFile(suppressionsFromClasspath, file);
                             } catch (IOException ex) {
-                                throwSuppressionParseException("Unable to locate suppressions file in classpath", ex);
+                            	final String msg = String.format("Unable to locate suppressions file in classpath '%s'", suppressionFilePath);
+                            	throw new SuppressionParseException(msg, ex);
                             }
                         }
                     }
@@ -170,26 +179,24 @@ public abstract class AbstractSuppressionAnalyzer extends AbstractAnalyzer {
             }
             if (file != null) {
                 if (!file.exists()) {
-                    final String msg = String.format("Suppression file '%s' does not exists", file.getPath());
-                    LOGGER.warn(msg);
+                    final String msg = String.format("Suppression file '%s' does not exists", suppressionFilePath);
+    
                     throw new SuppressionParseException(msg);
                 }
                 try {
                     rules.addAll(parser.parseSuppressionRules(file));
                 } catch (SuppressionParseException ex) {
-                    LOGGER.warn("Unable to parse suppression xml file '{}'", file.getPath());
-                    LOGGER.warn(ex.getMessage());
-                    throw ex;
+                	final String msg = String.format("Unable to parse suppression xml file '%s'", suppressionFilePath);
+                	throw new SuppressionParseException(msg, ex);
                 }
+                LOGGER.debug("'{}' correctly loaded",suppressionFilePath);
             }
-        } catch (DownloadFailedException ex) {
-            throwSuppressionParseException("Unable to fetch the configured suppression file", ex);
-        } catch (MalformedURLException ex) {
-            throwSuppressionParseException("Configured suppression file has an invalid URL", ex);
+        
         } catch (SuppressionParseException ex) {
-            throw ex;
+        	LOGGER.warn(ex.getMessage());
+        	LOGGER.debug("", ex);
         } catch (IOException ex) {
-            throwSuppressionParseException("Unable to create temp file for suppressions", ex);
+        	LOGGER.warn("Unable to create temp file for suppressions");            
         } finally {
             if (deleteTempFile && file != null) {
                 FileUtils.delete(file);
@@ -197,17 +204,4 @@ public abstract class AbstractSuppressionAnalyzer extends AbstractAnalyzer {
         }
     }
 
-    /**
-     * Utility method to throw parse exceptions.
-     *
-     * @param message the exception message
-     * @param exception the cause of the exception
-     * @throws SuppressionParseException throws the generated
-     * SuppressionParseException
-     */
-    private void throwSuppressionParseException(String message, Exception exception) throws SuppressionParseException {
-        LOGGER.warn(message);
-        LOGGER.debug("", exception);
-        throw new SuppressionParseException(message, exception);
-    }
 }
