@@ -21,6 +21,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 import java.util.Set;
 
@@ -30,6 +31,7 @@ import org.owasp.dependencycheck.BaseTest;
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.dependency.Dependency;
+import org.owasp.dependencycheck.exception.InitializationException;
 import org.owasp.dependencycheck.utils.Settings;
 import org.owasp.dependencycheck.utils.Settings.KEYS;
 
@@ -38,135 +40,180 @@ import org.owasp.dependencycheck.utils.Settings.KEYS;
  */
 public class AbstractSuppressionAnalyzerTest extends BaseTest {
 
-    /** A second suppression file to test with. */
-    private static final String OTHER_SUPPRESSIONS_FILE = "other-suppressions.xml";
+	/** A second suppression file to test with. */
+	private static final String OTHER_SUPPRESSIONS_FILE = "other-suppressions.xml";
 
-    /** Suppression file to test with. */
-    private static final String SUPPRESSIONS_FILE = "suppressions.xml";
+	/** Suppression file to test with. */
+	private static final String SUPPRESSIONS_FILE = "suppressions.xml";
 
-    private AbstractSuppressionAnalyzer instance;
+	private AbstractSuppressionAnalyzer instance;
 
-    @Before
-    public void createObjectUnderTest() throws Exception {
-        instance = new AbstractSuppressionAnalyzerImpl();
-    }
+	@Before
+	public void createObjectUnderTest() throws Exception {
+		instance = new AbstractSuppressionAnalyzerImpl();
+	}
 
-    /**
-     * Test of getSupportedExtensions method, of class
-     * AbstractSuppressionAnalyzer.
-     */
-    @Test
-    public void testGetSupportedExtensions() {
-        Set<String> result = instance.getSupportedExtensions();
-        assertNull(result);
-    }
+	/**
+	 * Test of getSupportedExtensions method, of class
+	 * AbstractSuppressionAnalyzer.
+	 */
+	@Test
+	public void testGetSupportedExtensions() {
+		Set<String> result = instance.getSupportedExtensions();
+		assertNull(result);
+	}
 
-    /**
-     * Test of getRules method, of class AbstractSuppressionAnalyzer for
-     * suppression file declared as URL.
-     */
-    @Test
-    public void testGetRulesFromSuppressionFileFromURL() throws Exception {
-        final String fileUrl = getClass().getClassLoader().getResource(SUPPRESSIONS_FILE).toURI().toURL().toString();
-        final int numberOfExtraLoadedRules = getNumberOfRulesLoadedFromPath(fileUrl) - getNumberOfRulesLoadedInCoreFile();
-        assertEquals("Expected 5 extra rules in the given path", 5, numberOfExtraLoadedRules);
-    }
+	/**
+	 * Test of getRules method, of class AbstractSuppressionAnalyzer for
+	 * suppression file declared as URL.
+	 */
+	@Test
+	public void testGetRulesFromSuppressionFileFromURL() throws Exception {
+		final String fileUrl = getClass().getClassLoader().getResource(SUPPRESSIONS_FILE).toURI().toURL().toString();
+		final int numberOfExtraLoadedRules = getNumberOfRulesLoadedFromPath(fileUrl)
+				- getNumberOfRulesLoadedInCoreFile();
+		assertEquals("Expected 5 extra rules in the given path", 5, numberOfExtraLoadedRules);
+	}
 
-    /**
-     * Test of getRules method, of class AbstractSuppressionAnalyzer for
-     * suppression file on the classpath.
-     */
-    @Test
-    public void testGetRulesFromSuppressionFileInClasspath() throws Exception {
-        final int numberOfExtraLoadedRules = getNumberOfRulesLoadedFromPath(SUPPRESSIONS_FILE) - getNumberOfRulesLoadedInCoreFile();
-        assertEquals("Expected 5 extra rules in the given file", 5, numberOfExtraLoadedRules);
-    }
+	/**
+	 * Test of getRules method, of class AbstractSuppressionAnalyzer for
+	 * suppression file on the classpath.
+	 */
+	@Test
+	public void testGetRulesFromSuppressionFileInClasspath() throws Exception {
+		final int numberOfExtraLoadedRules = getNumberOfRulesLoadedFromPath(SUPPRESSIONS_FILE)
+				- getNumberOfRulesLoadedInCoreFile();
+		assertEquals("Expected 5 extra rules in the given file", 5, numberOfExtraLoadedRules);
+	}
 
-    /**
-     * Assert that rules are loaded from multiple files if multiple files are denfined in the {@link Settings} singleton.
-     */
-    @Test
-    public void testGetRulesFromMultipleSuppressionFiles() throws Exception {
-        final int rulesInCoreFile = getNumberOfRulesLoadedInCoreFile();
+	/**
+	 * Assert that rules are loaded from multiple files if multiple files are
+	 * denfined in the {@link Settings} singleton.
+	 */
+	@Test
+	public void testGetRulesFromMultipleSuppressionFiles() throws Exception {
+		final int rulesInCoreFile = getNumberOfRulesLoadedInCoreFile();
 
-        // GIVEN suppression rules from one file
-        final int rulesInFirstFile = getNumberOfRulesLoadedFromPath(SUPPRESSIONS_FILE) - rulesInCoreFile;
+		// GIVEN suppression rules from one file
+		final int rulesInFirstFile = getNumberOfRulesLoadedFromPath(SUPPRESSIONS_FILE) - rulesInCoreFile;
 
-        // AND suppression rules from another file
-        final int rulesInSecondFile = getNumberOfRulesLoadedFromPath(OTHER_SUPPRESSIONS_FILE) - rulesInCoreFile;
+		// AND suppression rules from another file
+		final int rulesInSecondFile = getNumberOfRulesLoadedFromPath(OTHER_SUPPRESSIONS_FILE) - rulesInCoreFile;
 
-        // WHEN initializing with both suppression files
-        final String[] suppressionFiles = { SUPPRESSIONS_FILE, OTHER_SUPPRESSIONS_FILE };
-        Settings.setArrayIfNotEmpty(KEYS.SUPPRESSION_FILE, suppressionFiles);
-        instance.initialize();
+		// WHEN initializing with both suppression files
+		final String[] suppressionFiles = { SUPPRESSIONS_FILE, OTHER_SUPPRESSIONS_FILE };
+		Settings.setArrayIfNotEmpty(KEYS.SUPPRESSION_FILE, suppressionFiles);
+		instance.initialize();
 
-        // THEN rules from both files were loaded
-        final int expectedSize = rulesInFirstFile + rulesInSecondFile + rulesInCoreFile;
-        assertThat("Expected suppressions from both files", instance.getRuleCount(), is(expectedSize));
-    }
+		// THEN rules from both files were loaded
+		final int expectedSize = rulesInFirstFile + rulesInSecondFile + rulesInCoreFile;
+		assertThat("Expected suppressions from both files", instance.getRuleCount(), is(expectedSize));
+	}
 
-    @Test
-    public void testFailureToLocateSuppressionFileAnywhereOnDisk() throws Exception {
-        Settings.setString(Settings.KEYS.SUPPRESSION_FILE, "doesnotexist.xml");
-        instance.initialize();
-    }
-    
-    @Test
-    public void testFailureToLocateSuppressionFileAnywhereOnWeb() throws Exception {
-        Settings.setString(Settings.KEYS.SUPPRESSION_FILE, "https://jeremylong.github.io/DependencyCheck/doesnotexist.xml");
-        instance.initialize();
-    }
+	@Test
+	public void testFailureToLocateSuppressionFileAnywhereOnDisk() {
+		Settings.setString(Settings.KEYS.SUPPRESSION_FILE, "doesnotexist.xml");
+		try {
+			instance.initialize();
+		} catch (Exception e) {
+			fail();
+		}
 
-    /**
-     * Return the number of rules that are loaded from the core suppression file.
-     *
-     * @return the number of rules defined in the core suppresion file.
-     * @throws Exception if loading the rules fails.
-     */
-    private int getNumberOfRulesLoadedInCoreFile() throws Exception {
-        Settings.removeProperty(KEYS.SUPPRESSION_FILE);
+	}
 
-        final AbstractSuppressionAnalyzerImpl coreFileAnalyzer = new AbstractSuppressionAnalyzerImpl();
-        coreFileAnalyzer.initialize();
-        return coreFileAnalyzer.getRuleCount();
-    }
+	@Test
+	public void testFailureToLocateSuppressionFileAnywhereOnWeb() {
+		Settings.setString(Settings.KEYS.SUPPRESSION_FILE,
+				"https://jeremylong.github.io/DependencyCheck/doesnotexist.xml");
+		try {
+			instance.initialize();
+		} catch (Exception e) {
+			fail();
+		}
+	}
 
-    /**
-     * Load a file into the {@link AbstractSuppressionAnalyzer} and return the number of rules loaded.
-     *
-     * @param path the path to load.
-     * @return the number of rules that were loaded (including the core rules).
-     * @throws Exception if loading the rules fails.
-     */
-    private int getNumberOfRulesLoadedFromPath(final String path) throws Exception {
-        Settings.setString(KEYS.SUPPRESSION_FILE, path);
+	/**
+	 * Return the number of rules that are loaded from the core suppression
+	 * file.
+	 *
+	 * @return the number of rules defined in the core suppresion file.
+	 * @throws Exception
+	 *             if loading the rules fails.
+	 */
+	private int getNumberOfRulesLoadedInCoreFile() throws Exception {
+		Settings.removeProperty(KEYS.SUPPRESSION_FILE);
 
-        final AbstractSuppressionAnalyzerImpl fileAnalyzer = new AbstractSuppressionAnalyzerImpl();
-        fileAnalyzer.initialize();
-        return fileAnalyzer.getRuleCount();
-    }
+		final AbstractSuppressionAnalyzerImpl coreFileAnalyzer = new AbstractSuppressionAnalyzerImpl();
+		coreFileAnalyzer.initialize();
+		return coreFileAnalyzer.getRuleCount();
+	}
 
-    public class AbstractSuppressionAnalyzerImpl extends AbstractSuppressionAnalyzer {
+	/**
+	 * Load a file into the {@link AbstractSuppressionAnalyzer} and return the
+	 * number of rules loaded.
+	 *
+	 * @param path
+	 *            the path to load.
+	 * @return the number of rules that were loaded (including the core rules).
+	 * @throws Exception
+	 *             if loading the rules fails.
+	 */
+	private int getNumberOfRulesLoadedFromPath(final String path) throws Exception {
+		Settings.setString(KEYS.SUPPRESSION_FILE, path);
 
-        @Override
-        public void analyzeDependency(Dependency dependency, Engine engine) throws AnalysisException {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        }
+		final AbstractSuppressionAnalyzerImpl fileAnalyzer = new AbstractSuppressionAnalyzerImpl();
+		fileAnalyzer.initialize();
+		return fileAnalyzer.getRuleCount();
+	}
 
-        @Override
-        public String getName() {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        }
+	public class AbstractSuppressionAnalyzerImpl extends AbstractSuppressionAnalyzer {
 
-        @Override
-        public AnalysisPhase getAnalysisPhase() {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        }
+		@Override
+		public void analyzeDependency(Dependency dependency, Engine engine) throws AnalysisException {
+			throw new UnsupportedOperationException("Not supported yet."); // To
+																			// change
+																			// body
+																			// of
+																			// generated
+																			// methods,
+																			// choose
+																			// Tools
+																			// |
+																			// Templates.
+		}
 
-        @Override
-        protected String getAnalyzerEnabledSettingKey() {
-            return "unknown";
-        }
-    }
+		@Override
+		public String getName() {
+			throw new UnsupportedOperationException("Not supported yet."); // To
+																			// change
+																			// body
+																			// of
+																			// generated
+																			// methods,
+																			// choose
+																			// Tools
+																			// |
+																			// Templates.
+		}
+
+		@Override
+		public AnalysisPhase getAnalysisPhase() {
+			throw new UnsupportedOperationException("Not supported yet."); // To
+																			// change
+																			// body
+																			// of
+																			// generated
+																			// methods,
+																			// choose
+																			// Tools
+																			// |
+																			// Templates.
+		}
+
+		@Override
+		protected String getAnalyzerEnabledSettingKey() {
+			return "unknown";
+		}
+	}
 
 }
