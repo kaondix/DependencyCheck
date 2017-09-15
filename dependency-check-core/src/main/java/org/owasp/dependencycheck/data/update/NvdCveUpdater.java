@@ -17,9 +17,6 @@
  */
 package org.owasp.dependencycheck.data.update;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.net.MalformedURLException;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -27,8 +24,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.net.URL;
-import java.nio.channels.FileLock;
-import java.util.Date;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -36,7 +31,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.owasp.dependencycheck.data.nvdcve.ConnectionFactory;
 import org.owasp.dependencycheck.data.nvdcve.CveDB;
 import org.owasp.dependencycheck.data.nvdcve.DatabaseException;
 import org.owasp.dependencycheck.data.nvdcve.DatabaseProperties;

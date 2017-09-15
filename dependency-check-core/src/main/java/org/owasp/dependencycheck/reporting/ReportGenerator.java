@@ -19,7 +19,6 @@ package org.owasp.dependencycheck.reporting;
 
 import java.util.List;
 
-import com.google.gson.JsonSyntaxException;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
