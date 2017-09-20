@@ -91,7 +91,7 @@ public class ComposerLockAnalyzerTest extends BaseDBTestCase {
     }
 
     /**
-     * Test of basic additions to the depdnency list by parsing the composer.lock file
+     * Make sure the dependency for composer.lock is not removed in some cases.
      *
      * @throws AnalysisException is thrown when an exception occurs.
      */
