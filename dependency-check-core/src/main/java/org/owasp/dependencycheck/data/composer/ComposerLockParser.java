@@ -29,12 +29,14 @@ import javax.json.stream.JsonParsingException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.concurrent.NotThreadSafe;
 
 /**
  * Parses a Composer.lock file from an input stream. In a separate class so it can hopefully be injected.
  *
  * @author colezlaw
  */
+@NotThreadSafe
 public class ComposerLockParser {
 
     /**
@@ -58,7 +60,7 @@ public class ComposerLockParser {
      * @param inputStream the InputStream to parse
      */
     public ComposerLockParser(InputStream inputStream) {
-        LOGGER.info("Creating a ComposerLockParser");
+        LOGGER.debug("Creating a ComposerLockParser");
         this.jsonReader = Json.createReader(inputStream);
         this.composerDependencies = new ArrayList<>();
     }
@@ -67,7 +69,7 @@ public class ComposerLockParser {
      * Process the input stream to create the list of dependencies.
      */
     public void process() {
-        LOGGER.info("Beginning Composer lock processing");
+        LOGGER.debug("Beginning Composer lock processing");
         try {
             final JsonObject composer = jsonReader.readObject();
             if (composer.containsKey("packages")) {

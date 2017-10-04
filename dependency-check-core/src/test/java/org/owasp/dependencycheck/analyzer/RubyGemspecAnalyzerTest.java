@@ -29,6 +29,7 @@ import java.io.File;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
+import org.owasp.dependencycheck.dependency.EvidenceType;
 
 /**
  * Unit tests for {@link RubyGemspecAnalyzer}.
@@ -48,10 +49,13 @@ public class RubyGemspecAnalyzerTest extends BaseTest {
      * @throws Exception thrown if there is a problem
      */
     @Before
+    @Override
     public void setUp() throws Exception {
+        super.setUp();
         analyzer = new RubyGemspecAnalyzer();
+        analyzer.initialize(getSettings());
         analyzer.setFilesMatched(true);
-        analyzer.initialize();
+        analyzer.prepare(null);
     }
 
     /**
@@ -60,9 +64,10 @@ public class RubyGemspecAnalyzerTest extends BaseTest {
      * @throws Exception thrown if there is a problem
      */
     @After
+    @Override
     public void tearDown() throws Exception {
         analyzer.close();
-        analyzer = null;
+        super.tearDown();
     }
 
     /**
@@ -79,6 +84,7 @@ public class RubyGemspecAnalyzerTest extends BaseTest {
     @Test
     public void testSupportsFiles() {
         assertThat(analyzer.accept(new File("test.gemspec")), is(true));
+        assertThat(analyzer.accept(new File("gemspec.lock")), is(false));
 //        assertThat(analyzer.accept(new File("Rakefile")), is(true));
     }
 
@@ -92,25 +98,34 @@ public class RubyGemspecAnalyzerTest extends BaseTest {
         final Dependency result = new Dependency(BaseTest.getResourceAsFile(this,
                 "ruby/vulnerable/gems/specifications/rest-client-1.7.2.gemspec"));
         analyzer.analyze(result, null);
-        final String vendorString = result.getVendorEvidence().toString();
+        final String vendorString = result.getEvidence(EvidenceType.VENDOR).toString();
+        assertEquals(RubyGemspecAnalyzer.DEPENDENCY_ECOSYSTEM, result.getEcosystem());
         assertThat(vendorString, containsString("REST Client Team"));
         assertThat(vendorString, containsString("rest-client_project"));
         assertThat(vendorString, containsString("rest.client@librelist.com"));
         assertThat(vendorString, containsString("https://github.com/rest-client/rest-client"));
-        assertThat(result.getProductEvidence().toString(), containsString("rest-client"));
-        assertThat(result.getVersionEvidence().toString(), containsString("1.7.2"));
+        assertThat(result.getEvidence(EvidenceType.PRODUCT).toString(), containsString("rest-client"));
+        assertThat(result.getEvidence(EvidenceType.VERSION).toString(), containsString("1.7.2"));
+        assertEquals("rest-client", result.getName());
+        assertEquals("1.7.2", result.getVersion());
+        assertEquals("rest-client:1.7.2", result.getDisplayFileName());
     }
-    
+
     /**
      * Test Rakefile analysis.
      *
      * @throws AnalysisException is thrown when an exception occurs.
      */
-    //@Test  TODO: place holder to test Rakefile support
+    //@Test  
+    //TODO: place holder to test Rakefile support
     public void testAnalyzeRakefile() throws AnalysisException {
         final Dependency result = new Dependency(BaseTest.getResourceAsFile(this,
                 "ruby/vulnerable/gems/rails-4.1.15/vendor/bundle/ruby/2.2.0/gems/pg-0.18.4/Rakefile"));
         analyzer.analyze(result, null);
-        assertTrue(result.getEvidence().size()>0);
+        assertTrue(result.size() > 0);
+        assertEquals(RubyGemspecAnalyzer.DEPENDENCY_ECOSYSTEM, result.getEcosystem());
+        assertEquals("pg", result.getName());
+        assertEquals("0.18.4", result.getVersion());
+        assertEquals("pg:0.18.4", result.getDisplayFileName());
     }
 }

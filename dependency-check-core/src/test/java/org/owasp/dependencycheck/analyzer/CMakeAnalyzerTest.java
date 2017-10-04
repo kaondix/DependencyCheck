@@ -42,6 +42,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import org.owasp.dependencycheck.dependency.Evidence;
+import org.owasp.dependencycheck.dependency.EvidenceType;
 
 /**
  * Unit tests for CmakeAnalyzer.
@@ -61,10 +63,13 @@ public class CMakeAnalyzerTest extends BaseDBTestCase {
      * @throws Exception if there is a problem
      */
     @Before
+    @Override
     public void setUp() throws Exception {
+        super.setUp();
         analyzer = new CMakeAnalyzer();
+        analyzer.initialize(getSettings());
         analyzer.setFilesMatched(true);
-        analyzer.initialize();
+        analyzer.prepare(null);
     }
 
     /**
@@ -73,9 +78,15 @@ public class CMakeAnalyzerTest extends BaseDBTestCase {
      * @throws Exception if there is a problem
      */
     @After
+    @Override
     public void tearDown() throws Exception {
-        analyzer.close();
-        analyzer = null;
+        try {
+            analyzer.close();
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        } finally {
+            super.tearDown();
+        }
     }
 
     /**
@@ -125,36 +136,66 @@ public class CMakeAnalyzerTest extends BaseDBTestCase {
         assertProductEvidence(result, product);
     }
 
+    /**
+     * Test whether expected evidence is gathered from OpenCV's CVDetectPython.
+     *
+     * @throws AnalysisException is thrown when an exception occurs.
+     */
+    @Test
+    public void testAnalyzeCMakeListsPython() throws AnalysisException {
+        final Dependency result = new Dependency(BaseTest.getResourceAsFile(
+                this, "cmake/opencv/cmake/OpenCVDetectPython.cmake"));
+        analyzer.analyze(result, null);
+
+        //this one finds nothing so it falls through to the filename. Can we do better?
+        assertEquals("OpenCVDetectPython.cmake", result.getDisplayFileName());
+    }
+
     private void assertProductEvidence(Dependency result, String product) {
-        assertTrue("Expected product evidence to contain \"" + product + "\".",
-                result.getProductEvidence().toString().contains(product));
+        boolean found = false;
+        for (Evidence e : result.getEvidence(EvidenceType.PRODUCT)) {
+            if (product.equals(e.getValue())) {
+                found = true;
+                break;
+            }
+        }
+        assertTrue("Expected product evidence to contain \"" + product + "\".", found);
     }
 
     /**
-     * Test whether expected version evidence is gathered from OpenCV's third party cmake files.
+     * Test whether expected version evidence is gathered from OpenCV's third
+     * party cmake files.
      *
      * @throws AnalysisException is thrown when an exception occurs.
      */
     @Test
     public void testAnalyzeCMakeListsOpenCV3rdParty() throws AnalysisException, DatabaseException {
-        final Dependency result = new Dependency(BaseTest.getResourceAsFile(
-                this, "cmake/opencv/3rdparty/ffmpeg/ffmpeg_version.cmake"));
-        final Engine engine = new Engine();
-        analyzer.analyze(result, engine);
-        assertProductEvidence(result, "libavcodec");
-        assertVersionEvidence(result, "55.18.102");
-        assertFalse("ALIASOF_ prefix shouldn't be present.",
-                Pattern.compile("\\bALIASOF_\\w+").matcher(result.getProductEvidence().toString()).find());
-        final List<Dependency> dependencies = engine.getDependencies();
-        assertEquals("Number of additional dependencies should be 4.", 4, dependencies.size());
-        final Dependency last = dependencies.get(3);
-        assertProductEvidence(last, "libavresample");
-        assertVersionEvidence(last, "1.0.1");
+        try (Engine engine = new Engine(getSettings())) {
+            final Dependency result = new Dependency(BaseTest.getResourceAsFile(
+                    this, "cmake/opencv/3rdparty/ffmpeg/ffmpeg_version.cmake"));
+
+            analyzer.analyze(result, engine);
+            assertProductEvidence(result, "libavcodec");
+            assertVersionEvidence(result, "55.18.102");
+            assertFalse("ALIASOF_ prefix shouldn't be present.",
+                    Pattern.compile("\\bALIASOF_\\w+").matcher(result.getEvidence(EvidenceType.PRODUCT).toString()).find());
+            final Dependency[] dependencies = engine.getDependencies();
+            assertEquals("Number of additional dependencies should be 4.", 4, dependencies.length);
+            final Dependency last = dependencies[3];
+            assertProductEvidence(last, "libavresample");
+            assertVersionEvidence(last, "1.0.1");
+        }
     }
 
     private void assertVersionEvidence(Dependency result, String version) {
-        assertTrue("Expected version evidence to contain \"" + version + "\".",
-                result.getVersionEvidence().toString().contains(version));
+        boolean found = false;
+        for (Evidence e : result.getEvidence(EvidenceType.VERSION)) {
+            if (version.equals(e.getValue())) {
+                found = true;
+                break;
+            }
+        }
+        assertTrue("Expected version evidence to contain \"" + version + "\".", found);
     }
 
     @Test(expected = InitializationException.class)
@@ -169,7 +210,8 @@ public class CMakeAnalyzerTest extends BaseDBTestCase {
         analyzer = new CMakeAnalyzer();
         analyzer.setFilesMatched(true);
         assertTrue(analyzer.isEnabled());
-        analyzer.initialize();
+        analyzer.initialize(getSettings());
+        analyzer.prepare(null);
 
         assertFalse(analyzer.isEnabled());
     }

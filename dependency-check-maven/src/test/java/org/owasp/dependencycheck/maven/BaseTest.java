@@ -17,8 +17,11 @@
  */
 package org.owasp.dependencycheck.maven;
 
+import java.io.IOException;
 import java.io.InputStream;
+import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.owasp.dependencycheck.utils.Settings;
 
@@ -33,16 +36,36 @@ public class BaseTest {
      */
     public static final String PROPERTIES_FILE = "mojo.properties";
 
-    @BeforeClass
-    public static void setUpClass() throws Exception {
-        Settings.initialize();
+    /**
+     * The configured settings.
+     */
+    private Settings settings;
+
+    /**
+     * Initialize the {@link Settings}.
+     */
+    @Before
+    public void setUp() throws IOException {
+        settings = new Settings();
         try (InputStream mojoProperties = BaseTest.class.getClassLoader().getResourceAsStream(BaseTest.PROPERTIES_FILE)) {
-            Settings.mergeProperties(mojoProperties);
+            settings.mergeProperties(mojoProperties);
         }
     }
 
-    @AfterClass
-    public static void tearDownClass() throws Exception {
-        Settings.cleanup(true);
+    /**
+     * Clean the {@link Settings}.
+     */
+    @After
+    public void tearDown() {
+        settings.cleanup(true);
+    }
+
+    /**
+     * Returns the settings for the test cases.
+     *
+     * @return
+     */
+    protected Settings getSettings() {
+        return settings;
     }
 }

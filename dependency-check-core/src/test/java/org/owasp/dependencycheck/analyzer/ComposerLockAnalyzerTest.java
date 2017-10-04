@@ -32,10 +32,13 @@ import org.owasp.dependencycheck.exception.InitializationException;
 import java.io.File;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import org.apache.commons.lang3.ArrayUtils;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertThat;
+import static org.hamcrest.CoreMatchers.equalTo;
 
 /**
  * Unit tests for NodePackageAnalyzer.
@@ -55,10 +58,13 @@ public class ComposerLockAnalyzerTest extends BaseDBTestCase {
      * @throws Exception thrown if there is a problem
      */
     @Before
+    @Override
     public void setUp() throws Exception {
+        super.setUp();
         analyzer = new ComposerLockAnalyzer();
+        analyzer.initialize(getSettings());
         analyzer.setFilesMatched(true);
-        analyzer.initialize();
+        analyzer.prepare(null);
     }
 
     /**
@@ -67,9 +73,10 @@ public class ComposerLockAnalyzerTest extends BaseDBTestCase {
      * @throws Exception thrown if there is a problem
      */
     @After
+    @Override
     public void tearDown() throws Exception {
         analyzer.close();
-        analyzer = null;
+        super.tearDown();
     }
 
     /**
@@ -89,32 +96,62 @@ public class ComposerLockAnalyzerTest extends BaseDBTestCase {
     }
 
     /**
+     * Test of basic additions to the dependency list by parsing the
+     * composer.lock file
+     *
+     * @throws AnalysisException is thrown when an exception occurs.
+     */
+    @Test
+    public void testRemoveRedundantParent() throws Exception {
+        try (Engine engine = new Engine(getSettings())) {
+            final Dependency result = new Dependency(BaseTest.getResourceAsFile(this, "composer.lock"));
+            //test that we don't remove the parent if it's not redundant by name
+            result.setDisplayFileName("NotComposer.Lock");
+            engine.addDependency(result);
+            analyzer.analyze(result, engine);
+            //make sure the composer.lock is not removed
+            assertTrue(ArrayUtils.contains(engine.getDependencies(), result));
+        }
+    }
+
+    /**
      * Test of inspect method, of class PythonDistributionAnalyzer.
      *
      * @throws AnalysisException is thrown when an exception occurs.
      */
     @Test
     public void testAnalyzePackageJson() throws Exception {
-        final Engine engine = new Engine();
-        final Dependency result = new Dependency(BaseTest.getResourceAsFile(this,
-                "composer.lock"));
-        analyzer.analyze(result, engine);
+        try (Engine engine = new Engine(getSettings())) {
+            final Dependency result = new Dependency(BaseTest.getResourceAsFile(this,
+                    "composer.lock"));
+            //simulate normal operation when the composer.lock is already added to the engine as a dependency
+            engine.addDependency(result);
+            analyzer.analyze(result, engine);
+            //make sure the redundant composer.lock is removed
+            assertFalse(ArrayUtils.contains(engine.getDependencies(), result));
+            assertEquals(30, engine.getDependencies().length);
+            Dependency d = engine.getDependencies()[0];
+            assertEquals("classpreloader", d.getName());
+            assertEquals("2.0.0", d.getVersion());
+            assertThat(d.getDisplayFileName(), equalTo("classpreloader:2.0.0"));
+            assertEquals(ComposerLockAnalyzer.DEPENDENCY_ECOSYSTEM, d.getEcosystem());
+        }
     }
-
 
     @Test(expected = InitializationException.class)
     public void analyzerIsDisabledInCaseOfMissingMessageDigest() throws InitializationException {
         new MockUp<MessageDigest>() {
             @Mock
             MessageDigest getInstance(String ignore) throws NoSuchAlgorithmException {
-                throw new NoSuchAlgorithmException();
+                throw new NoSuchAlgorithmException("SHA1 is missing");
             }
         };
 
         analyzer = new ComposerLockAnalyzer();
         analyzer.setFilesMatched(true);
+        analyzer.initialize(getSettings());
         assertTrue(analyzer.isEnabled());
-        analyzer.initialize();
+        analyzer.prepare(null);
 
         assertFalse(analyzer.isEnabled());
     }

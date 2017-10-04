@@ -10,8 +10,10 @@ import org.owasp.dependencycheck.dependency.Dependency;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.hamcrest.CoreMatchers.equalTo;
 
 import java.io.File;
+import org.owasp.dependencycheck.dependency.EvidenceType;
 
 /**
  * Unit tests for CocoaPodsAnalyzer.
@@ -32,14 +34,18 @@ public class SwiftAnalyzersTest extends BaseTest {
      * @throws Exception thrown if there is a problem
      */
     @Before
+    @Override
     public void setUp() throws Exception {
+        super.setUp();
         podsAnalyzer = new CocoaPodsAnalyzer();
+        podsAnalyzer.initialize(getSettings());
         podsAnalyzer.setFilesMatched(true);
-        podsAnalyzer.initialize();
+        podsAnalyzer.prepare(null);
 
         spmAnalyzer = new SwiftPackageManagerAnalyzer();
+        spmAnalyzer.initialize(getSettings());
         spmAnalyzer.setFilesMatched(true);
-        spmAnalyzer.initialize();
+        spmAnalyzer.prepare(null);
     }
 
     /**
@@ -48,12 +54,15 @@ public class SwiftAnalyzersTest extends BaseTest {
      * @throws Exception thrown if there is a problem
      */
     @After
+    @Override
     public void tearDown() throws Exception {
         podsAnalyzer.close();
         podsAnalyzer = null;
 
         spmAnalyzer.close();
         spmAnalyzer = null;
+
+        super.tearDown();
     }
 
     /**
@@ -98,13 +107,17 @@ public class SwiftAnalyzersTest extends BaseTest {
         final Dependency result = new Dependency(BaseTest.getResourceAsFile(this,
                 "swift/cocoapods/EasyPeasy.podspec"));
         podsAnalyzer.analyze(result, null);
-        final String vendorString = result.getVendorEvidence().toString();
+        final String vendorString = result.getEvidence(EvidenceType.VENDOR).toString();
 
         assertThat(vendorString, containsString("Carlos Vidal"));
         assertThat(vendorString, containsString("https://github.com/nakiostudio/EasyPeasy"));
-        assertThat(vendorString, containsString("MIT"));
-        assertThat(result.getProductEvidence().toString(), containsString("EasyPeasy"));
-        assertThat(result.getVersionEvidence().toString(), containsString("0.2.3"));
+        assertThat(result.getEvidence(EvidenceType.PRODUCT).toString(), containsString("EasyPeasy"));
+        assertThat(result.getEvidence(EvidenceType.VERSION).toString(), containsString("0.2.3"));
+        assertThat(result.getName(), equalTo("EasyPeasy"));
+        assertThat(result.getVersion(), equalTo("0.2.3"));
+        assertThat(result.getDisplayFileName(), equalTo("EasyPeasy:0.2.3"));
+        assertThat(result.getLicense(), containsString("MIT"));
+        assertThat(result.getEcosystem(), equalTo(CocoaPodsAnalyzer.DEPENDENCY_ECOSYSTEM));
     }
 
     /**
@@ -118,6 +131,10 @@ public class SwiftAnalyzersTest extends BaseTest {
                 "swift/Gloss/Package.swift"));
         spmAnalyzer.analyze(result, null);
 
-        assertThat(result.getProductEvidence().toString(), containsString("Gloss"));
+        assertThat(result.getEvidence(EvidenceType.PRODUCT).toString(), containsString("Gloss"));
+        assertThat(result.getName(), equalTo("Gloss"));
+        //TODO: when version processing is added, update the expected name.
+        assertThat(result.getDisplayFileName(), equalTo("Gloss"));
+        assertThat(result.getEcosystem(), equalTo(SwiftPackageManagerAnalyzer.DEPENDENCY_ECOSYSTEM));
     }
 }

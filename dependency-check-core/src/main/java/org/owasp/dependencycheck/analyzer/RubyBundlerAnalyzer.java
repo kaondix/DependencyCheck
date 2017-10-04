@@ -19,6 +19,7 @@ package org.owasp.dependencycheck.analyzer;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import javax.annotation.concurrent.ThreadSafe;
 
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
@@ -47,8 +48,14 @@ import org.owasp.dependencycheck.dependency.Dependency;
  * @author Bianca Jiang (https://twitter.com/biancajiang)
  */
 @Experimental
+@ThreadSafe
 public class RubyBundlerAnalyzer extends RubyGemspecAnalyzer {
 
+    /**
+     * A descriptor for the type of dependencies processed or added by this analyzer
+     */
+    public static final String DEPENDENCY_ECOSYSTEM = "Ruby.Bundle";
+    
     /**
      * The name of the analyzer.
      */
@@ -97,7 +104,7 @@ public class RubyBundlerAnalyzer extends RubyGemspecAnalyzer {
     protected void analyzeDependency(Dependency dependency, Engine engine)
             throws AnalysisException {
         super.analyzeDependency(dependency, engine);
-
+        dependency.setEcosystem(DEPENDENCY_ECOSYSTEM);
         //find the corresponding gem folder for this .gemspec stub by "bundle install --deployment"
         final File gemspecFile = dependency.getActualFile();
         final String gemFileName = gemspecFile.getName();

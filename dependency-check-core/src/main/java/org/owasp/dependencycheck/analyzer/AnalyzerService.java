@@ -18,21 +18,23 @@
 package org.owasp.dependencycheck.analyzer;
 
 import java.util.ArrayList;
-import org.owasp.dependencycheck.utils.InvalidSettingException;
-import org.owasp.dependencycheck.utils.Settings;
 import org.slf4j.LoggerFactory;
 
 import static java.util.Arrays.asList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ServiceLoader;
+import javax.annotation.concurrent.ThreadSafe;
+import org.owasp.dependencycheck.utils.InvalidSettingException;
+import org.owasp.dependencycheck.utils.Settings;
 
 /**
  * The Analyzer Service Loader. This class loads all services that implement
- * org.owasp.dependencycheck.analyzer.Analyzer.
+ * {@link org.owasp.dependencycheck.analyzer.Analyzer}.
  *
  * @author Jeremy Long
  */
+@ThreadSafe
 public class AnalyzerService {
 
     /**
@@ -44,15 +46,21 @@ public class AnalyzerService {
      * The service loader for analyzers.
      */
     private final ServiceLoader<Analyzer> service;
+    /**
+     * The configured settings.
+     */
+    private final Settings settings;
 
     /**
      * Creates a new instance of AnalyzerService.
      *
      * @param classLoader the ClassLoader to use when dynamically loading
      * Analyzer and Update services
+     * @param settings the configured settings
      */
-    public AnalyzerService(ClassLoader classLoader) {
+    public AnalyzerService(ClassLoader classLoader, Settings settings) {
         service = ServiceLoader.load(Analyzer.class, classLoader);
+        this.settings = settings;
     }
 
     /**
@@ -86,10 +94,12 @@ public class AnalyzerService {
         final List<Analyzer> analyzers = new ArrayList<>();
         final Iterator<Analyzer> iterator = service.iterator();
         boolean experimentalEnabled = false;
+        boolean retiredEnabled = false;
         try {
-            experimentalEnabled = Settings.getBoolean(Settings.KEYS.ANALYZER_EXPERIMENTAL_ENABLED, false);
+            experimentalEnabled = settings.getBoolean(Settings.KEYS.ANALYZER_EXPERIMENTAL_ENABLED, false);
+            retiredEnabled = settings.getBoolean(Settings.KEYS.ANALYZER_RETIRED_ENABLED, false);
         } catch (InvalidSettingException ex) {
-            LOGGER.error("invalid experimental setting", ex);
+            LOGGER.error("invalid experimental or retired setting", ex);
         }
         while (iterator.hasNext()) {
             final Analyzer a = iterator.next();
@@ -97,6 +107,9 @@ public class AnalyzerService {
                 continue;
             }
             if (!experimentalEnabled && a.getClass().isAnnotationPresent(Experimental.class)) {
+                continue;
+            }
+            if (!retiredEnabled && a.getClass().isAnnotationPresent(Retired.class)) {
                 continue;
             }
             LOGGER.debug("Loaded Analyzer {}", a.getName());
