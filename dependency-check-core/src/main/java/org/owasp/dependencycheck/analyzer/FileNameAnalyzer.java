@@ -21,6 +21,7 @@ import java.io.File;
 import javax.annotation.concurrent.ThreadSafe;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOCase;
 import org.apache.commons.io.filefilter.NameFileFilter;
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
@@ -46,7 +47,15 @@ public class FileNameAnalyzer extends AbstractAnalyzer {
     private static final NameFileFilter IGNORED_FILES = new NameFileFilter(new String[]{
         "__init__.py",
         "__init__.pyc",
-        "__init__.pyo",});
+        "__init__.pyo",
+        "composer.lock",
+        "configure.in",
+        "configure.ac",
+        "Gemfile.lock",
+        "METADATA",
+        "PKG-INFO",
+        "package.json",
+        "Package.swift",}, IOCase.INSENSITIVE);
     //CSON: WhitespaceAfter
 
     //<editor-fold defaultstate="collapsed" desc="All standard implementation details of Analyzer">

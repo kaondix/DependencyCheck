@@ -16,7 +16,7 @@ Property                    | Description                        | Default Value
 ----------------------------|------------------------------------|------------------
 autoUpdate                  | Sets whether auto-updating of the NVD CVE/CPE data is enabled. It is not recommended that this be turned to false. | true
 cveValidForHours            | Sets the number of hours to wait before checking for new updates from the NVD.                                     | 4
-failBuildOnCVSS             | Specifies if the build should be failed if a CVSS score above a specified level is identified. The default is 11 which means since the CVSS scores are 0-10, by default the build will never fail. | 11
+failBuildOnCVSS             | Specifies if the build should be failed if a CVSS score equal to or above a specified level is identified. The default is 11 which means since the CVSS scores are 0-10, by default the build will never fail. | 11
 failBuildOnAnyVulnerability | Specific that if any vulnerability is identified, the build will fail. | false
 failOnError                 | Whether the build should fail if there is an error executing the dependency-check analysis. | true
 format                      | The report format to be generated (HTML, XML, CSV, JSON, VULN, ALL). This configuration option has no affect if using this within the Site plugin unless the externalReport is set to true. | HTML
@@ -47,7 +47,7 @@ archiveAnalyzerEnabled        | Sets whether the Archive Analyzer will be used. 
 zipExtensions                 | A comma-separated list of additional file extensions to be treated like a ZIP file, the contents will be extracted and analyzed. | &nbsp;
 jarAnalyzer                   | Sets whether Jar Analyzer will be used.                                   | true
 centralAnalyzerEnabled        | Sets whether Central Analyzer will be used. If this analyzer is being disabled there is a good chance you also want to disable the Nexus Analyzer (see below). | true
-nexusAnalyzerEnabled          | Sets whether Nexus Analyzer will be used. This analyzer is superceded by the Central Analyzer; however, you can configure this to run against a Nexus Pro installation. | true
+nexusAnalyzerEnabled          | Sets whether Nexus Analyzer will be used (requires Nexus Pro). This analyzer is superceded by the Central Analyzer; however, you can configure this to run against a Nexus Pro installation. | true
 nexusUrl                      | Defines the Nexus Server's web service end point (example http://domain.enterprise/service/local/). If not set the Nexus Analyzer will be disabled. | &nbsp;
 nexusUsesProxy                | Whether or not the defined proxy should be used when connecting to Nexus. | true
 pyDistributionAnalyzerEnabled | Sets whether the [experimental](../analyzers/index.html) Python Distribution Analyzer will be used.               | true

@@ -868,7 +868,8 @@ public class DependencyCheckScanAgent {
     //</editor-fold>
 
     /**
-     * Executes the Dependency-Check on the dependent libraries.
+     * Executes the Dependency-Check on the dependent libraries. <b>Note</b>, the engine
+     * object returned from this method must be closed by calling `close()`
      *
      * @return the Engine used to scan the dependencies.
      * @throws ExceptionCollection a collection of one or more exceptions that
@@ -887,6 +888,8 @@ public class DependencyCheckScanAgent {
                 engine.doUpdates();
             } catch (UpdateException ex) {
                 throw new ExceptionCollection("Unable to perform update", ex);
+            } finally {
+                engine.close();
             }
         } else {
             engine.setDependencies(this.dependencies);
@@ -1028,7 +1031,7 @@ public class DependencyCheckScanAgent {
             final String msg;
             if (showSummary) {
                 msg = String.format("%n%nDependency-Check Failure:%n"
-                        + "One or more dependencies were identified with vulnerabilities that have a CVSS score greater than '%.1f': %s%n"
+                        + "One or more dependencies were identified with vulnerabilities that have a CVSS score greater than or equal to '%.1f': %s%n"
                         + "See the dependency-check report for more details.%n%n", failBuildOnCVSS, ids.toString());
             } else {
                 msg = String.format("%n%nDependency-Check Failure:%n"
