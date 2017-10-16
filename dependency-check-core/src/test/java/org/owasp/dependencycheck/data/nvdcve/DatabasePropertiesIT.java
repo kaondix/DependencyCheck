@@ -18,13 +18,13 @@
 package org.owasp.dependencycheck.data.nvdcve;
 
 import org.owasp.dependencycheck.BaseDBTestCase;
+
+import static org.junit.Assert.*;
+
 import java.util.Properties;
 import org.junit.After;
 import org.junit.Test;
 import org.owasp.dependencycheck.data.update.nvd.NvdCveInfo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 
 /**

@@ -94,6 +94,7 @@ public abstract class AbstractSuppressionAnalyzer extends AbstractAnalyzer {
             }
         }
     }
+    }
 
     @Override
     protected void analyzeDependency(Dependency dependency, Engine engine) throws AnalysisException {
@@ -122,7 +123,6 @@ public abstract class AbstractSuppressionAnalyzer extends AbstractAnalyzer {
         final String[] suppressionFilePaths = getSettings().getArray(Settings.KEYS.SUPPRESSION_FILE);
         final List<String> failedLoadingFiles = new ArrayList<>();
         if (suppressionFilePaths != null && suppressionFilePaths.length > 0) {
-
             // Load all the suppression file paths
             for (final String suppressionFilePath : suppressionFilePaths) {
                 try {
@@ -134,6 +134,7 @@ public abstract class AbstractSuppressionAnalyzer extends AbstractAnalyzer {
             }
         }
         rules = ruleList.toArray(new SuppressionRule[ruleList.size()]);
+
         LOGGER.debug("{} suppression rules were loaded.", ruleList.size());
         if (!failedLoadingFiles.isEmpty()) {
             LOGGER.debug("{} suppression files failed to load.", failedLoadingFiles.size());
@@ -156,8 +157,7 @@ public abstract class AbstractSuppressionAnalyzer extends AbstractAnalyzer {
      * be loaded and parsed.
      */
     private List<SuppressionRule> loadSuppressionFile(final SuppressionParser parser,
-            final String suppressionFilePath) throws SuppressionParseException {
-        LOGGER.debug("Loading suppression rules from '{}'", suppressionFilePath);
+            final String suppressionFilePath) {        LOGGER.debug("Loading suppression rules from '{}'", suppressionFilePath);
         final List<SuppressionRule> list = new ArrayList<>();
         File file = null;
         boolean deleteTempFile = false;
@@ -166,13 +166,21 @@ public abstract class AbstractSuppressionAnalyzer extends AbstractAnalyzer {
             if (uriRx.matcher(suppressionFilePath).matches()) {
                 deleteTempFile = true;
                 file = getSettings().getTempFile("suppression", "xml");
-                final URL url = new URL(suppressionFilePath);
+                try{
+	                final URL url = new URL(suppressionFilePath);
                 final Downloader downloader = new Downloader(getSettings());
-                try {
+	                try {
                     downloader.fetchFile(url, file, false);
-                } catch (DownloadFailedException ex) {
+	                } catch (DownloadFailedException ex) {
                     LOGGER.trace("Failed download - first attempt", ex);
                     downloader.fetchFile(url, file, true);
+	                }
+                } catch (DownloadFailedException ex) {
+                	final String msg = String.format("Unable to fetch the configured suppression file '%s'", suppressionFilePath);
+                	throw new SuppressionParseException(msg, ex);
+                } catch (MalformedURLException ex) {
+                	final String msg = String.format("Configured suppression file '%s' has an invalid URL", suppressionFilePath);
+                	throw new SuppressionParseException(msg, ex);
                 }
             } else {
                 file = new File(suppressionFilePath);
@@ -185,7 +193,8 @@ public abstract class AbstractSuppressionAnalyzer extends AbstractAnalyzer {
                             try {
                                 org.apache.commons.io.FileUtils.copyInputStreamToFile(suppressionsFromClasspath, file);
                             } catch (IOException ex) {
-                                throwSuppressionParseException("Unable to locate suppressions file in classpath", ex);
+                            	final String msg = String.format("Unable to locate suppressions file in classpath '%s'", suppressionFilePath);
+                            	throw new SuppressionParseException(msg, ex);
                             }
                         }
                     }
@@ -200,19 +209,17 @@ public abstract class AbstractSuppressionAnalyzer extends AbstractAnalyzer {
                 try {
                     list.addAll(parser.parseSuppressionRules(file));
                 } catch (SuppressionParseException ex) {
-                    LOGGER.warn("Unable to parse suppression xml file '{}'", file.getPath());
-                    LOGGER.warn(ex.getMessage());
-                    throw ex;
+                	final String msg = String.format("Unable to parse suppression xml file '%s'", suppressionFilePath);
+                	throw new SuppressionParseException(msg, ex);
                 }
+                LOGGER.debug("'{}' correctly loaded",suppressionFilePath);
             }
-        } catch (DownloadFailedException ex) {
-            throwSuppressionParseException("Unable to fetch the configured suppression file", ex);
-        } catch (MalformedURLException ex) {
-            throwSuppressionParseException("Configured suppression file has an invalid URL", ex);
+        
         } catch (SuppressionParseException ex) {
-            throw ex;
+        	LOGGER.warn(ex.getMessage());
+        	LOGGER.debug("", ex);
         } catch (IOException ex) {
-            throwSuppressionParseException("Unable to create temp file for suppressions", ex);
+        	LOGGER.warn("Unable to create temp file for suppressions");            
         } finally {
             if (deleteTempFile && file != null) {
                 FileUtils.delete(file);
@@ -221,17 +228,4 @@ public abstract class AbstractSuppressionAnalyzer extends AbstractAnalyzer {
         return list;
     }
 
-    /**
-     * Utility method to throw parse exceptions.
-     *
-     * @param message the exception message
-     * @param exception the cause of the exception
-     * @throws SuppressionParseException throws the generated
-     * SuppressionParseException
-     */
-    private void throwSuppressionParseException(String message, Exception exception) throws SuppressionParseException {
-        LOGGER.warn(message);
-        LOGGER.debug("", exception);
-        throw new SuppressionParseException(message, exception);
-    }
 }

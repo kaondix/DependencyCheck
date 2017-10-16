@@ -85,7 +85,7 @@ public class CPEAnalyzerIT extends BaseDBTestCase {
     public void testDetermineCPE_full() throws Exception {
         CPEAnalyzer cpeAnalyzer = new CPEAnalyzer();
         try (Engine e = new Engine(getSettings())) {
-            //update needs to be performed so that xtream can be tested
+        //update needs to be performed so that xtream can be tested
             e.doUpdates(true);
             cpeAnalyzer.initialize(getSettings());
             cpeAnalyzer.prepare(e);
@@ -198,19 +198,19 @@ public class CPEAnalyzerIT extends BaseDBTestCase {
             engine.openDatabase(true, true);
             instance.initialize(getSettings());
             instance.prepare(engine);
-            instance.determineCPE(commonValidator);
-            instance.determineCPE(struts);
-            instance.determineCPE(spring);
-            instance.determineCPE(spring3);
-            instance.close();
+        instance.determineCPE(commonValidator);
+        instance.determineCPE(struts);
+        instance.determineCPE(spring);
+        instance.determineCPE(spring3);
+        instance.close();
 
-            String expResult = "cpe:/a:apache:struts:2.1.2";
+        String expResult = "cpe:/a:apache:struts:2.1.2";
 
-            for (Identifier i : commonValidator.getIdentifiers()) {
-                assertFalse("Apache Common Validator - found a CPE identifier?", "cpe".equals(i.getType()));
-            }
+        for (Identifier i : commonValidator.getIdentifiers()) {
+            assertFalse("Apache Common Validator - found a CPE identifier?", "cpe".equals(i.getType()));
+        }
 
-            assertTrue("Incorrect match size - struts", struts.getIdentifiers().size() >= 1);
+        assertTrue("Incorrect match size - struts", struts.getIdentifiers().size() >= 1);
             boolean found = false;
             for (Identifier i : struts.getIdentifiers()) {
                 if (expResult.equals(i.getValue())) {
@@ -219,10 +219,10 @@ public class CPEAnalyzerIT extends BaseDBTestCase {
                 }
             }
             assertTrue("Incorrect match - struts", found);
-            assertTrue("Incorrect match size - spring3 - " + spring3.getIdentifiers().size(), spring3.getIdentifiers().size() >= 1);
+        assertTrue("Incorrect match size - spring3 - " + spring3.getIdentifiers().size(), spring3.getIdentifiers().size() >= 1);
 
-            jarAnalyzer.close();
-        }
+        jarAnalyzer.close();
+    }
     }
 
     /**
@@ -242,8 +242,8 @@ public class CPEAnalyzerIT extends BaseDBTestCase {
             engine.openDatabase(true, true);
             instance.initialize(getSettings());
             instance.prepare(engine);
-            instance.determineIdentifiers(openssl, "openssl", "openssl", Confidence.HIGHEST);
-            instance.close();
+        instance.determineIdentifiers(openssl, "openssl", "openssl", Confidence.HIGHEST);
+        instance.close();
         }
 
         String expResult = "cpe:/a:openssl:openssl:1.0.1c";
@@ -253,7 +253,7 @@ public class CPEAnalyzerIT extends BaseDBTestCase {
             if (expResult.equals(i.getValue())) {
                 found = true;
                 break;
-            }
+    }
         }
         assertTrue("OpenSSL identifier not found", found);
     }
@@ -276,19 +276,19 @@ public class CPEAnalyzerIT extends BaseDBTestCase {
             instance.initialize(getSettings());
             instance.prepare(engine);
 
-            Set<String> productWeightings = Collections.singleton("struts2");
-            Set<String> vendorWeightings = Collections.singleton("apache");
-            List<IndexEntry> result = instance.searchCPE(vendor, product, vendorWeightings, productWeightings);
+        Set<String> productWeightings = Collections.singleton("struts2");
+        Set<String> vendorWeightings = Collections.singleton("apache");
+        List<IndexEntry> result = instance.searchCPE(vendor, product, vendorWeightings, productWeightings);
 
-            boolean found = false;
-            for (IndexEntry entry : result) {
-                if (expVendor.equals(entry.getVendor()) && expProduct.equals(entry.getProduct())) {
-                    found = true;
-                    break;
-                }
+        boolean found = false;
+        for (IndexEntry entry : result) {
+            if (expVendor.equals(entry.getVendor()) && expProduct.equals(entry.getProduct())) {
+                found = true;
+                break;
             }
-            assertTrue("apache:struts was not identified", found);
         }
+        assertTrue("apache:struts was not identified", found);
+    }
         instance.close();
     }
 }
