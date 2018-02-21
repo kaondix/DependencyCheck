@@ -88,4 +88,10 @@ public class DependencyVersionUtilTest extends BaseTest {
         assertEquals(expResult, result);
 
     }
+
+    @Test
+    public void testParseJavaVersion() {
+        assertEquals(DependencyVersionUtil.parseVersion("1.8.0.45"), DependencyVersionUtil.parseVersion("1.8.0.update_45"));
+        assertEquals(DependencyVersionUtil.parseVersion("1.8.0.145"), DependencyVersionUtil.parseVersion("1.8.0.update_145"));
+    }
 }
