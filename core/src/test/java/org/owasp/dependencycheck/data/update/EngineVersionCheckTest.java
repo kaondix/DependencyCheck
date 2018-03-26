@@ -83,7 +83,7 @@ public class EngineVersionCheckTest extends BaseTest {
 
         DatabaseProperties properties = Deencapsulation.newUninitializedInstance(DatabaseProperties.class);
 
-                String updateToVersion = "1.2.6";
+        String updateToVersion = "1.2.6";
         String currentVersion = "1.2.6";
         
         long lastChecked = dateToMilliseconds("2014-12-01");
