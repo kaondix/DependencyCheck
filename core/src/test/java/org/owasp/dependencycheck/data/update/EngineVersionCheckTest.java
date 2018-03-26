@@ -16,6 +16,8 @@
 package org.owasp.dependencycheck.data.update;
 
 import java.util.Properties;
+
+import mockit.Deencapsulation;
 import mockit.Mock;
 import mockit.MockUp;
 import org.joda.time.DateTime;
@@ -64,7 +66,7 @@ public class EngineVersionCheckTest extends BaseTest {
      */
     @Test
     public void testShouldUpdate() throws Exception {
-        DatabaseProperties properties = new MockUp<DatabaseProperties>() {
+        new MockUp<DatabaseProperties>() {
             final private Properties properties = new Properties();
             
             @Mock
@@ -77,8 +79,10 @@ public class EngineVersionCheckTest extends BaseTest {
                 return properties.getProperty(key);
             }
             
-        }.getMockInstance();
-        
+        };
+
+        DatabaseProperties properties = Deencapsulation.newUninitializedInstance(DatabaseProperties.class);
+
         String updateToVersion = "1.2.6";
         String currentVersion = "1.2.6";
         

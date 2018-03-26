@@ -68,7 +68,7 @@ public class BaseDependencyCheckMojoTest extends BaseTest {
     @Test
     public void testScanArtifacts() throws DatabaseException, InvalidSettingException {
         if (canRun()) {
-            MavenProject project = new MockUp<MavenProject>() {
+            new MockUp<MavenProject>() {
                 @Mock
                 public Set<Artifact> getArtifacts() {
                     Set<Artifact> artifacts = new HashSet<>();
@@ -89,7 +89,9 @@ public class BaseDependencyCheckMojoTest extends BaseTest {
                 public String getName() {
                     return "test-project";
                 }
-            }.getMockInstance();
+            };
+
+            MavenProject project = new MavenProject();
 
             boolean autoUpdate = getSettings().getBoolean(Settings.KEYS.AUTO_UPDATE);
             getSettings().setBoolean(Settings.KEYS.AUTO_UPDATE, false);
