@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Locale;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.artifact.resolver.filter.ArtifactFilter;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.doxia.sink.Sink;
 import org.apache.maven.execution.MavenSession;
@@ -720,7 +721,7 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
      */
     protected ExceptionCollection scanArtifacts(MavenProject project, Engine engine) {
         try {
-            final DependencyNode dn = dependencyGraphBuilder.buildDependencyGraph(project.getProjectBuildingRequest(), null, reactorProjects);
+            final DependencyNode dn = dependencyGraphBuilder.buildDependencyGraph(newResolveArtifactProjectBuildingRequest(), null, reactorProjects);
             final ProjectBuildingRequest buildingRequest = newResolveArtifactProjectBuildingRequest();
             return collectDependencies(engine, project, dn.getChildren(), buildingRequest);
         } catch (DependencyGraphBuilderException ex) {
@@ -905,6 +906,7 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
     public ProjectBuildingRequest newResolveArtifactProjectBuildingRequest() {
         final ProjectBuildingRequest buildingRequest = new DefaultProjectBuildingRequest(session.getProjectBuildingRequest());
         buildingRequest.setRemoteRepositories(remoteRepositories);
+        buildingRequest.setProject(project);
         return buildingRequest;
     }
 
