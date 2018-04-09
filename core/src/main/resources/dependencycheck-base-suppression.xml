@@ -2074,4 +2074,16 @@
         <gav regex="true">^io\.vertx:vertx-config-kubernetes-configmap:.*$</gav>
         <cpe>cpe:/a:kubernetes:kubernetes</cpe>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+        This suppresses the false positive
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>.*</artifactId>
+            <version>2.0.0.RELEASE</version>
+        </dependency>
+        ]]></notes>
+        <gav regex="true">^org\.springframework\.boot:.*:2.0.0.RELEASE$</gav>
+        <cve>CVE-2017-8046</cve>
+    </suppress>
 </suppressions>
