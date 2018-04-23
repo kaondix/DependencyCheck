@@ -340,7 +340,7 @@ Copyright (c) 2012 - Jeremy Long
                 <groupId>org.codehaus.gmavenplus</groupId>
                 <artifactId>gmavenplus-plugin</artifactId>
                 <!-- upgrading beyond 1.5 will cause the build to fail on Java 7 -->
-                <version>1.5</version>
+                <version>1.6</version>
                 <dependencies>
                     <dependency>
                         <groupId>org.codehaus.groovy</groupId>
@@ -360,9 +360,9 @@ Copyright (c) 2012 - Jeremy Long
                             <scripts>
                                 <script><![CDATA[
                                 if ("dependency-check-parent".equals("${project.artifactId}")) {
-                                    config = "file:///"+project.basedir.absolutePath.replace('\\','\\\\')+"/src/main/config"
+                                    config = "file:///"+project.basedir.absolutePath.replace('\','\\')+"/src/main/config"
                                 } else {
-                                    config = "file:///"+project.basedir.absolutePath.replace('\\','\\\\')+"/../src/main/config"
+                                    config = "file:///"+project.basedir.absolutePath.replace('\','\\')+"/../src/main/config"
                                 }
                                 project.properties['odc.config']= config
                                 ]]></script>
@@ -379,9 +379,9 @@ Copyright (c) 2012 - Jeremy Long
                             <scripts>
                                 <script><![CDATA[
                                 if ("dependency-check-parent".equals("${project.artifactId}")) {
-                                    config = "file:///"+project.basedir.absolutePath.replace('\\','\\\\')+"/src/main/config"
+                                    config = "file:///"+project.basedir.absolutePath.replace('\','\\')+"/src/main/config"
                                 } else {
-                                    config = "file:///"+project.basedir.absolutePath.replace('\\','\\\\')+"/../src/main/config"
+                                    config = "file:///"+project.basedir.absolutePath.replace('\','\\')+"/../src/main/config"
                                 }
                                 project.properties['odc.config']= config
                                 ]]></script>
@@ -399,9 +399,9 @@ Copyright (c) 2012 - Jeremy Long
                             <scripts>
                                 <script><![CDATA[
                                 if ("dependency-check-parent".equals("${project.artifactId}")) {
-                                    config = "file:///"+project.basedir.absolutePath.replace('\\','\\\\')+"/src/main/config"
+                                    config = "file:///"+project.basedir.absolutePath.replace('\','\\')+"/src/main/config"
                                 } else {
-                                    config = "file:///"+project.basedir.absolutePath.replace('\\','\\\\')+"/../src/main/config"
+                                    config = "file:///"+project.basedir.absolutePath.replace('\','\\')+"/../src/main/config"
                                 }
                                 project.properties['odc.config']= config
                                 ]]></script>
