@@ -323,7 +323,7 @@ Copyright (c) 2012 Jeremy Long. All Rights Reserved.
         <dependency>
             <groupId>com.google.inject</groupId>
             <artifactId>guice</artifactId>
-            <version>3.0</version>
+            <version>4.2.0</version>
             <scope>test</scope>
             <optional>true</optional>
         </dependency>
