@@ -110,9 +110,9 @@ public class Check extends Update {
      */
     private String zipExtensions;
     /**
-     * The path to Mono for .NET assembly analysis on non-windows systems.
+     * The path to dotnet for .NET assembly analysis on non-windows systems.
      */
-    private String pathToMono;
+    private String pathToDotnet;
 
     /**
      * The application name for the report.
@@ -951,21 +951,21 @@ public class Check extends Update {
     }
 
     /**
-     * Get the value of pathToMono.
+     * Get the value of pathToDotnet.
      *
-     * @return the value of pathToMono
+     * @return the value of pathToDotnet
      */
-    public String getPathToMono() {
-        return pathToMono;
+    public String getpathToDotnet() {
+        return pathToDotnet;
     }
 
     /**
-     * Set the value of pathToMono.
+     * Set the value of pathToDotnet.
      *
-     * @param pathToMono new value of pathToMono
+     * @param pathToDotnet new value of pathToDotnet
      */
-    public void setPathToMono(String pathToMono) {
-        this.pathToMono = pathToMono;
+    public void setpathToDotnet(String pathToDotnet) {
+        this.pathToDotnet = pathToDotnet;
     }
 
     @Override
@@ -1080,7 +1080,7 @@ public class Check extends Update {
         getSettings().setStringIfNotEmpty(Settings.KEYS.ANALYZER_NEXUS_URL, nexusUrl);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_NEXUS_USES_PROXY, nexusUsesProxy);
         getSettings().setStringIfNotEmpty(Settings.KEYS.ADDITIONAL_ZIP_EXTENSIONS, zipExtensions);
-        getSettings().setStringIfNotEmpty(Settings.KEYS.ANALYZER_ASSEMBLY_MONO_PATH, pathToMono);
+        getSettings().setStringIfNotEmpty(Settings.KEYS.ANALYZER_ASSEMBLY_DOTNET_PATH, pathToDotnet);
     }
 
     /**

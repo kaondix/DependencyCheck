@@ -121,8 +121,8 @@ public final class CliParser {
         if (isRunScan()) {
             validatePathExists(getScanFiles(), ARGUMENT.SCAN);
             validatePathExists(getReportDirectory(), ARGUMENT.OUT);
-            if (getPathToMono() != null) {
-                validatePathExists(getPathToMono(), ARGUMENT.PATH_TO_MONO);
+            if (getPathToDotNet() != null) {
+                validatePathExists(getPathToDotNet(), ARGUMENT.PATH_TO_DOTNET);
             }
             if (!line.hasOption(ARGUMENT.APP_NAME) && !line.hasOption(ARGUMENT.PROJECT)) {
                 throw new ParseException("Missing '" + ARGUMENT.PROJECT + "' argument; the scan cannot be run without the an project name.");
@@ -383,8 +383,8 @@ public final class CliParser {
                 .desc("A comma separated list of additional extensions to be scanned as ZIP files "
                         + "(ZIP, EAR, WAR are already treated as zip files)").build();
 
-        final Option pathToMono = Option.builder().argName("path").hasArg().longOpt(ARGUMENT.PATH_TO_MONO)
-                .desc("The path to Mono for .NET Assembly analysis on non-windows systems.")
+        final Option pathToDotnet = Option.builder().argName("path").hasArg().longOpt(ARGUMENT.PATH_TO_DOTNET)
+                .desc("The path to dotnet for .NET Assembly analysis on non-windows systems.")
                 .build();
 
         final Option pathToBundleAudit = Option.builder().argName("path").hasArg()
@@ -511,7 +511,7 @@ public final class CliParser {
                 .addOption(nexusUrl)
                 .addOption(nexusUsesProxy)
                 .addOption(additionalZipExtensions)
-                .addOption(pathToMono)
+                .addOption(pathToDotnet)
                 .addOption(pathToBundleAudit)
                 .addOption(purge);
     }
@@ -882,19 +882,19 @@ public final class CliParser {
     }
 
     /**
-     * Returns the path to Mono for .NET Assembly analysis on non-windows
+     * Returns the path to dotnet for .NET Assembly analysis on non-windows
      * systems.
      *
-     * @return the path to Mono
+     * @return the path to dotnet
      */
-    public String getPathToMono() {
-        return line.getOptionValue(ARGUMENT.PATH_TO_MONO);
+    public String getPathToDotNet() {
+        return line.getOptionValue(ARGUMENT.PATH_TO_DOTNET);
     }
 
     /**
      * Returns the path to bundle-audit for Ruby bundle analysis.
      *
-     * @return the path to Mono
+     * @return the path to dotnet
      */
     public String getPathToBundleAudit() {
         return line.getOptionValue(ARGUMENT.PATH_TO_BUNDLE_AUDIT);
@@ -1514,10 +1514,10 @@ public final class CliParser {
          */
         public static final String DB_DRIVER_PATH = "dbDriverPath";
         /**
-         * The CLI argument name for setting the path to mono for .NET Assembly
+         * The CLI argument name for setting the path to dotnet for .NET Assembly
          * analysis on non-windows systems.
          */
-        public static final String PATH_TO_MONO = "mono";
+        public static final String PATH_TO_DOTNET = "dotnet";
         /**
          * The CLI argument name for setting extra extensions.
          */

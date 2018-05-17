@@ -22,6 +22,7 @@ import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.NullOutputStream;
 import org.owasp.dependencycheck.Engine;
@@ -93,10 +94,10 @@ public class AssemblyAnalyzer extends AbstractFileTypeAnalyzer {
         // Use file.separator as a wild guess as to whether this is Windows
         final List<String> args = new ArrayList<>();
         if (!SystemUtils.IS_OS_WINDOWS) {
-            if (getSettings().getString(Settings.KEYS.ANALYZER_ASSEMBLY_MONO_PATH) != null) {
-                args.add(getSettings().getString(Settings.KEYS.ANALYZER_ASSEMBLY_MONO_PATH));
-            } else if (isInPath("mono")) {
-                args.add("mono");
+            if (getSettings().getString(Settings.KEYS.ANALYZER_ASSEMBLY_DOTNET_PATH) != null) {
+                args.add(getSettings().getString(Settings.KEYS.ANALYZER_ASSEMBLY_DOTNET_PATH));
+            } else if (isInPath("dotnet")) {
+                args.add("dotnet");
             } else {
                 return null;
             }
@@ -190,7 +191,7 @@ public class AssemblyAnalyzer extends AbstractFileTypeAnalyzer {
         } catch (SAXException saxe) {
             LOGGER.error("----------------------------------------------------");
             LOGGER.error("Failed to read the Assembly Analyzer results. "
-                    + "On some systems mono-runtime and mono-devel need to be installed.");
+                    + "On some systems dotnet need to be installed.");
             LOGGER.error("----------------------------------------------------");
             throw new AnalysisException("Couldn't parse Assembly Analyzer results (GrokAssembly)", saxe);
         }
@@ -207,17 +208,37 @@ public class AssemblyAnalyzer extends AbstractFileTypeAnalyzer {
     public void prepareFileTypeAnalyzer(Engine engine) throws InitializationException {
         final File tempFile;
         final File cfgFile;
-        try {
-            tempFile = File.createTempFile("GKA", ".exe", getSettings().getTempDirectory());
-            cfgFile = new File(tempFile.getPath() + ".config");
-        } catch (IOException ex) {
-            setEnabled(false);
-            throw new InitializationException("Unable to create temporary file for the assembly analyzer", ex);
+        final String exeFileSource;
+        final String cfgFileSource;
+
+        if (SystemUtils.IS_OS_WINDOWS) {
+            try {
+                tempFile = File.createTempFile("GKA", ".exe", getSettings().getTempDirectory());
+                cfgFile = new File(tempFile.getPath() + ".config");
+            } catch (IOException ex) {
+                setEnabled(false);
+                throw new InitializationException("Unable to create temporary file for the assembly analyzer", ex);
+            }
+
+            exeFileSource = "GrokAssembly.exe";
+            cfgFileSource = "GrokAssembly.exe.config";
+
+        } else {
+            try {
+                tempFile = File.createTempFile("GKA", ".dll", getSettings().getTempDirectory());
+                cfgFile = new File(FilenameUtils.removeExtension(tempFile.getAbsolutePath()) + ".runtimeconfig.json");
+            } catch (IOException ex) {
+                setEnabled(false);
+                throw new InitializationException("Unable to create temporary file for the assembly analyzer", ex);
+            }
+
+            exeFileSource = "GrokAssemblyCore.dll";
+            cfgFileSource = "GrokAssemblyCore.runtimeconfig.json";
         }
         try (FileOutputStream fos = new FileOutputStream(tempFile);
-                InputStream is = FileUtils.getResourceAsStream("GrokAssembly.exe");
+                InputStream is = FileUtils.getResourceAsStream(exeFileSource);
                 FileOutputStream fosCfg = new FileOutputStream(cfgFile);
-                InputStream isCfg = FileUtils.getResourceAsStream("GrokAssembly.exe.config")) {
+                InputStream isCfg = FileUtils.getResourceAsStream(cfgFileSource)) {
             IOUtils.copy(is, fos);
             grokAssemblyExe = tempFile;
             LOGGER.debug("Extracted GrokAssembly.exe to {}", grokAssemblyExe.getPath());
@@ -243,9 +264,9 @@ public class AssemblyAnalyzer extends AbstractFileTypeAnalyzer {
             setEnabled(false);
             LOGGER.error("----------------------------------------------------");
             LOGGER.error(".NET Assembly Analyzer could not be initialized and at least one "
-                    + "'exe' or 'dll' was scanned. The 'mono' executable could not be found on "
-                    + "the path; either disable the Assembly Analyzer or configure the path mono. "
-                    + "On some systems mono-runtime and mono-devel need to be installed.");
+                    + "'exe' or 'dll' was scanned. The 'dotnet' executable could not be found on "
+                    + "the path; either disable the Assembly Analyzer or configure the path. "
+                    + "On some systems dotnet need to be installed.");
             LOGGER.error("----------------------------------------------------");
             return;
         }

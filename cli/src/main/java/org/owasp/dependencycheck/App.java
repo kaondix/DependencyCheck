@@ -415,7 +415,7 @@ public class App {
         final String databaseUser = cli.getDatabaseUser();
         final String databasePassword = cli.getDatabasePassword();
         final String additionalZipExtensions = cli.getAdditionalZipExtensions();
-        final String pathToMono = cli.getPathToMono();
+        final String pathToDotNet = cli.getPathToDotNet();
         final String cveMod12 = cli.getModifiedCve12Url();
         final String cveMod20 = cli.getModifiedCve20Url();
         final String cveBase12 = cli.getBaseCve12Url();
@@ -493,7 +493,7 @@ public class App {
         settings.setStringIfNotEmpty(Settings.KEYS.DB_USER, databaseUser);
         settings.setStringIfNotEmpty(Settings.KEYS.DB_PASSWORD, databasePassword);
         settings.setStringIfNotEmpty(Settings.KEYS.ADDITIONAL_ZIP_EXTENSIONS, additionalZipExtensions);
-        settings.setStringIfNotEmpty(Settings.KEYS.ANALYZER_ASSEMBLY_MONO_PATH, pathToMono);
+        settings.setStringIfNotEmpty(Settings.KEYS.ANALYZER_ASSEMBLY_DOTNET_PATH, pathToDotNet);
         if (cveBase12 != null && !cveBase12.isEmpty()) {
             settings.setString(Settings.KEYS.CVE_SCHEMA_1_2, cveBase12);
             settings.setString(Settings.KEYS.CVE_SCHEMA_2_0, cveBase20);

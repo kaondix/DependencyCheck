@@ -86,7 +86,7 @@ bundleAuditAnalyzerEnabled    | Sets whether the [experimental](../analyzers/ind
 bundleAuditPath               | Sets the path to the bundle audit executable; only used if bundle audit analyzer is enabled and experimental analyzers are enabled.  | &nbsp;
 swiftPackageManagerAnalyzerEnabled | Sets whether the [experimental](../analyzers/index.html) Switft Package Analyzer should be used.      | true
 assemblyAnalyzerEnabled       | Sets whether the .NET Assembly Analyzer should be used.                                                    | true
-pathToMono                    | The path to Mono for .NET assembly analysis on non-windows systems.                                        | &nbsp;
+pathToDotnet                  | The path to dotnet runtime for .NET assembly analysis on non-windows systems.                              | &nbsp;
 
 Advanced Configuration
 ====================

@@ -530,11 +530,11 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
     private Integer cveValidForHours;
 
     /**
-     * The path to mono for .NET Assembly analysis on non-windows systems.
+     * The path to dotnet for .NET Assembly analysis on non-windows systems.
      */
     @SuppressWarnings("CanBeFinal")
-    @Parameter(property = "pathToMono", defaultValue = "", required = false)
-    private String pathToMono;
+    @Parameter(property = "pathToDotnet", defaultValue = "", required = false)
+    private String pathToDotnet;
 
     /**
      * The Proxy URL.
@@ -1275,7 +1275,7 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
         settings.setBooleanIfNotNull(Settings.KEYS.ANALYZER_ASSEMBLY_ENABLED, assemblyAnalyzerEnabled);
         settings.setBooleanIfNotNull(Settings.KEYS.ANALYZER_ARCHIVE_ENABLED, archiveAnalyzerEnabled);
         settings.setStringIfNotEmpty(Settings.KEYS.ADDITIONAL_ZIP_EXTENSIONS, zipExtensions);
-        settings.setStringIfNotEmpty(Settings.KEYS.ANALYZER_ASSEMBLY_MONO_PATH, pathToMono);
+        settings.setStringIfNotEmpty(Settings.KEYS.ANALYZER_ASSEMBLY_DOTNET_PATH, pathToDotnet);
 
         settings.setBooleanIfNotNull(Settings.KEYS.ANALYZER_PYTHON_DISTRIBUTION_ENABLED, pyDistributionAnalyzerEnabled);
         settings.setBooleanIfNotNull(Settings.KEYS.ANALYZER_PYTHON_PACKAGE_ENABLED, pyPackageAnalyzerEnabled);
