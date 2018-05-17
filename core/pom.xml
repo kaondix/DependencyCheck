@@ -240,7 +240,7 @@ Copyright (c) 2012 Jeremy Long. All Rights Reserved.
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-webmvc</artifactId>
-            <version>2.5.5</version>
+            <version>4.3.17.RELEASE</version>
             <scope>test</scope>
             <optional>true</optional>
         </dependency>
