@@ -87,6 +87,12 @@ public class Check extends Update {
      * Whether the python distribution analyzer should be enabled.
      */
     private Boolean pyDistributionAnalyzerEnabled;
+
+    private Boolean rDistributionAnalyzerEnabled;
+
+    private Boolean mixDistributionAnalyzerEnabled;
+
+
     /**
      * Whether or not the central analyzer is enabled.
      */
@@ -860,6 +866,56 @@ public class Check extends Update {
         this.pyDistributionAnalyzerEnabled = pyDistributionAnalyzerEnabled;
     }
 
+    /***********************************************/
+
+    /**
+     * Get the value of rDistributionAnalyzerEnabled.
+     *
+     * @return the value of rDistributionAnalyzerEnabled
+     */
+    public Boolean isRDistributionAnalyzerEnabled() {
+        return rDistributionAnalyzerEnabled;
+    }
+
+    /**
+     * Set the value of rDistributionAnalyzerEnabled.
+     *
+     * @param rDistributionAnalyzerEnabled new value of
+     * rDistributionAnalyzerEnabled
+     */
+    public void setRDistributionAnalyzerEnabled(Boolean rDistributionAnalyzerEnabled) {
+        this.rDistributionAnalyzerEnabled = rDistributionAnalyzerEnabled;
+    }
+
+
+
+
+
+
+
+
+    /**
+     * Get the value of mixDistributionAnalyzerEnabled.
+     *
+     * @return the value of mixDistributionAnalyzerEnabled
+     */
+    public Boolean isMixDistributionAnalyzerEnabled() {
+        return mixDistributionAnalyzerEnabled;
+    }
+
+    /**
+     * Set the value of mixDistributionAnalyzerEnabled.
+     *
+     * @param mixDistributionAnalyzerEnabled new value of
+     * mixDistributionAnalyzerEnabled
+     */
+    public void setMixDistributionAnalyzerEnabled(Boolean mixDistributionAnalyzerEnabled) {
+        this.mixDistributionAnalyzerEnabled = mixDistributionAnalyzerEnabled;
+    }
+
+
+
+
     /**
      * Get the value of centralAnalyzerEnabled.
      *
@@ -1061,6 +1117,13 @@ public class Check extends Update {
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_JAR_ENABLED, jarAnalyzerEnabled);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_PYTHON_DISTRIBUTION_ENABLED, pyDistributionAnalyzerEnabled);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_PYTHON_PACKAGE_ENABLED, pyPackageAnalyzerEnabled);
+
+        getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_R_DISTRIBUTION_ENABLED, rDistributionAnalyzerEnabled);
+
+        getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_MIX_PACKAGE_ENABLED, mixDistributionAnalyzerEnabled);
+
+
+
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_RUBY_GEMSPEC_ENABLED, rubygemsAnalyzerEnabled);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_OPENSSL_ENABLED, opensslAnalyzerEnabled);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_CMAKE_ENABLED, cmakeAnalyzerEnabled);

@@ -133,7 +133,7 @@ Copyright (c) 2012 Jeremy Long. All Rights Reserved.
                         </goals>
                         <configuration>
                             <includes>
-                                <include>**/*.class</include>
+                                <include>**/*.class</include>pwd
                             </includes>
                         </configuration>
                     </execution>
@@ -142,6 +142,11 @@ Copyright (c) 2012 Jeremy Long. All Rights Reserved.
         </plugins>
     </build>
     <dependencies>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.11</version>
+        </dependency>
         <dependency>
             <groupId>com.vdurmont</groupId>
             <artifactId>semver4j</artifactId>

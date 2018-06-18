@@ -469,6 +469,11 @@ public class App {
         settings.setBoolean(Settings.KEYS.ANALYZER_ARCHIVE_ENABLED, !cli.isArchiveDisabled());
         settings.setBoolean(Settings.KEYS.ANALYZER_PYTHON_DISTRIBUTION_ENABLED, !cli.isPythonDistributionDisabled());
         settings.setBoolean(Settings.KEYS.ANALYZER_PYTHON_PACKAGE_ENABLED, !cli.isPythonPackageDisabled());
+
+        settings.setBoolean(Settings.KEYS.ANALYZER_R_DISTRIBUTION_ENABLED, !cli.isRDistributionDisabled());
+        settings.setBoolean(Settings.KEYS.ANALYZER_MIX_PACKAGE_ENABLED, !cli.isMixPackageDisabled());
+
+
         settings.setBoolean(Settings.KEYS.ANALYZER_AUTOCONF_ENABLED, !cli.isAutoconfDisabled());
         settings.setBoolean(Settings.KEYS.ANALYZER_CMAKE_ENABLED, !cli.isCmakeDisabled());
         settings.setBoolean(Settings.KEYS.ANALYZER_NUSPEC_ENABLED, !cli.isNuspecDisabled());

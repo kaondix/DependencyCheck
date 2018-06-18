@@ -289,6 +289,22 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
      */
     @Parameter(property = "pyPackageAnalyzerEnabled", required = false)
     private Boolean pyPackageAnalyzerEnabled;
+
+    /*******************************************************************/
+    /**
+     * Sets whether the R Distribution Analyzer will be used.
+     */
+    @SuppressWarnings("CanBeFinal")
+    @Parameter(property = "rDistributionAnalyzerEnabled", required = false)
+    private Boolean rDistributionAnalyzerEnabled;
+    /********************************************************************/
+    /**
+     * Sets whether the Mix Package Analyzer will be used.
+     */
+    @Parameter(property = "mixPackageAnalyzerEnabled", required = false)
+    private Boolean mixPackageAnalyzerEnabled;
+    /********************************************************************/
+
     /**
      * Sets whether the Ruby Gemspec Analyzer will be used.
      */
@@ -1295,6 +1311,12 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
 
         settings.setBooleanIfNotNull(Settings.KEYS.ANALYZER_PYTHON_DISTRIBUTION_ENABLED, pyDistributionAnalyzerEnabled);
         settings.setBooleanIfNotNull(Settings.KEYS.ANALYZER_PYTHON_PACKAGE_ENABLED, pyPackageAnalyzerEnabled);
+
+        settings.setBooleanIfNotNull(Settings.KEYS.ANALYZER_R_DISTRIBUTION_ENABLED, rDistributionAnalyzerEnabled);
+        settings.setBooleanIfNotNull(Settings.KEYS.ANALYZER_MIX_PACKAGE_ENABLED, mixPackageAnalyzerEnabled);
+
+
+
         settings.setBooleanIfNotNull(Settings.KEYS.ANALYZER_RUBY_GEMSPEC_ENABLED, rubygemsAnalyzerEnabled);
         settings.setBooleanIfNotNull(Settings.KEYS.ANALYZER_OPENSSL_ENABLED, opensslAnalyzerEnabled);
         settings.setBooleanIfNotNull(Settings.KEYS.ANALYZER_CMAKE_ENABLED, cmakeAnalyzerEnabled);

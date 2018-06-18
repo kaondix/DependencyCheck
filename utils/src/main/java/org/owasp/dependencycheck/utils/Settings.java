@@ -290,6 +290,19 @@ public final class Settings {
          * enabled.
          */
         public static final String ANALYZER_PYTHON_PACKAGE_ENABLED = "analyzer.python.package.enabled";
+
+        /**
+         * The properties key for whether the r.distribution analyzer is
+         * enabled.
+         */
+        public static final String ANALYZER_R_DISTRIBUTION_ENABLED = "analyzer.r.distribution.enabled";
+
+        /**
+         * The properties key for whether the mix.distribution analyzer is
+         * enabled.
+         */
+        public static final String ANALYZER_MIX_PACKAGE_ENABLED = "analyzer.mix.distribution.enabled";
+
         /**
          * The properties key for whether the Ruby Gemspec Analyzer is enabled.
          */

@@ -441,6 +441,14 @@ public final class CliParser {
         final Option disablePythonPackageAnalyzer = Option.builder().longOpt(ARGUMENT.DISABLE_PY_PKG)
                 .desc("Disable the Python Package Analyzer.").build();
 
+        final Option disableRDistributionAnalyzer = Option.builder().longOpt(ARGUMENT.DISABLE_R_DIST)
+                .desc("Disable the R Distribution Analyzer.").build();
+
+
+        final Option disableMixPackageAnalyzer = Option.builder().longOpt(ARGUMENT.DISABLE_MIX_PKG)
+                .desc("Disable the Mix Package Analyzer.").build();
+
+
         final Option disableComposerAnalyzer = Option.builder().longOpt(ARGUMENT.DISABLE_COMPOSER)
                 .desc("Disable the PHP Composer Analyzer.").build();
 
@@ -490,8 +498,12 @@ public final class CliParser {
                 .addOption(disableAssemblyAnalyzer)
                 .addOption(pathToBundleAudit)
                 .addOption(disablePythonDistributionAnalyzer)
-                .addOption(disableCmakeAnalyzer)
                 .addOption(disablePythonPackageAnalyzer)
+                .addOption(disableCmakeAnalyzer)
+
+                .addOption(disableRDistributionAnalyzer)
+                .addOption(disableMixPackageAnalyzer)
+
                 .addOption(Option.builder().longOpt(ARGUMENT.DISABLE_RUBYGEMS)
                         .desc("Disable the Ruby Gemspec Analyzer.").build())
                 .addOption(Option.builder().longOpt(ARGUMENT.DISABLE_BUNDLE_AUDIT)
@@ -681,6 +693,29 @@ public final class CliParser {
         return hasDisableOption(ARGUMENT.DISABLE_PY_PKG, Settings.KEYS.ANALYZER_PYTHON_PACKAGE_ENABLED);
     }
 
+    /************************************************************************/
+
+    /**
+     * Returns true if the disableRDist command line argument was specified.
+     *
+     * @return true if the disableRDist command line argument was specified;
+     * otherwise false
+     */
+    public boolean isRDistributionDisabled() {
+        return hasDisableOption(ARGUMENT.DISABLE_R_DIST, Settings.KEYS.ANALYZER_R_DISTRIBUTION_ENABLED);
+    }
+
+    /**
+     * Returns true if the disableMixPkg command line argument was specified.
+     *
+     * @return true if the disableMixPkg command line argument was specified;
+     * otherwise false
+     */
+    public boolean isMixPackageDisabled() {
+        return hasDisableOption(ARGUMENT.DISABLE_MIX_PKG, Settings.KEYS.ANALYZER_MIX_PACKAGE_ENABLED);
+    }
+
+    /***********************************************************************/
     /**
      * Returns whether the Ruby gemspec analyzer is disabled.
      *
@@ -1427,8 +1462,26 @@ public final class CliParser {
          * Disables the Python Package Analyzer.
          */
         public static final String DISABLE_PY_PKG = "disablePyPkg";
+
+
         /**
-         * Disables the Python Package Analyzer.
+         * Disables the R Distribution Analyzer.
+         */
+        public static final String DISABLE_R_DIST = "disableRDist";
+        /**
+         * Disables the R Package Analyzer.
+         */
+        public static final String DISABLE_R_PKG = "disableRPkg";
+        /**
+         * Disables the Mix Package Analyzer.
+         */
+        public static final String DISABLE_MIX_PKG = "disableMixPkg";
+
+
+
+
+        /**
+         * Disables the PHP Composer Analyzer.
          */
         public static final String DISABLE_COMPOSER = "disableComposer";
         /**
