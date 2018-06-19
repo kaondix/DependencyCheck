@@ -143,11 +143,6 @@ Copyright (c) 2012 Jeremy Long. All Rights Reserved.
     </build>
     <dependencies>
         <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>8.0.11</version>
-        </dependency>
-        <dependency>
             <groupId>com.vdurmont</groupId>
             <artifactId>semver4j</artifactId>
         </dependency>
