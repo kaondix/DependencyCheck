@@ -32,6 +32,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import org.junit.Before;
@@ -116,7 +117,7 @@ public class CveDBIT extends BaseDBTestCase {
         assertTrue("Expected " + expected + ", but was not identified", found);
 
         found = false;
-        expected = "CVE-2012-5370";
+        expected = "CVE-2012-5370"; // Affects all versions
         for (Vulnerability v : results) {
             if (expected.equals(v.getName())) {
                 found = true;
@@ -124,6 +125,16 @@ public class CveDBIT extends BaseDBTestCase {
             }
         }
         assertTrue("Expected " + expected + ", but was not identified", found);
+
+        found = false;
+        expected = "CVE-2010-1330"; // Affects all versions before 1.4.1
+        for (Vulnerability v : results) {
+            if (expected.equals(v.getName())) {
+                found = true;
+                break;
+            }
+        }
+        assertFalse("Did not expect " + expected + ", but it was identified", found);
     }
 
     /**
@@ -174,9 +185,18 @@ public class CveDBIT extends BaseDBTestCase {
 
         versions.clear();
 
-        versions.put("cpe:/a:jruby:jruby:-", Boolean.FALSE);
+        versions.put("cpe:/a:jruby:jruby:-", Boolean.FALSE); // Matches all versions
         identifiedVersion = new DependencyVersion("1.6.3");
         results = instance.getMatchingSoftware(versions, "springsource", "spring_framework", identifiedVersion);
         assertNotNull(results);
+
+        versions.put("cpe:/a:jruby:jruby:1.0.0", Boolean.TRUE); // Adding another version means that the hyphen only denotes the initial version
+        results = instance.getMatchingSoftware(versions, "springsource", "spring_framework", identifiedVersion);
+        assertNull(results);
+
+        versions.put("cpe:/a:jruby:jruby:1.6.5", Boolean.TRUE);
+        results = instance.getMatchingSoftware(versions, "springsource", "spring_framework", identifiedVersion);
+        assertNotNull(results);
+
     }
 }

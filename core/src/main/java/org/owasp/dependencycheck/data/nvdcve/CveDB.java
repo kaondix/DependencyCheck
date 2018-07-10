@@ -959,7 +959,7 @@ public final class CveDB implements AutoCloseable {
         String majorVersionMatch = null;
         for (Entry<String, Boolean> entry : vulnerableSoftware.entrySet()) {
             final DependencyVersion v = parseDependencyVersion(entry.getKey());
-            if (v == null || "-".equals(v.toString())) { //all versions
+            if (v == null || ("-".equals(v.toString()) && vulnerableSoftware.size() == 1)) { //all versions
                 return entry;
             }
             if (entry.getValue()) {
