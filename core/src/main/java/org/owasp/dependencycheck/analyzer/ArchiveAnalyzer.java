@@ -17,20 +17,6 @@
  */
 package org.owasp.dependencycheck.analyzer;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-import javax.annotation.concurrent.ThreadSafe;
-
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -43,7 +29,6 @@ import org.apache.commons.compress.compressors.bzip2.BZip2Utils;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipUtils;
 import org.apache.commons.compress.utils.IOUtils;
-
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.analyzer.exception.ArchiveExtractionException;
@@ -52,9 +37,22 @@ import org.owasp.dependencycheck.exception.InitializationException;
 import org.owasp.dependencycheck.utils.FileFilterBuilder;
 import org.owasp.dependencycheck.utils.FileUtils;
 import org.owasp.dependencycheck.utils.Settings;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.concurrent.ThreadSafe;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * <p>
@@ -250,7 +248,7 @@ public class ArchiveAnalyzer extends AbstractFileTypeAnalyzer {
         extractFiles(f, tmpDir, engine);
 
         //make a copy
-        final List<Dependency> dependencySet = findMoreDependencies(engine, tmpDir);
+        final Collection<Dependency> dependencySet = findMoreDependencies(engine, tmpDir);
 
         if (dependencySet != null && !dependencySet.isEmpty()) {
             for (Dependency d : dependencySet) {
@@ -318,7 +316,7 @@ public class ArchiveAnalyzer extends AbstractFileTypeAnalyzer {
                 dependency.setSha1sum("");
                 dependency.setSha256sum("");
                 org.apache.commons.io.FileUtils.copyFile(dependency.getActualFile(), tmpLoc);
-                final List<Dependency> dependencySet = findMoreDependencies(engine, tmpLoc);
+                final Collection<Dependency> dependencySet = findMoreDependencies(engine, tmpLoc);
                 if (dependencySet != null && !dependencySet.isEmpty()) {
                     for (Dependency d : dependencySet) {
                         //fix the dependency's display name and path
@@ -352,7 +350,7 @@ public class ArchiveAnalyzer extends AbstractFileTypeAnalyzer {
      * @param file target of scanning
      * @return any dependencies that weren't known to the engine before
      */
-    private static List<Dependency> findMoreDependencies(Engine engine, File file) {
+    private static Collection<Dependency> findMoreDependencies(Engine engine, File file) {
         return engine.scan(file);
     }
 

@@ -1,29 +1,28 @@
 package org.owasp.dependencycheck;
 
-import org.junit.Before;
 import org.junit.After;
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.rules.TestName;
 import org.owasp.dependencycheck.analyzer.AnalysisPhase;
 import org.owasp.dependencycheck.dependency.Dependency;
+import org.owasp.dependencycheck.dependency.EvidenceType;
+import org.owasp.dependencycheck.utils.FileUtils;
 import org.owasp.dependencycheck.utils.Settings;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import org.junit.Assume;
-import org.owasp.dependencycheck.dependency.EvidenceType;
-import org.owasp.dependencycheck.utils.FileUtils;
+import static org.junit.Assert.*;
 
 /**
  * @author Mark Rekveld
@@ -65,7 +64,7 @@ public class EngineModeIT extends BaseTest {
 
     @Test
     public void testEvidenceCollectionAndEvidenceProcessingModes() throws Exception {
-        Dependency[] dependencies;
+        List<Dependency> dependencies;
         try (Engine engine = new Engine(Engine.Mode.EVIDENCE_COLLECTION, getSettings())) {
             engine.openDatabase(); //does nothing in the current mode
             assertDatabase(false);
@@ -79,8 +78,8 @@ public class EngineModeIT extends BaseTest {
             engine.scan(file);
             engine.analyzeDependencies();
             dependencies = engine.getDependencies();
-            assertThat(dependencies.length, is(1));
-            Dependency dependency = dependencies[0];
+            assertThat(dependencies.size(), is(1));
+            Dependency dependency = dependencies.get(0);
             assertTrue(dependency.getEvidence(EvidenceType.VENDOR).toString().toLowerCase().contains("apache"));
             assertTrue(dependency.getVendorWeightings().contains("apache"));
             assertTrue(dependency.getVulnerabilities().isEmpty());
@@ -95,9 +94,9 @@ public class EngineModeIT extends BaseTest {
             for (AnalysisPhase phase : Engine.Mode.EVIDENCE_COLLECTION.getPhases()) {
                 assertThat(engine.getAnalyzers(phase), is(nullValue()));
             }
-            engine.addDependency(dependencies[0]);
+            engine.addDependency(dependencies.get(0));
             engine.analyzeDependencies();
-            Dependency dependency = dependencies[0];
+            Dependency dependency = dependencies.get(0);
             assertFalse(dependency.getVulnerabilities().isEmpty());
         }
     }
@@ -113,9 +112,9 @@ public class EngineModeIT extends BaseTest {
             File file = BaseTest.getResourceAsFile(this, "struts2-core-2.1.2.jar");
             engine.scan(file);
             engine.analyzeDependencies();
-            Dependency[] dependencies = engine.getDependencies();
-            assertThat(dependencies.length, is(1));
-            Dependency dependency = dependencies[0];
+            List<Dependency> dependencies = engine.getDependencies();
+            assertThat(dependencies.size(), is(1));
+            Dependency dependency = dependencies.get(0);
             assertTrue(dependency.getEvidence(EvidenceType.VENDOR).toString().toLowerCase().contains("apache"));
             assertTrue(dependency.getVendorWeightings().contains("apache"));
             assertFalse(dependency.getVulnerabilities().isEmpty());

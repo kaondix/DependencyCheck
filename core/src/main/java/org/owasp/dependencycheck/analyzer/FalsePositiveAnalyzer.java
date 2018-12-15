@@ -17,19 +17,6 @@
  */
 package org.owasp.dependencycheck.analyzer;
 
-import java.io.FileFilter;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import javax.annotation.concurrent.ThreadSafe;
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.dependency.Dependency;
@@ -41,6 +28,21 @@ import org.owasp.dependencycheck.utils.FileFilterBuilder;
 import org.owasp.dependencycheck.utils.Settings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.concurrent.ThreadSafe;
+import java.io.FileFilter;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * This analyzer attempts to remove some well known false positives -
@@ -483,7 +485,7 @@ public class FalsePositiveAnalyzer extends AbstractAnalyzer {
             String parentPath = dependency.getFilePath().toLowerCase();
             if (parentPath.contains(".jar")) {
                 parentPath = parentPath.substring(0, parentPath.indexOf(".jar") + 4);
-                final Dependency[] dependencies = engine.getDependencies();
+                final Collection<Dependency> dependencies = engine.getDependencies();
                 final Dependency parent = findDependency(parentPath, dependencies);
                 if (parent != null) {
                     boolean remove = false;
@@ -516,7 +518,7 @@ public class FalsePositiveAnalyzer extends AbstractAnalyzer {
      * @param dependencies the array of dependencies to search
      * @return the dependency object for the given path, otherwise null
      */
-    private Dependency findDependency(String dependencyPath, Dependency[] dependencies) {
+    private Dependency findDependency(String dependencyPath, Collection<Dependency> dependencies) {
         for (Dependency d : dependencies) {
             if (d.getFilePath().equalsIgnoreCase(dependencyPath)) {
                 return d;

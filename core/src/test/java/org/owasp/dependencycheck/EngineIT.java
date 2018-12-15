@@ -17,18 +17,19 @@
  */
 package org.owasp.dependencycheck;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.junit.Test;
 import org.owasp.dependencycheck.data.nvdcve.DatabaseException;
 import org.owasp.dependencycheck.exception.ExceptionCollection;
 import org.owasp.dependencycheck.exception.ReportException;
 import org.owasp.dependencycheck.utils.InvalidSettingException;
 import org.owasp.dependencycheck.utils.Settings;
-import static org.junit.Assert.assertTrue;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
+
+import static org.junit.Assert.*;
 
 /**
  *
@@ -51,7 +52,7 @@ public class EngineIT extends BaseDBTestCase {
         getSettings().setBoolean(Settings.KEYS.AUTO_UPDATE, false);
         try (Engine instance = new Engine(getSettings())) {
             instance.scan(testClasses);
-            assertTrue(instance.getDependencies().length > 0);
+            assertTrue(instance.getDependencies().size() > 0);
             try {
                 instance.analyzeDependencies();
             } catch (ExceptionCollection ex) {

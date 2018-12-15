@@ -17,14 +17,16 @@
  */
 package org.owasp.dependencycheck.analyzer;
 
-import java.util.HashSet;
-import java.util.Set;
-import javax.annotation.concurrent.ThreadSafe;
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.dependency.Dependency;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.concurrent.ThreadSafe;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * <p>
@@ -91,15 +93,15 @@ public abstract class AbstractDependencyComparingAnalyzer extends AbstractAnalyz
             analyzed = true;
             final Set<Dependency> dependenciesToRemove = new HashSet<>();
 
-            final Dependency[] dependencies = engine.getDependencies();
-            if (dependencies.length < 2) {
+            final List<Dependency> dependencies = engine.getDependencies();
+            if (dependencies.size() < 2) {
                 return;
             }
-            for (int x = 0; x < dependencies.length - 1; x++) {
-                final Dependency dependency = dependencies[x];
+            for (int x = 0; x < dependencies.size() - 1; x++) {
+                final Dependency dependency = dependencies.get(x);
                 if (!dependenciesToRemove.contains(dependency)) {
-                    for (int y = x + 1; y < dependencies.length; y++) {
-                        final Dependency nextDependency = dependencies[y];
+                    for (int y = x + 1; y < dependencies.size(); y++) {
+                        final Dependency nextDependency = dependencies.get(y);
                         if (evaluateDependencies(dependency, nextDependency, dependenciesToRemove)) {
                             break;
                         }

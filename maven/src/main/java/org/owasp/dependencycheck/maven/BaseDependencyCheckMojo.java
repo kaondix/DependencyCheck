@@ -19,6 +19,8 @@ package org.owasp.dependencycheck.maven;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.artifact.resolver.filter.ArtifactFilter;
+import org.apache.maven.artifact.resolver.filter.ExcludesArtifactFilter;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.doxia.sink.Sink;
 import org.apache.maven.execution.MavenSession;
@@ -35,15 +37,16 @@ import org.apache.maven.reporting.MavenReport;
 import org.apache.maven.reporting.MavenReportException;
 import org.apache.maven.settings.Proxy;
 import org.apache.maven.settings.Server;
+import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
+import org.apache.maven.shared.dependency.graph.DependencyGraphBuilderException;
+import org.apache.maven.shared.dependency.graph.DependencyNode;
+import org.apache.maven.shared.dependency.graph.traversal.CollectingDependencyNodeVisitor;
+import org.apache.maven.shared.model.fileset.FileSet;
+import org.apache.maven.shared.model.fileset.util.FileSetManager;
 import org.apache.maven.shared.transfer.artifact.ArtifactCoordinate;
 import org.apache.maven.shared.transfer.artifact.TransferUtils;
 import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolver;
 import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolverException;
-import org.apache.maven.shared.dependency.graph.DependencyGraphBuilder;
-import org.apache.maven.shared.dependency.graph.DependencyGraphBuilderException;
-import org.apache.maven.shared.dependency.graph.DependencyNode;
-import org.apache.maven.shared.model.fileset.FileSet;
-import org.apache.maven.shared.model.fileset.util.FileSetManager;
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.JarAnalyzer;
 import org.owasp.dependencycheck.data.nexus.MavenArtifact;
@@ -69,12 +72,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import org.apache.maven.artifact.resolver.filter.ArtifactFilter;
-import org.apache.maven.artifact.resolver.filter.ExcludesArtifactFilter;
-import org.apache.maven.shared.dependency.graph.traversal.CollectingDependencyNodeVisitor;
 
 /**
  * @author Jeremy Long
@@ -1718,7 +1719,7 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
      * @throws MojoFailureException thrown if a CVSS score is found that is
      * higher then the threshold set
      */
-    protected void checkForFailure(Dependency[] dependencies) throws MojoFailureException {
+    protected void checkForFailure(Collection<Dependency> dependencies) throws MojoFailureException {
         final StringBuilder ids = new StringBuilder();
         for (Dependency d : dependencies) {
             boolean addName = true;
@@ -1756,11 +1757,10 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
     /**
      * Generates a warning message listing a summary of dependencies and their
      * associated CPE and CVE entries.
-     *
-     * @param mp the Maven project for which the summary is shown
+     *  @param mp the Maven project for which the summary is shown
      * @param dependencies a list of dependency objects
      */
-    protected void showSummary(MavenProject mp, Dependency[] dependencies) {
+    protected void showSummary(MavenProject mp, Collection<Dependency> dependencies) {
         if (showSummary) {
             final StringBuilder summary = new StringBuilder();
             for (Dependency d : dependencies) {

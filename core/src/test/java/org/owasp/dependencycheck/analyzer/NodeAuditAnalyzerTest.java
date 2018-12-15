@@ -1,18 +1,20 @@
 package org.owasp.dependencycheck.analyzer;
 
+import org.junit.Assume;
 import org.junit.Test;
 import org.owasp.dependencycheck.BaseTest;
+import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.dependency.Dependency;
-import java.io.File;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
-import org.junit.Assume;
-import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.dependency.EvidenceType;
 import org.owasp.dependencycheck.exception.InitializationException;
 import org.owasp.dependencycheck.utils.InvalidSettingException;
 import org.owasp.dependencycheck.utils.Settings;
+
+import java.io.File;
+
+import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.*;
 
 public class NodeAuditAnalyzerTest extends BaseTest {
 
@@ -41,7 +43,7 @@ public class NodeAuditAnalyzerTest extends BaseTest {
             final Dependency toScan = new Dependency(BaseTest.getResourceAsFile(this, "nodeaudit/package-lock.json"));
             analyzer.analyze(toScan, engine);
             boolean found = false;
-            assertTrue("Mpre then 1 dependency should be identified", 1 < engine.getDependencies().length);
+            assertTrue("Mpre then 1 dependency should be identified", 1 < engine.getDependencies().size());
             for (Dependency result : engine.getDependencies()) {
                 if ("package-lock.json?uglify-js".equals(result.getFileName())) {
                     found = true;
@@ -83,7 +85,7 @@ public class NodeAuditAnalyzerTest extends BaseTest {
             final Dependency toScan = new Dependency(BaseTest.getResourceAsFile(this, "nodejs/node_modules/dns-sync/package.json"));
             engine.addDependency(toScan);
             analyzer.analyze(toScan, engine);
-            assertEquals("No dependencies should exist", 0, engine.getDependencies().length);
+            assertEquals("No dependencies should exist", 0, engine.getDependencies().size());
         }
     }
 

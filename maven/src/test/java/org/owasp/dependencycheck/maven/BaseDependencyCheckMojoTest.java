@@ -17,13 +17,6 @@
  */
 package org.owasp.dependencycheck.maven;
 
-import java.io.File;
-import java.net.URISyntaxException;
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mockit.Mock;
 import mockit.MockUp;
 import mockit.Tested;
@@ -32,8 +25,6 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.testing.stubs.ArtifactStub;
 import org.apache.maven.project.MavenProject;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import org.junit.Assume;
 import org.junit.Test;
 import org.owasp.dependencycheck.Engine;
@@ -41,6 +32,16 @@ import org.owasp.dependencycheck.data.nvdcve.DatabaseException;
 import org.owasp.dependencycheck.exception.ExceptionCollection;
 import org.owasp.dependencycheck.utils.InvalidSettingException;
 import org.owasp.dependencycheck.utils.Settings;
+
+import java.io.File;
+import java.net.URISyntaxException;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import static org.junit.Assert.*;
 
 /**
  *
@@ -100,14 +101,14 @@ public class BaseDependencyCheckMojoTest extends BaseTest {
             try (Engine engine = new Engine(getSettings())) {
                 getSettings().setBoolean(Settings.KEYS.AUTO_UPDATE, autoUpdate);
 
-                assertTrue(engine.getDependencies().length == 0);
+                assertTrue(engine.getDependencies().size() == 0);
                 BaseDependencyCheckMojoImpl instance = new BaseDependencyCheckMojoImpl();
                 try { //the mock above fails under some JDKs
                     instance.scanArtifacts(project, engine);
                 } catch (NullPointerException ex) {
                     Assume.assumeNoException(ex);
                 }
-                assertFalse(engine.getDependencies().length == 0);
+                assertFalse(engine.getDependencies().size() == 0);
             }
         }
     }

@@ -17,24 +17,9 @@
  */
 package org.owasp.dependencycheck.reporting;
 
-import java.util.List;
-
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
-import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
-import javax.annotation.concurrent.NotThreadSafe;
 import org.apache.commons.text.WordUtils;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -52,6 +37,22 @@ import org.owasp.dependencycheck.utils.FileUtils;
 import org.owasp.dependencycheck.utils.Settings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.concurrent.NotThreadSafe;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * The ReportGenerator is used to, as the name implies, generate reports.
@@ -114,16 +115,15 @@ public class ReportGenerator {
 
     /**
      * Constructs a new ReportGenerator.
-     *
-     * @param applicationName the application name being analyzed
+     *  @param applicationName the application name being analyzed
      * @param dependencies the list of dependencies
      * @param analyzers the list of analyzers used
      * @param properties the database properties (containing timestamps of the
-     * NVD CVE data)
+* NVD CVE data)
      * @param settings a reference to the database settings
      */
-    public ReportGenerator(String applicationName, List<Dependency> dependencies, List<Analyzer> analyzers,
-            DatabaseProperties properties, Settings settings) {
+    public ReportGenerator(String applicationName, Collection<Dependency> dependencies, List<Analyzer> analyzers,
+                           DatabaseProperties properties, Settings settings) {
         this.settings = settings;
         velocityEngine = createVelocityEngine();
         velocityEngine.init();
@@ -132,20 +132,19 @@ public class ReportGenerator {
 
     /**
      * Constructs a new ReportGenerator.
-     *
-     * @param applicationName the application name being analyzed
+     *  @param applicationName the application name being analyzed
      * @param groupID the group id of the project being analyzed
      * @param artifactID the application id of the project being analyzed
      * @param version the application version of the project being analyzed
      * @param dependencies the list of dependencies
      * @param analyzers the list of analyzers used
      * @param properties the database properties (containing timestamps of the
-     * NVD CVE data)
+* NVD CVE data)
      * @param settings a reference to the database settings
      */
     //CSOFF: ParameterNumber
     public ReportGenerator(String applicationName, String groupID, String artifactID, String version,
-            List<Dependency> dependencies, List<Analyzer> analyzers, DatabaseProperties properties, Settings settings) {
+                           Collection<Dependency> dependencies, List<Analyzer> analyzers, DatabaseProperties properties, Settings settings) {
         this(applicationName, dependencies, analyzers, properties, settings);
         if (version != null) {
             context.put("applicationVersion", version);
@@ -182,8 +181,8 @@ public class ReportGenerator {
      * NVD CVE data)
      * @return the velocity context
      */
-    private VelocityContext createContext(String applicationName, List<Dependency> dependencies,
-            List<Analyzer> analyzers, DatabaseProperties properties) {
+    private VelocityContext createContext(String applicationName, Collection<Dependency> dependencies,
+                                          List<Analyzer> analyzers, DatabaseProperties properties) {
         final DateTime dt = new DateTime();
         final DateTimeFormatter dateFormat = DateTimeFormat.forPattern("MMM d, yyyy 'at' HH:mm:ss z");
         final DateTimeFormatter dateFormatXML = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ");

@@ -27,13 +27,9 @@ import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.dependency.Dependency;
 
 import java.io.File;
-import org.apache.commons.lang3.ArrayUtils;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertThat;
-import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.*;
 
 /**
  * Unit tests for NodePackageAnalyzer.
@@ -104,9 +100,9 @@ public class ComposerLockAnalyzerTest extends BaseDBTestCase {
             engine.addDependency(result);
             analyzer.analyze(result, engine);
             //make sure the redundant composer.lock is removed
-            assertFalse(ArrayUtils.contains(engine.getDependencies(), result));
-            assertEquals(30, engine.getDependencies().length);
-            Dependency d = engine.getDependencies()[0];
+            assertFalse(engine.getDependencies().contains(result));
+            assertEquals(30, engine.getDependencies().size());
+            Dependency d = engine.getDependencies().get(0);
             assertEquals("classpreloader", d.getName());
             assertEquals("2.0.0", d.getVersion());
             assertThat(d.getDisplayFileName(), equalTo("classpreloader:2.0.0"));

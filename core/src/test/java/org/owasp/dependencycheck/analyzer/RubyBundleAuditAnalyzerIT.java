@@ -17,12 +17,6 @@
  */
 package org.owasp.dependencycheck.analyzer;
 
-import edu.emory.mathcs.backport.java.util.Arrays;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
@@ -32,20 +26,21 @@ import org.owasp.dependencycheck.BaseTest;
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.data.nvdcve.DatabaseException;
+import org.owasp.dependencycheck.data.update.exception.UpdateException;
 import org.owasp.dependencycheck.dependency.Dependency;
+import org.owasp.dependencycheck.dependency.EvidenceType;
 import org.owasp.dependencycheck.dependency.Vulnerability;
 import org.owasp.dependencycheck.exception.ExceptionCollection;
+import org.owasp.dependencycheck.exception.InitializationException;
 import org.owasp.dependencycheck.utils.Settings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.owasp.dependencycheck.data.update.exception.UpdateException;
-import org.owasp.dependencycheck.exception.InitializationException;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import org.owasp.dependencycheck.dependency.EvidenceType;
+
+import java.io.File;
+import java.util.Collection;
+
+import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.*;
 
 /**
  * Unit tests for {@link RubyBundleAuditAnalyzer}.
@@ -123,8 +118,8 @@ public class RubyBundleAuditAnalyzerIT extends BaseDBTestCase {
             final String resource = "ruby/vulnerable/gems/rails-4.1.15/Gemfile.lock";
             final Dependency result = new Dependency(BaseTest.getResourceAsFile(this, resource));
             analyzer.analyze(result, engine);
-            final Dependency[] dependencies = engine.getDependencies();
-            final int size = dependencies.length;
+            final Collection<Dependency> dependencies = engine.getDependencies();
+            final int size = dependencies.size();
             assertTrue(size >= 1);
             boolean found = false;
             for (Dependency dependency : dependencies) {
@@ -156,7 +151,7 @@ public class RubyBundleAuditAnalyzerIT extends BaseDBTestCase {
             final Dependency result = new Dependency(BaseTest.getResourceAsFile(this,
                     "ruby/vulnerable/gems/sinatra/Gemfile.lock"));
             analyzer.analyze(result, engine);
-            Dependency dependency = engine.getDependencies()[0];
+            Dependency dependency = engine.getDependencies().get(0);
             Vulnerability vulnerability = dependency.getVulnerabilities(true).iterator().next();
             assertEquals(vulnerability.getCvssScore(), 5.0f, 0.0);
 
@@ -209,8 +204,7 @@ public class RubyBundleAuditAnalyzerIT extends BaseDBTestCase {
                 Assume.assumeNoException("Exception setting up RubyBundleAuditAnalyzer; bundle audit may not be installed, or property \"analyzer.bundle.audit.path\" may not be set.", ex);
                 return;
             }
-            Dependency[] dependencies = engine.getDependencies();
-            LOGGER.info("{} dependencies found.", dependencies.length);
+            LOGGER.info("{} dependencies found.", engine.getDependencies().size());
         }
     }
 }

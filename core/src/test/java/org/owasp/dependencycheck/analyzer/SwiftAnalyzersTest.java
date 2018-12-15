@@ -7,14 +7,13 @@ import org.owasp.dependencycheck.BaseTest;
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.dependency.Dependency;
-
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-import static org.hamcrest.CoreMatchers.equalTo;
+import org.owasp.dependencycheck.dependency.EvidenceType;
 
 import java.io.File;
-import org.owasp.dependencycheck.dependency.EvidenceType;
+import java.util.List;
+
+import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.*;
 
 /**
  * Unit tests for CocoaPodsAnalyzer.
@@ -111,25 +110,26 @@ public class SwiftAnalyzersTest extends BaseTest {
                 "swift/cocoapods/Podfile.lock"));
         podsAnalyzer.analyze(result, engine);
 
-        assertThat(engine.getDependencies().length, equalTo(9));
-        assertThat(engine.getDependencies()[0].getName(), equalTo("Bolts"));
-        assertThat(engine.getDependencies()[0].getVersion(), equalTo("1.9.0"));
-        assertThat(engine.getDependencies()[1].getName(), equalTo("Bolts/AppLinks"));
-        assertThat(engine.getDependencies()[1].getVersion(), equalTo("1.9.0"));
-        assertThat(engine.getDependencies()[2].getName(), equalTo("Bolts/Tasks"));
-        assertThat(engine.getDependencies()[2].getVersion(), equalTo("1.9.0"));
-        assertThat(engine.getDependencies()[3].getName(), equalTo("FBSDKCoreKit"));
-        assertThat(engine.getDependencies()[3].getVersion(), equalTo("4.33.0"));
-        assertThat(engine.getDependencies()[4].getName(), equalTo("FBSDKLoginKit"));
-        assertThat(engine.getDependencies()[4].getVersion(), equalTo("4.33.0"));
-        assertThat(engine.getDependencies()[5].getName(), equalTo("FirebaseCore"));
-        assertThat(engine.getDependencies()[5].getVersion(), equalTo("5.0.1"));
-        assertThat(engine.getDependencies()[6].getName(), equalTo("GoogleToolboxForMac/Defines"));
-        assertThat(engine.getDependencies()[6].getVersion(), equalTo("2.1.4"));
-        assertThat(engine.getDependencies()[7].getName(), equalTo("GoogleToolboxForMac/NSData+zlib"));
-        assertThat(engine.getDependencies()[7].getVersion(), equalTo("2.1.4"));
-        assertThat(engine.getDependencies()[8].getName(), equalTo("OCMock"));
-        assertThat(engine.getDependencies()[8].getVersion(), equalTo("3.4.1"));
+        assertThat(engine.getDependencies().size(), equalTo(9));
+        final List<Dependency> dependencies = engine.getDependencies();
+        assertThat(dependencies.get(0).getName(), equalTo("Bolts"));
+        assertThat(dependencies.get(0).getVersion(), equalTo("1.9.0"));
+        assertThat(dependencies.get(1).getName(), equalTo("Bolts/AppLinks"));
+        assertThat(dependencies.get(1).getVersion(), equalTo("1.9.0"));
+        assertThat(dependencies.get(2).getName(), equalTo("Bolts/Tasks"));
+        assertThat(dependencies.get(2).getVersion(), equalTo("1.9.0"));
+        assertThat(dependencies.get(3).getName(), equalTo("FBSDKCoreKit"));
+        assertThat(dependencies.get(3).getVersion(), equalTo("4.33.0"));
+        assertThat(dependencies.get(4).getName(), equalTo("FBSDKLoginKit"));
+        assertThat(dependencies.get(4).getVersion(), equalTo("4.33.0"));
+        assertThat(dependencies.get(5).getName(), equalTo("FirebaseCore"));
+        assertThat(dependencies.get(5).getVersion(), equalTo("5.0.1"));
+        assertThat(dependencies.get(6).getName(), equalTo("GoogleToolboxForMac/Defines"));
+        assertThat(dependencies.get(6).getVersion(), equalTo("2.1.4"));
+        assertThat(dependencies.get(7).getName(), equalTo("GoogleToolboxForMac/NSData+zlib"));
+        assertThat(dependencies.get(7).getVersion(), equalTo("2.1.4"));
+        assertThat(dependencies.get(8).getName(), equalTo("OCMock"));
+        assertThat(dependencies.get(8).getVersion(), equalTo("3.4.1"));
     }
 
     @Test

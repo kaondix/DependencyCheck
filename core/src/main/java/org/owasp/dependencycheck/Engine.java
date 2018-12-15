@@ -30,20 +30,24 @@ import org.owasp.dependencycheck.data.update.UpdateService;
 import org.owasp.dependencycheck.data.update.exception.UpdateException;
 import org.owasp.dependencycheck.dependency.Dependency;
 import org.owasp.dependencycheck.exception.ExceptionCollection;
+import org.owasp.dependencycheck.exception.H2DBLockException;
 import org.owasp.dependencycheck.exception.InitializationException;
 import org.owasp.dependencycheck.exception.NoDataException;
 import org.owasp.dependencycheck.exception.ReportException;
 import org.owasp.dependencycheck.reporting.ReportGenerator;
+import org.owasp.dependencycheck.utils.H2DBLock;
 import org.owasp.dependencycheck.utils.InvalidSettingException;
 import org.owasp.dependencycheck.utils.Settings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -52,18 +56,19 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.concurrent.NotThreadSafe;
-import org.owasp.dependencycheck.exception.H2DBLockException;
-import org.owasp.dependencycheck.utils.H2DBLock;
+import java.util.stream.Collectors;
+
+import static org.owasp.dependencycheck.analyzer.AnalysisPhase.*;
 
 //CSOFF: AvoidStarImport
-import static org.owasp.dependencycheck.analyzer.AnalysisPhase.*;
 //CSON: AvoidStarImport
 
 /**
@@ -96,7 +101,7 @@ public class Engine implements FileFilter, AutoCloseable {
          * In evidence processing mode the {@link Engine} processes the evidence
          * collected using the {@link #EVIDENCE_COLLECTION} mode. Dependencies
          * should be injected into the {@link Engine} using
-         * {@link Engine#setDependencies(List)}.
+         * {@link Engine#setDependencies(Collection)}.
          */
         EVIDENCE_PROCESSING(
                 true,
@@ -156,11 +161,13 @@ public class Engine implements FileFilter, AutoCloseable {
     /**
      * The list of dependencies.
      */
-    private final List<Dependency> dependencies = Collections.synchronizedList(new ArrayList<Dependency>());
+    private final TreeSet<Dependency> dependencies = new TreeSet<>();
+
     /**
-     * The external view of the dependency list.
+     * Dependency map for ease of computation.
      */
-    private Dependency[] dependenciesExternalView = null;
+    private final Map<String, Dependency> dependencyMap = new ConcurrentHashMap<>();
+
     /**
      * A Map of analyzers grouped by Analysis phase.
      */
@@ -300,8 +307,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * @param dependency the dependency to add
      */
     public synchronized void addDependency(Dependency dependency) {
-        dependencies.add(dependency);
-        dependenciesExternalView = null;
+        dependencyMap.put(dependency.getSha1sum(), dependency);
     }
 
     /**
@@ -319,8 +325,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * @param dependency the dependency to remove.
      */
     public synchronized void removeDependency(Dependency dependency) {
-        dependencies.remove(dependency);
-        dependenciesExternalView = null;
+        dependencyMap.remove(dependency.getSha1sum());
     }
 
     /**
@@ -328,11 +333,8 @@ public class Engine implements FileFilter, AutoCloseable {
      *
      * @return the dependencies identified
      */
-    public synchronized Dependency[] getDependencies() {
-        if (dependenciesExternalView == null) {
-            dependenciesExternalView = dependencies.toArray(new Dependency[dependencies.size()]);
-        }
-        return dependenciesExternalView;
+    public synchronized List<Dependency> getDependencies() {
+        return new ArrayList<>(dependencyMap.values());
     }
 
     /**
@@ -340,10 +342,9 @@ public class Engine implements FileFilter, AutoCloseable {
      *
      * @param dependencies the dependencies
      */
-    public synchronized void setDependencies(List<Dependency> dependencies) {
-        this.dependencies.clear();
-        this.dependencies.addAll(dependencies);
-        dependenciesExternalView = null;
+    public synchronized void setDependencies(Collection<Dependency> dependencies) {
+        this.dependencyMap.clear();
+        dependencies.forEach((dep) -> this.dependencyMap.put(dep.getSha1sum(), dep));
     }
 
     /**
@@ -371,14 +372,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * @since v1.4.4
      */
     public List<Dependency> scan(String[] paths, String projectReference) {
-        final List<Dependency> deps = new ArrayList<>();
-        for (String path : paths) {
-            final List<Dependency> d = scan(path, projectReference);
-            if (d != null) {
-                deps.addAll(d);
-            }
-        }
-        return deps;
+        return scan(Arrays.stream(paths).map(File::new).collect(Collectors.toList()), projectReference);
     }
 
     /**
@@ -434,14 +428,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * @since v1.4.4
      */
     public List<Dependency> scan(File[] files, String projectReference) {
-        final List<Dependency> deps = new ArrayList<>();
-        for (File file : files) {
-            final List<Dependency> d = scan(file, projectReference);
-            if (d != null) {
-                deps.addAll(d);
-            }
-        }
-        return deps;
+        return scan(Arrays.asList(files), projectReference);
     }
 
     /**
@@ -469,14 +456,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * @since v1.4.4
      */
     public List<Dependency> scan(Collection<File> files, String projectReference) {
-        final List<Dependency> deps = new ArrayList<>();
-        for (File file : files) {
-            final List<Dependency> d = scan(file, projectReference);
-            if (d != null) {
-                deps.addAll(d);
-            }
-        }
-        return deps;
+        return files.stream().map(file -> scan(file, projectReference).stream()).flatMap(dep -> dep).collect(Collectors.toList());
     }
 
     /**
@@ -591,28 +571,20 @@ public class Engine implements FileFilter, AutoCloseable {
                     dependency.addProjectReference(projectReference);
                 }
                 final String sha1 = dependency.getSha1sum();
-                boolean found = false;
 
                 if (sha1 != null) {
-                    for (Dependency existing : dependencies) {
-                        if (sha1.equals(existing.getSha1sum())) {
-                            found = true;
-                            if (projectReference != null) {
-                                existing.addProjectReference(projectReference);
-                            }
-                            if (existing.getActualFilePath() != null && dependency.getActualFilePath() != null
-                                    && !existing.getActualFilePath().equals(dependency.getActualFilePath())) {
-                                existing.addRelatedDependency(dependency);
-                            } else {
-                                dependency = existing;
-                            }
-                            break;
+                    final Dependency hashDependency = dependency;
+                    dependencyMap.computeIfPresent(sha1, (sha, existing) -> {
+                        if (projectReference != null) {
+                            existing.addProjectReference(projectReference);
                         }
-                    }
-                }
-                if (!found) {
-                    dependencies.add(dependency);
-                    dependenciesExternalView = null;
+                        if (existing.getActualFilePath() != null && hashDependency.getActualFilePath() != null
+                            && !existing.getActualFilePath().equals(hashDependency.getActualFilePath())) {
+                            existing.addRelatedDependency(hashDependency);
+                        }
+                        return existing;
+                    });
+                    dependency = dependencyMap.computeIfAbsent(sha1, (sha) -> hashDependency);
                 }
             }
         } else {
@@ -787,12 +759,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * @return a collection of analysis tasks
      */
     protected synchronized List<AnalysisTask> getAnalysisTasks(Analyzer analyzer, List<Throwable> exceptions) {
-        final List<AnalysisTask> result = new ArrayList<>();
-        for (final Dependency dependency : dependencies) {
-            final AnalysisTask task = new AnalysisTask(analyzer, dependency, this, exceptions);
-            result.add(task);
-        }
-        return result;
+        return getDependencies().stream().map(dependency -> new AnalysisTask(analyzer, dependency, this, exceptions)).collect(Collectors.toList());
     }
 
     /**
@@ -1113,7 +1080,7 @@ public class Engine implements FileFilter, AutoCloseable {
             throw new UnsupportedOperationException("Cannot generate report in evidence collection mode.");
         }
         final DatabaseProperties prop = database.getDatabaseProperties();
-        final ReportGenerator r = new ReportGenerator(applicationName, groupId, artifactId, version, dependencies, getAnalyzers(), prop, settings);
+        final ReportGenerator r = new ReportGenerator(applicationName, groupId, artifactId, version, getDependencies(), getAnalyzers(), prop, settings);
         try {
             r.write(outputDir.getAbsolutePath(), format);
         } catch (ReportException ex) {

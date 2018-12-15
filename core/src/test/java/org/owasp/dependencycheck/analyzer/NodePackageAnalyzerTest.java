@@ -18,22 +18,22 @@
 package org.owasp.dependencycheck.analyzer;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.owasp.dependencycheck.BaseTest;
+import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.dependency.Dependency;
-
-import java.io.File;
-
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
-import org.junit.Assume;
-import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.dependency.EvidenceType;
 import org.owasp.dependencycheck.utils.InvalidSettingException;
 import org.owasp.dependencycheck.utils.Settings;
+
+import java.io.File;
+import java.util.List;
+
+import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.*;
 
 /**
  * Unit tests for NodePackageAnalyzer.
@@ -123,7 +123,7 @@ public class NodePackageAnalyzerTest extends BaseTest {
         engine.addDependency(toCombine);
         analyzer.analyze(toScan, engine);
         analyzer.analyze(toCombine, engine);
-        assertEquals("Expected 6 dependency", engine.getDependencies().length, 6);
+        assertEquals("Expected 6 dependency [" + engine.getDependencies().toString() +"]", engine.getDependencies().size(), 6);
         Dependency result = null;
         for (Dependency dep : engine.getDependencies()) {
             if ("dns-sync".equals(dep.getName())) {
@@ -156,12 +156,13 @@ public class NodePackageAnalyzerTest extends BaseTest {
                 "nodejs/npm-shrinkwrap.json"));
         engine.addDependency(packageJson);
         engine.addDependency(shrinkwrap);
-        assertEquals(2, engine.getDependencies().length);
+        List<Dependency> dependencies = engine.getDependencies();
+        assertEquals(2, dependencies.size());
         analyzer.analyze(packageJson, engine);
-        assertEquals(1, engine.getDependencies().length); //package-lock was removed without analysis
-        assertTrue(shrinkwrap.equals(engine.getDependencies()[0]));
+        assertEquals(1, dependencies.size()); //package-lock was removed without analysis
+        assertTrue(shrinkwrap.equals(dependencies.get(0)));
         analyzer.analyze(shrinkwrap, engine);
-        assertEquals(6, engine.getDependencies().length); //shrinkwrap was removed with analysis adding 6 dependency
-        assertFalse(shrinkwrap.equals(engine.getDependencies()[0]));
+        assertEquals(6, dependencies.size()); //shrinkwrap was removed with analysis adding 6 dependency
+        assertFalse(shrinkwrap.equals(dependencies.get(0)));
     }
 }

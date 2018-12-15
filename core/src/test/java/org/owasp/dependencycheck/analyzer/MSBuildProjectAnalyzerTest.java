@@ -75,7 +75,7 @@ public class MSBuildProjectAnalyzerTest extends BaseTest {
             analyzer.setEnabled(true);
             analyzer.analyze(toScan, engine);
 
-            assertEquals("3 dependencies should be found", 3, engine.getDependencies().length);
+            assertEquals("3 dependencies should be found", 3, engine.getDependencies().size());
 
             int foundCount = 0;
 

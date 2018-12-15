@@ -26,18 +26,15 @@ import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.data.nvdcve.DatabaseException;
 import org.owasp.dependencycheck.dependency.Dependency;
-
-import java.io.File;
-import java.util.regex.Pattern;
-
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 import org.owasp.dependencycheck.dependency.Evidence;
 import org.owasp.dependencycheck.dependency.EvidenceType;
+
+import java.io.File;
+import java.util.List;
+import java.util.regex.Pattern;
+
+import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.*;
 
 /**
  * Unit tests for CmakeAnalyzer.
@@ -173,9 +170,9 @@ public class CMakeAnalyzerTest extends BaseDBTestCase {
             assertVersionEvidence(result, "55.18.102");
             assertFalse("ALIASOF_ prefix shouldn't be present.",
                     Pattern.compile("\\bALIASOF_\\w+").matcher(result.getEvidence(EvidenceType.PRODUCT).toString()).find());
-            final Dependency[] dependencies = engine.getDependencies();
-            assertEquals("Number of additional dependencies should be 4.", 4, dependencies.length);
-            final Dependency last = dependencies[3];
+            final List<Dependency> dependencies = engine.getDependencies();
+            assertEquals("Number of additional dependencies should be 4.", 4, dependencies.size());
+            final Dependency last = dependencies.get(3);
             assertProductEvidence(last, "libavresample");
             assertVersionEvidence(last, "1.0.1");
         }

@@ -186,6 +186,7 @@ Copyright (c) 2012 - Jeremy Long
         <gmavenplus-plugin.version>1.5</gmavenplus-plugin.version>
         <com.h3xstream.retirejs.core.version>3.0.1</com.h3xstream.retirejs.core.version>
         <com.google.guava.version>27.0.1-jre</com.google.guava.version>
+        <jackson.version>2.4.5</jackson.version>
         <surefireArgLine/>
     </properties>
     <distributionManagement>
@@ -815,6 +816,11 @@ Copyright (c) 2012 - Jeremy Long
     </reporting>
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
             <dependency>
                 <groupId>com.vdurmont</groupId>
                 <artifactId>semver4j</artifactId>
