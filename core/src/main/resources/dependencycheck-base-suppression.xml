@@ -285,6 +285,14 @@
     </suppress-->
     <suppress base="true">
         <notes><![CDATA[
+        FP per #1622
+        ]]></notes>
+        <gav regex="true">^org\.openjdk\.jmh:jmh-core:.*$</gav>
+        <cpe>cpe:/a:sun:openjdk</cpe>
+        <cpe>cpe:/a:oracle:openjdk</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
         FP per #1485
         ]]></notes>
         <gav regex="true">^org\.sonatype\.plexus:plexus-sec-dispatcher:.*$</gav>
