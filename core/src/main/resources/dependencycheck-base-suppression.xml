@@ -2299,6 +2299,7 @@
         <notes><![CDATA[
         FP per issue #1660 
         ]]></notes>
+        <gav regex="true">^net\.postgis:postgis-jdbc:.*$</gav>
         <cpe>cpe:/a:postgresql:postgresql</cpe>
         <cpe>cpe:/a:postgresql:postgresql_jdbc_driver</cpe>
     </suppress>
