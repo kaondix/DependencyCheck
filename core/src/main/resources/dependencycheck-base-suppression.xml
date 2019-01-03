@@ -2297,6 +2297,13 @@
     </suppress>
     <suppress base="true">
         <notes><![CDATA[
+        FP per issue #1660 
+        ]]></notes>
+        <cpe>cpe:/a:postgresql:postgresql</cpe>
+        <cpe>cpe:/a:postgresql:postgresql_jdbc_driver</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
         FP per issue #947 - instead of suppressing the whole thing, we will just
             suppress specific CVE that are for the server
         ]]></notes>
