@@ -58,6 +58,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.NotThreadSafe;
 import org.owasp.dependencycheck.exception.H2DBLockException;
 import org.owasp.dependencycheck.utils.H2DBLock;
@@ -200,7 +202,7 @@ public class Engine implements FileFilter, AutoCloseable {
      *
      * @param settings reference to the configured settings
      */
-    public Engine(Settings settings) {
+    public Engine(@Nonnull final Settings settings) {
         this(Mode.STANDALONE, settings);
     }
 
@@ -210,7 +212,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * @param mode the mode of operation
      * @param settings reference to the configured settings
      */
-    public Engine(Mode mode, Settings settings) {
+    public Engine(@Nonnull final Mode mode, @Nonnull final Settings settings) {
         this(Thread.currentThread().getContextClassLoader(), mode, settings);
     }
 
@@ -220,7 +222,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * @param serviceClassLoader a reference the class loader being used
      * @param settings reference to the configured settings
      */
-    public Engine(ClassLoader serviceClassLoader, Settings settings) {
+    public Engine(@Nonnull final ClassLoader serviceClassLoader, @Nonnull final Settings settings) {
         this(serviceClassLoader, Mode.STANDALONE, settings);
     }
 
@@ -231,7 +233,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * @param mode the mode of the engine
      * @param settings reference to the configured settings
      */
-    public Engine(ClassLoader serviceClassLoader, Mode mode, Settings settings) {
+    public Engine(@Nonnull final ClassLoader serviceClassLoader, @Nonnull final Mode mode, @Nonnull final Settings settings) {
         this.settings = settings;
         this.serviceClassLoader = serviceClassLoader;
         this.mode = mode;
@@ -318,7 +320,7 @@ public class Engine implements FileFilter, AutoCloseable {
      *
      * @param dependency the dependency to remove.
      */
-    public synchronized void removeDependency(Dependency dependency) {
+    public synchronized void removeDependency(@Nonnull final Dependency dependency) {
         dependencies.remove(dependency);
         dependenciesExternalView = null;
     }
@@ -340,7 +342,7 @@ public class Engine implements FileFilter, AutoCloseable {
      *
      * @param dependencies the dependencies
      */
-    public synchronized void setDependencies(List<Dependency> dependencies) {
+    public synchronized void setDependencies(@Nonnull final List<Dependency> dependencies) {
         this.dependencies.clear();
         this.dependencies.addAll(dependencies);
         dependenciesExternalView = null;
@@ -355,7 +357,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * @return the list of dependencies scanned
      * @since v0.3.2.5
      */
-    public List<Dependency> scan(String[] paths) {
+    public List<Dependency> scan(@Nonnull final String[] paths) {
         return scan(paths, null);
     }
 
@@ -370,7 +372,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * @return the list of dependencies scanned
      * @since v1.4.4
      */
-    public List<Dependency> scan(String[] paths, String projectReference) {
+    public List<Dependency> scan(@Nonnull final String[] paths, @Nullable final String projectReference) {
         final List<Dependency> deps = new ArrayList<>();
         for (String path : paths) {
             final List<Dependency> d = scan(path, projectReference);
@@ -389,7 +391,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * @param path the path to a file or directory to be analyzed
      * @return the list of dependencies scanned
      */
-    public List<Dependency> scan(String path) {
+    public List<Dependency> scan(@Nonnull final String path) {
         return scan(path, null);
     }
 
@@ -404,7 +406,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * @return the list of dependencies scanned
      * @since v1.4.4
      */
-    public List<Dependency> scan(String path, String projectReference) {
+    public List<Dependency> scan(@Nonnull final String path, String projectReference) {
         final File file = new File(path);
         return scan(file, projectReference);
     }
@@ -503,7 +505,8 @@ public class Engine implements FileFilter, AutoCloseable {
      * @return the list of dependencies scanned
      * @since v1.4.4
      */
-    public List<Dependency> scan(File file, String projectReference) {
+    @Nullable
+    public List<Dependency> scan(@Nonnull final File file, String projectReference) {
         if (file.exists()) {
             if (file.isDirectory()) {
                 return scanDirectory(file, projectReference);
@@ -540,7 +543,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * @return the list of Dependency objects scanned
      * @since v1.4.4
      */
-    protected List<Dependency> scanDirectory(File dir, String projectReference) {
+    protected List<Dependency> scanDirectory(@Nonnull final File dir, @Nullable final String projectReference) {
         final File[] files = dir.listFiles();
         final List<Dependency> deps = new ArrayList<>();
         if (files != null) {
@@ -568,7 +571,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * @param file The file to scan
      * @return the scanned dependency
      */
-    protected Dependency scanFile(File file) {
+    protected Dependency scanFile(@Nonnull final File file) {
         return scanFile(file, null);
     }
 
@@ -582,7 +585,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * @return the scanned dependency
      * @since v1.4.4
      */
-    protected synchronized Dependency scanFile(File file, String projectReference) {
+    protected synchronized Dependency scanFile(@Nonnull final File file, @Nullable final String projectReference) {
         Dependency dependency = null;
         if (file.isFile()) {
             if (accept(file)) {
@@ -700,7 +703,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * @param exceptions a collection to store non-fatal exceptions
      * @throws ExceptionCollection thrown if fatal exceptions occur
      */
-    private void initializeAndUpdateDatabase(final List<Throwable> exceptions) throws ExceptionCollection {
+    private void initializeAndUpdateDatabase(@Nonnull final List<Throwable> exceptions) throws ExceptionCollection {
         if (!mode.isDatabaseRequired()) {
             return;
         }
@@ -752,7 +755,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * @param analyzer the analyzer to execute
      * @throws ExceptionCollection thrown if exceptions occurred during analysis
      */
-    protected void executeAnalysisTasks(Analyzer analyzer, List<Throwable> exceptions) throws ExceptionCollection {
+    protected void executeAnalysisTasks(@Nonnull final Analyzer analyzer, List<Throwable> exceptions) throws ExceptionCollection {
         LOGGER.debug("Starting {}", analyzer.getName());
         final List<AnalysisTask> analysisTasks = getAnalysisTasks(analyzer, exceptions);
         final ExecutorService executorService = getExecutorService(analyzer);
@@ -819,7 +822,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * @throws InitializationException thrown when there is a problem
      * initializing the analyzer
      */
-    protected void initializeAnalyzer(Analyzer analyzer) throws InitializationException {
+    protected void initializeAnalyzer(@Nonnull final Analyzer analyzer) throws InitializationException {
         try {
             LOGGER.debug("Initializing {}", analyzer.getName());
             analyzer.prepare(this);
@@ -851,7 +854,7 @@ public class Engine implements FileFilter, AutoCloseable {
      *
      * @param analyzer the analyzer to close
      */
-    protected void closeAnalyzer(Analyzer analyzer) {
+    protected void closeAnalyzer(@Nonnull final Analyzer analyzer) {
         LOGGER.debug("Closing Analyzer '{}'", analyzer.getName());
         try {
             analyzer.close();
@@ -1000,6 +1003,7 @@ public class Engine implements FileFilter, AutoCloseable {
      *
      * @return a list of Analyzers
      */
+    @Nonnull
     public List<Analyzer> getAnalyzers() {
         final List<Analyzer> ret = new ArrayList<>();
         for (AnalysisPhase phase : mode.getPhases()) {
@@ -1017,7 +1021,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * supported
      */
     @Override
-    public boolean accept(File file) {
+    public boolean accept(@Nullable final File file) {
         if (file == null) {
             return false;
         }
@@ -1063,7 +1067,7 @@ public class Engine implements FileFilter, AutoCloseable {
      *
      * @param fta the file type analyzer to add
      */
-    protected void addFileTypeAnalyzer(FileTypeAnalyzer fta) {
+    protected void addFileTypeAnalyzer(@Nonnull final FileTypeAnalyzer fta) {
         this.fileTypeAnalyzers.add(fta);
     }
 
@@ -1088,7 +1092,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * @throws ExceptionCollection a collection of exceptions that occurred
      * during analysis
      */
-    private void throwFatalExceptionCollection(String message, Throwable throwable, List<Throwable> exceptions) throws ExceptionCollection {
+    private void throwFatalExceptionCollection(String message, @Nonnull final Throwable throwable, @Nonnull final List<Throwable> exceptions) throws ExceptionCollection {
         LOGGER.error("{}\n\n{}", throwable.getMessage(), message);
         LOGGER.debug("", throwable);
         exceptions.add(throwable);
@@ -1107,8 +1111,9 @@ public class Engine implements FileFilter, AutoCloseable {
      * @param format the report format (ALL, HTML, CSV, JSON, etc.)
      * @throws ReportException thrown if there is an error generating the report
      */
-    public synchronized void writeReports(String applicationName, String groupId, String artifactId,
-            String version, File outputDir, String format) throws ReportException {
+    public synchronized void writeReports(String applicationName, @Nullable final String groupId,
+                                          @Nullable final String artifactId, @Nullable final String version,
+                                          @Nonnull final File outputDir, String format) throws ReportException {
         if (mode == Mode.EVIDENCE_COLLECTION) {
             throw new UnsupportedOperationException("Cannot generate report in evidence collection mode.");
         }
