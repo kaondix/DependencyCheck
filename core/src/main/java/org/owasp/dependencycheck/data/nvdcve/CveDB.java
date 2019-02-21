@@ -1552,14 +1552,6 @@ public final class CveDB implements AutoCloseable {
 //                }
 //                //this can't dereference a null 'identifiedVersion' because if it was null we would have exited
 //                //in the above loop or just after loop (if matchesAnyPrevious return null).
-//                if (identifiedVersion != null && identifiedVersion.equals(v)) {
-//                    return entry;
-//                }
-//            }
-//        }
-//        for (Entry<String, Boolean> entry : vulnerableSoftware.entrySet()) {
-//            if (entry.getValue()) {
-//                final DependencyVersion v = parseDependencyVersion(entry.getKey());
 //                //this can't dereference a null 'majorVersionMatch' as canSkipVersions accounts for this.
 //                if (canSkipVersions && majorVersionMatch != null && !majorVersionMatch.equals(v.getVersionParts().get(0))) {
 //                    continue;
