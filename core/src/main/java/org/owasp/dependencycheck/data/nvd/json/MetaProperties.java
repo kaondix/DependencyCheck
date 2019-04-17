@@ -125,7 +125,7 @@ public class MetaProperties {
         try {
             String date = properties.getProperty("lastModifiedDate");
             if (date == null) {
-                throw new RuntimeException("lastModifiedDate not found in meta file");
+                throw new InvalidDataException("lastModifiedDate not found in meta file");
             }
             this.lastModifiedDate = ZonedDateTime.parse(date, DateTimeFormatter.ISO_OFFSET_DATE_TIME).toEpochSecond();
         } catch (DateTimeParseException ex) {
