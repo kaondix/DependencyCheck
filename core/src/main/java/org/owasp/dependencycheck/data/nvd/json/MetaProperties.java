@@ -37,10 +37,6 @@ import org.slf4j.LoggerFactory;
 public class MetaProperties {
 
     /**
-     * The logger.
-     */
-    private static final Logger LOGGER = LoggerFactory.getLogger(NvdCveUpdater.class);
-    /**
      * The SHA256 of the NVD file.
      */
     private String sha256;
