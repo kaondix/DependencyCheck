@@ -5,7 +5,7 @@ The following table lists the command line arguments:
 
 | Short | Argument Name | Parameter | Description | Requirement |
 |-------|---------------|-----------|-------------|-------------|
-|       | \-\-project            | \<name\>        | The name of the project being scanned. | Optional |
+|       | \-\-project            | \<name\>        | The name of the project being scanned. | Required |
 | \-s   | \-\-scan               | \<path\>        | The path to scan \- this option can be specified multiple times. It is also possible to specify Ant style paths (e.g. directory/**/*.jar). | Required |
 |       | \-\-exclude            | \<pattern\>     | The path patterns to exclude from the scan \- this option can be specified multiple times. This accepts Ant style path patterns (e.g. **/exclude/**). | Optional |
 |       | \-\-symLink            | \<depth\>       | The depth that symbolic links will be followed; the default is 0 meaning symbolic links will not be followed. | Optional |
