@@ -130,12 +130,15 @@ public final class CliParser {
                 validatePathExists(getPathToCore(), ARGUMENT.PATH_TO_CORE);
             }
             if (line.hasOption(ARGUMENT.OUTPUT_FORMAT)) {
-                final String format = line.getOptionValue(ARGUMENT.OUTPUT_FORMAT);
+                String validating = null;
                 try {
-                    Format.valueOf(format);
+                    for (String format : getReportFormat()) {
+                        validating = format;
+                        Format.valueOf(format);
+                    }
                 } catch (IllegalArgumentException ex) {
                     final String msg = String.format("An invalid 'format' of '%s' was specified. "
-                            + "Supported output formats are " + SUPPORTED_FORMATS, format);
+                            + "Supported output formats are " + SUPPORTED_FORMATS, validating);
                     throw new ParseException(msg);
                 }
             }
@@ -189,9 +192,11 @@ public final class CliParser {
             throw new FileNotFoundException(msg);
         } else if (!path.contains("*") && !path.contains("?")) {
             File f = new File(path);
-            if ("o".equalsIgnoreCase(argumentName.substring(0, 1)) && !"ALL".equalsIgnoreCase(this.getReportFormat())) {
+            String[] formats = this.getReportFormat();
+            if ("o".equalsIgnoreCase(argumentName.substring(0, 1)) && formats.length==1 && !"ALL".equalsIgnoreCase(formats[0])) {
                 final String checkPath = path.toLowerCase();
-                if (checkPath.endsWith(".html") || checkPath.endsWith(".xml") || checkPath.endsWith(".htm")) {
+                if (checkPath.endsWith(".html") || checkPath.endsWith(".xml") || checkPath.endsWith(".htm")
+                         || checkPath.endsWith(".csv") || checkPath.endsWith(".json")) {
                     if (f.getParentFile() == null) {
                         f = new File(".", path);
                     }
@@ -201,6 +206,10 @@ public final class CliParser {
                         throw new FileNotFoundException(msg);
                     }
                 }
+            } else if ("o".equalsIgnoreCase(argumentName.substring(0, 1)) && !f.isDirectory()) {
+                isValid = false;
+                final String msg = String.format("Invalid '%s' argument: '%s'", argumentName, path);
+                throw new FileNotFoundException(msg);
             } else if (!f.exists()) {
                 isValid = false;
                 final String msg = String.format("Invalid '%s' argument: '%s'", argumentName, path);
@@ -274,7 +283,7 @@ public final class CliParser {
                 .build();
 
         final Option outputFormat = Option.builder(ARGUMENT.OUTPUT_FORMAT_SHORT).argName("format").hasArg().longOpt(ARGUMENT.OUTPUT_FORMAT)
-                .desc("The output format to write to (" + SUPPORTED_FORMATS + "). The default is HTML.")
+                .desc("The report format (" + SUPPORTED_FORMATS + "). The default is HTML. Multiple format parameters can be specified.")
                 .build();
 
         final Option verboseLog = Option.builder(ARGUMENT.VERBOSE_LOG_SHORT).argName("file").hasArg().longOpt(ARGUMENT.VERBOSE_LOG)
@@ -731,7 +740,8 @@ public final class CliParser {
     }
 
     /**
-     * Returns true if the {@link ARGUMENT#DISABLE_OSSINDEX} command line argument was specified.
+     * Returns true if the {@link ARGUMENT#DISABLE_OSSINDEX} command line
+     * argument was specified.
      */
     public boolean isOssIndexDisabled() {
         return hasDisableOption(ARGUMENT.DISABLE_OSSINDEX, Settings.KEYS.ANALYZER_OSSINDEX_ENABLED);
@@ -955,13 +965,15 @@ public final class CliParser {
         return line.getOptionValues(ARGUMENT.EXCLUDE);
     }
 
-   /**
+    /**
      * Returns the retire JS repository URL.
+     *
      * @return the retire JS repository URL
      */
     String getRetireJSUrl() {
         return line.getOptionValue(ARGUMENT.RETIREJS_URL);
     }
+
     /**
      * Retrieves the list of retire JS content filters used to exclude JS files
      * by content.
@@ -1019,8 +1031,11 @@ public final class CliParser {
      *
      * @return the output format name.
      */
-    public String getReportFormat() {
-        return line.getOptionValue(ARGUMENT.OUTPUT_FORMAT, "HTML");
+    public String[] getReportFormat() {
+        if (line.hasOption(ARGUMENT.OUTPUT_FORMAT)) {
+            return line.getOptionValues(ARGUMENT.OUTPUT_FORMAT);
+        }
+        return new String[]{"HTML"};
     }
 
     /**
@@ -1292,7 +1307,6 @@ public final class CliParser {
         return (line != null && line.hasOption(ARGUMENT.RETIRED)) ? true : null;
     }
 
-
     /**
      * Returns the CVSS value to fail on.
      *
@@ -1311,8 +1325,6 @@ public final class CliParser {
             return 11;
         }
     }
-
-    
 
     /**
      * A collection of static final strings that represent the possible command
@@ -1671,6 +1683,6 @@ public final class CliParser {
          * The CLI argument to enable the experimental analyzers.
          */
         public static final String FAIL_ON_CVSS = "failOnCVSS";
-        
+
     }
 }

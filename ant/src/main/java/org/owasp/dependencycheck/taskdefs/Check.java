@@ -162,6 +162,11 @@ public class Check extends Update {
      */
     private String reportFormat = "HTML";
     /**
+     * The report format to be generated (HTML, XML, JUNIT, CSV, JSON, ALL).
+     * Default is HTML.
+     */
+    private List<String> reportFormats = new ArrayList<>();
+    /**
      * Suppression file path.
      */
     private String suppressionFile = null;
@@ -444,21 +449,25 @@ public class Check extends Update {
     }
 
     /**
-     * Get the value of reportFormat.
-     *
-     * @return the value of reportFormat
-     */
-    public String getReportFormat() {
-        return reportFormat;
-    }
-
-    /**
      * Set the value of reportFormat.
      *
      * @param reportFormat new value of reportFormat
      */
     public void setReportFormat(ReportFormats reportFormat) {
         this.reportFormat = reportFormat.getValue();
+        this.reportFormats.add(this.reportFormat);
+    }
+
+    /**
+     * Get the value of reportFormats.
+     *
+     * @return the value of reportFormats
+     */
+    public List<String> getReportFormats() {
+        if (reportFormats.isEmpty()) {
+            this.reportFormats.add(this.reportFormat);
+        }
+        return this.reportFormats;
     }
 
     /**
@@ -888,7 +897,7 @@ public class Check extends Update {
     public void setRetireJsUrl(String retireJsUrl) {
         this.retireJsUrl = retireJsUrl;
     }
-    
+
     /**
      * Get the value of retirejsFilterNonVulnerable.
      *
@@ -1328,7 +1337,9 @@ public class Check extends Update {
                     throw new BuildException(ex);
                 }
             }
-            engine.writeReports(getProjectName(), new File(reportOutputDirectory), reportFormat);
+            for (String format : getReportFormats()) {
+                engine.writeReports(getProjectName(), new File(reportOutputDirectory), format);
+            }
 
             if (this.failBuildOnCVSS <= 10) {
                 checkForFailure(engine.getDependencies());

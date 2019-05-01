@@ -77,6 +77,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.maven.artifact.resolver.filter.ExcludesArtifactFilter;
 import org.apache.maven.shared.dependency.graph.traversal.CollectingDependencyNodeVisitor;
 
@@ -174,6 +176,14 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
     @Parameter(property = "failBuildOnCVSS", defaultValue = "11", required = true)
     private float failBuildOnCVSS = 11;
     /**
+     * Specifies the CVSS score that is considered a "test" failure when
+     * generating a jUnit style report. The default value is 0 - all
+     * vulnerabilities are considered a failure.
+     */
+    @SuppressWarnings("CanBeFinal")
+    @Parameter(property = "junitFailOnCVSS", defaultValue = "0", required = true)
+    private float junitFailOnCVSS = 0;
+    /**
      * Fail the build if any dependency has a vulnerability listed.
      */
     @SuppressWarnings("CanBeFinal")
@@ -207,9 +217,11 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
     @Parameter(property = "dependency-check.virtualSnapshotsFromReactor", defaultValue = "true")
     private Boolean virtualSnapshotsFromReactor;
     /**
-     * The report format to be generated (HTML, XML, JUNIT, CSV, JSON, ALL). This
+     * The report format to be generated (HTML, XML, JUNIT, CSV, JSON, ALL).
+     * Multiple formats can be selected using a comma delineated list. This
      * configuration option has no affect if using this within the Site plug-in
      * unless the externalReport is set to true. Default is HTML.
+     *
      */
     @SuppressWarnings("CanBeFinal")
     @Parameter(property = "format", defaultValue = "HTML", required = true)
@@ -1328,7 +1340,9 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
                 }
                 try {
                     final MavenProject p = this.getProject();
-                    engine.writeReports(p.getName(), p.getGroupId(), p.getArtifactId(), p.getVersion(), outputDir, getFormat());
+                    for (String f : Stream.of(format.split(",")).map(s -> s.trim()).collect(Collectors.toList())) {
+                        engine.writeReports(p.getName(), p.getGroupId(), p.getArtifactId(), p.getVersion(), outputDir, f);
+                    }
                 } catch (ReportException ex) {
                     if (exCol == null) {
                         exCol = new ExceptionCollection(ex);
@@ -1455,7 +1469,7 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
      */
     @Override
     public String getOutputName() {
-        if ("HTML".equalsIgnoreCase(this.format) || "ALL".equalsIgnoreCase(this.format)) {
+        if ("HTML".equalsIgnoreCase(this.format) || "ALL".equalsIgnoreCase(this.format) || this.format.contains(",")) {
             return "dependency-check-report";
         } else if ("XML".equalsIgnoreCase(this.format)) {
             return "dependency-check-report.xml";
@@ -1543,6 +1557,7 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
         settings.setBooleanIfNotNull(Settings.KEYS.UPDATE_VERSION_CHECK_ENABLED, versionCheckEnabled);
         settings.setStringIfNotEmpty(Settings.KEYS.CONNECTION_TIMEOUT, connectionTimeout);
         settings.setStringIfNotEmpty(Settings.KEYS.HINTS_FILE, hintsFile);
+        settings.setFloat(Settings.KEYS.JUNIT_FAIL_ON_CVSS, junitFailOnCVSS);
 
         //File Type Analyzer Settings
         settings.setBooleanIfNotNull(Settings.KEYS.ANALYZER_JAR_ENABLED, jarAnalyzerEnabled);

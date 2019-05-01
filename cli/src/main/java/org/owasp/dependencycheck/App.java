@@ -184,8 +184,11 @@ public class App {
             try {
                 final String[] scanFiles = cli.getScanFiles();
                 if (scanFiles != null) {
-                    exitCode = runScan(cli.getReportDirectory(), cli.getReportFormat(), cli.getProjectName(), scanFiles,
-                            cli.getExcludeList(), cli.getSymLinkDepth(), cli.getFailOnCVSS());
+                    String[] formats = cli.getReportFormat();
+                    for (String format : formats) {
+                        exitCode = runScan(cli.getReportDirectory(), format, cli.getProjectName(), scanFiles,
+                                cli.getExcludeList(), cli.getSymLinkDepth(), cli.getFailOnCVSS());
+                    }
                 } else {
                     LOGGER.error("No scan files configured");
                 }
