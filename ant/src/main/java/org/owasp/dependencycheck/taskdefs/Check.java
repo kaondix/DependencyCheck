@@ -144,6 +144,11 @@ public class Check extends Update {
      */
     private String reportOutputDirectory = ".";
     /**
+     * If using the JUNIT report format the junitFailOnCVSS sets the CVSS score
+     * threshold that is considered a failure. The default is 0.
+     */
+    private float junitFailOnCVSS = 0;
+    /**
      * Specifies if the build should be failed if a CVSS score above a specified
      * level is identified. The default is 11 which means since the CVSS scores
      * are 0-10, by default the build will never fail and the CVSS score is set
@@ -428,6 +433,24 @@ public class Check extends Update {
      */
     public void setFailBuildOnCVSS(float failBuildOnCVSS) {
         this.failBuildOnCVSS = failBuildOnCVSS;
+    }
+
+    /**
+     * Get the value of junitFailOnCVSS.
+     *
+     * @return the value of junitFailOnCVSS
+     */
+    public float getJunitFailOnCVSS() {
+        return junitFailOnCVSS;
+    }
+
+    /**
+     * Set the value of junitFailOnCVSS.
+     *
+     * @param junitFailOnCVSS new value of junitFailOnCVSS
+     */
+    public void setJunitFailOnCVSS(float junitFailOnCVSS) {
+        this.junitFailOnCVSS = junitFailOnCVSS;
     }
 
     /**
@@ -1436,6 +1459,7 @@ public class Check extends Update {
         getSettings().setStringIfNotEmpty(Settings.KEYS.ANALYZER_ASSEMBLY_DOTNET_PATH, pathToCore);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_OSSINDEX_ENABLED, ossindexAnalyzerEnabled);
         getSettings().setStringIfNotEmpty(Settings.KEYS.ANALYZER_OSSINDEX_URL, ossindexAnalyzerUrl);
+        getSettings().setFloat(Settings.KEYS.JUNIT_FAIL_ON_CVSS, junitFailOnCVSS);
     }
 
     /**

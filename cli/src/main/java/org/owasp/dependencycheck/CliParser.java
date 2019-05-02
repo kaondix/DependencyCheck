@@ -193,10 +193,10 @@ public final class CliParser {
         } else if (!path.contains("*") && !path.contains("?")) {
             File f = new File(path);
             String[] formats = this.getReportFormat();
-            if ("o".equalsIgnoreCase(argumentName.substring(0, 1)) && formats.length==1 && !"ALL".equalsIgnoreCase(formats[0])) {
+            if ("o".equalsIgnoreCase(argumentName.substring(0, 1)) && formats.length == 1 && !"ALL".equalsIgnoreCase(formats[0])) {
                 final String checkPath = path.toLowerCase();
                 if (checkPath.endsWith(".html") || checkPath.endsWith(".xml") || checkPath.endsWith(".htm")
-                         || checkPath.endsWith(".csv") || checkPath.endsWith(".json")) {
+                        || checkPath.endsWith(".csv") || checkPath.endsWith(".json")) {
                     if (f.getParentFile() == null) {
                         f = new File(".", path);
                     }
@@ -344,7 +344,10 @@ public final class CliParser {
                 .addOption(cveValidForHours)
                 .addOption(experimentalEnabled)
                 .addOption(retiredEnabled)
-                .addOption(failOnCVSS);
+                .addOption(failOnCVSS)
+                .addOption(Option.builder().argName("score").longOpt(ARGUMENT.FAIL_JUNIT_ON_CVSS)
+                        .desc("Sepcifies the CVSS score that is considered a failure when generating the junit report. "
+                                + "The default is 0.").build());
     }
 
     /**
@@ -1313,16 +1316,29 @@ public final class CliParser {
      * @return 11 if nothing is set. Otherwise it returns the int passed from
      * the command line arg
      */
-    public int getFailOnCVSS() {
+    public float getFailOnCVSS() {
         if (line.hasOption(ARGUMENT.FAIL_ON_CVSS)) {
             final String value = line.getOptionValue(ARGUMENT.FAIL_ON_CVSS);
             try {
-                return Integer.parseInt(value);
+                return Float.parseFloat(value);
             } catch (NumberFormatException nfe) {
                 return 11;
             }
         } else {
             return 11;
+        }
+    }
+
+    public float getJunitFailOnCVSS() {
+        if (line.hasOption(ARGUMENT.FAIL_JUNIT_ON_CVSS)) {
+            final String value = line.getOptionValue(ARGUMENT.FAIL_JUNIT_ON_CVSS);
+            try {
+                return Integer.parseInt(value);
+            } catch (NumberFormatException nfe) {
+                return 0;
+            }
+        } else {
+            return 0;
         }
     }
 
@@ -1680,9 +1696,15 @@ public final class CliParser {
         public static final String ARTIFACTORY_PARALLEL_ANALYSIS = "artifactoryParallelAnalysis";
 
         /**
-         * The CLI argument to enable the experimental analyzers.
+         * The CLI argument to configure when the execution should be considered
+         * a failure.
          */
         public static final String FAIL_ON_CVSS = "failOnCVSS";
+        /**
+         * The CLI argument to set the threshold that is considered a failure
+         * when generating the JUNIT report format.
+         */
+        private static String FAIL_JUNIT_ON_CVSS = "junitFailOnCVSS";
 
     }
 }
