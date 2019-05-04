@@ -28,6 +28,8 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 import javax.annotation.concurrent.ThreadSafe;
 import org.json.JSONObject;
 import org.owasp.dependencycheck.utils.Settings;
@@ -99,7 +101,7 @@ public class NodeAuditSearch {
      * @throws IOException if it's unable to connect to Node Audit API
      */
     public List<Advisory> submitPackage(JsonObject packageJson) throws SearchException, IOException {
-       return submitPackage(packageJson,0);
+       return submitPackage(packageJson, 0);
     }
 
     /**
@@ -113,7 +115,7 @@ public class NodeAuditSearch {
      * package
      * @throws IOException if it's unable to connect to Node Audit API
      */
-    private  List<Advisory> submitPackage(JsonObject packageJson, int count) throws SearchException, IOException {
+    private List<Advisory> submitPackage(JsonObject packageJson, int count) throws SearchException, IOException {
         try {
             final byte[] packageDatabytes = packageJson.toString().getBytes(StandardCharsets.UTF_8);
             final URLConnectionFactory factory = new URLConnectionFactory(settings);
@@ -143,13 +145,13 @@ public class NodeAuditSearch {
                         return parser.parse(jsonResponse);
                     }
                 case 503:
-                    LOGGER.debug("Invalid payload submitted to Node Audit API. Received response code: {} {}",
+                    LOGGER.debug("Node Audit API returned `{} {}` - retrying request.",
                             conn.getResponseCode(), conn.getResponseMessage());
                     if (count > 5){
+                        LockSupport.parkNanos(TimeUnit.MICROSECONDS.toNanos(500) * count);
                         return submitPackage(packageJson, ++count);
                     }
-                    throw new SearchException("Could not perform Node Audit analysis. Invalid payload submitted to Node Audit API.");
-
+                    throw new SearchException("Could not perform Node Audit analysis - service returned a 503.");
                 case 400:
                     LOGGER.debug("Invalid payload submitted to Node Audit API. Received response code: {} {}",
                             conn.getResponseCode(), conn.getResponseMessage());
