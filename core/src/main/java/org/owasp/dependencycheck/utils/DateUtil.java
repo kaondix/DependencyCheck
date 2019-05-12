@@ -97,7 +97,7 @@ public final class DateUtil {
         }
         long results = 0;
         try {
-            results = Long.parseLong(epoch);
+            results = Long.parseLong(seconds);
         } catch (NumberFormatException ex) {
             LOGGER.debug(String.format("Error parsing '%s' property from the database - using zero", epoch), ex);
         }
