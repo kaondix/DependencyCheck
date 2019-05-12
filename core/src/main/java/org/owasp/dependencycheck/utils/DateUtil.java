@@ -84,20 +84,23 @@ public final class DateUtil {
      * Returns the string value converted to an epoch seconds. Note, in some
      * cases the value provided may be in milliseconds.
      *
-     * @param value the property value
+     * @param epoch the property value
      * @return the value in seconds
      */
-    public static long getEpochValueInSeconds(String value) {
-        if (value.length() >= 13) {
+    public static long getEpochValueInSeconds(String epoch) {
+        String seconds;
+        if (epoch.length() >= 13) {
             //this is in milliseconds - reduce to seconds
-            value = value.substring(0, 10);
+            seconds = epoch.substring(0, 10);
+        } else {
+            seconds = epoch;
         }
-        long lastUpdated = 0;
+        long results = 0;
         try {
-            lastUpdated = Long.parseLong(value);
+            results = Long.parseLong(epoch);
         } catch (NumberFormatException ex) {
-            LOGGER.debug(String.format("Error parsing '%s' property from the database - using zero", value), ex);
+            LOGGER.debug(String.format("Error parsing '%s' property from the database - using zero", epoch), ex);
         }
-        return lastUpdated;
+        return results;
     }
 }
