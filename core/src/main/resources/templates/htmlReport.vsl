@@ -16,7 +16,7 @@ limitations under the License.
 Copyright (c) 2012 Jeremy Long. All Rights Reserved.
 
 @author Jeremy Long <jeremy.long@owasp.org>
-@version 1.2
+@version 1.3
 *#
 
 
@@ -79,7 +79,7 @@ Copyright (c) 2012 Jeremy Long. All Rights Reserved.
                     setTimeout('$("#modal-content,#modal-background").toggleClass("active");',100);
                 });
                 $('#modal-add-header').click(function () {
-                    xml = '<?xml version="1.0" encoding="UTF-8"?>\n<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.2.xsd">\n   ';
+                    xml = '<?xml version="1.0" encoding="UTF-8"?>\n<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">\n   ';
                     xml += $("#modal-text").text().replace(/\n/g,'\n   ');
                     xml += '\n</suppressions>';
                     $('#modal-add-header').toggleClass('active');
@@ -852,9 +852,9 @@ Getting Help: <a href="https://github.com/jeremylong/DependencyCheck/issues" tar
                             #if($vuln.getSource().name().equals("NVD"))
                                 <p><b><a target="_blank" href="http://web.nvd.nist.gov/view/vuln/detail?vulnId=$enc.url($vuln.name)">$enc.html($vuln.name)</a></b>&nbsp;&nbsp;<button class="copybutton" title="Generate Suppression XML for this CCE for this file" onclick="copyText('$enc.javascript($dependency.DisplayFileName)', '$enc.javascript($dependency.Sha1sum)', '#if($suppressGav)$enc.javascript($suppressGav)#end', 'cve', '$enc.javascript($vuln.name)')">suppress</button></p>
                             #elseif($vuln.getSource().name().equals("NPM"))
-                                <p><b><a target="_blank" href="https://www.npmjs.com/advisories/$enc.url($vuln.name)">NPM-$enc.html($vuln.name)</a></b></p>
+                                <p><b><a target="_blank" href="https://www.npmjs.com/advisories/$enc.url($vuln.name)">NPM-$enc.html($vuln.name)</a></b>&nbsp;&nbsp;<button class="copybutton" title="Generate Suppression XML for this CCE for this file" onclick="copyText('$enc.javascript($dependency.DisplayFileName)', '$enc.javascript($dependency.Sha1sum)', '#if($suppressGav)$enc.javascript($suppressGav)#end', 'vulnerabilityName', '$enc.javascript($vuln.name)')">suppress</button></p>
                             #else
-                                <p><b>$enc.html($vuln.name)</b> ($vuln.getSource().name())</p>
+                                <p><b>$enc.html($vuln.name)</b>&nbsp;($vuln.getSource().name())</b>&nbsp;&nbsp;<button class="copybutton" title="Generate Suppression XML for this CCE for this file" onclick="copyText('$enc.javascript($dependency.DisplayFileName)', '$enc.javascript($dependency.Sha1sum)', '#if($suppressGav)$enc.javascript($suppressGav)#end', 'vulnerabilityName', '$enc.javascript($vuln.name)')">suppress</button></p>
                             #end
                             <p>#if($vuln.description)
                             <pre>$enc.html($vuln.description)</pre>
