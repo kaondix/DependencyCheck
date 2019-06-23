@@ -29,6 +29,13 @@ HTML version of the report. The other common scenario would be to ignore all CVE
 <suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
     <suppress>
         <notes><![CDATA[
+        This suppresses a CVE identified by OSS Index using the vulnerability name and packageUrl.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.eclipse\.jetty/jetty-server@.*$</packageUrl>
+        <vulnerabilityName>CVE-2017-7656</vulnerabilityName>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
         This suppresses cpe:/a:csv:csv:1.0 for some.jar in the "c:\path\to" directory.
         ]]></notes>
         <filePath>c:\path\to\some.jar</filePath>
