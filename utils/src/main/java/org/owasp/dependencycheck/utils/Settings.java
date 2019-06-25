@@ -321,6 +321,11 @@ public final class Settings {
          * The path to go, if available.
          */
         public static final String ANALYZER_GOLANG_PATH = "analyzer.golang.path";
+        /*
+         * The properties key for whether the Golang Dep analyzer is
+         * enabled.
+         */
+        public static final String ANALYZER_GOLANG_DEP_ENABLED = "analyzer.golang.dep.enabled";
         /**
          * The properties key for whether the Ruby Gemspec Analyzer is enabled.
          */
