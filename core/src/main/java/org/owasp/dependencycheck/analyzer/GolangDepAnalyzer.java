@@ -39,6 +39,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.owasp.dependencycheck.dependency.naming.GenericIdentifier;
 import org.owasp.dependencycheck.dependency.naming.Identifier;
 import org.owasp.dependencycheck.dependency.naming.PurlIdentifier;
+import org.owasp.dependencycheck.utils.Checksum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -173,6 +174,7 @@ public class GolangDepAnalyzer extends AbstractFileTypeAnalyzer {
      */
     private Dependency createDependency(Dependency parentDependency, String name, String version, String revision, String subPath) {
         final Dependency dep = new Dependency(parentDependency.getActualFile(), true);
+        dep.setEcosystem(DEPENDENCY_ECOSYSTEM);
         if (StringUtils.isNotBlank(subPath)) {
             dep.setDisplayFileName(name + "/" + subPath);
             dep.setName(name + "/" + subPath);
@@ -200,8 +202,10 @@ public class GolangDepAnalyzer extends AbstractFileTypeAnalyzer {
                     packageBuilder.withNamespace(baseNamespace);
                 }
                 packageBuilder.withName(depName);
-                dep.addEvidence(EvidenceType.PRODUCT, GOPKG_LOCK, "namespace", baseNamespace, Confidence.LOW);
-                dep.addEvidence(EvidenceType.VENDOR, GOPKG_LOCK, "namespace", baseNamespace, Confidence.LOW);
+                if (!"golang.org".equals(baseNamespace)) {
+                    dep.addEvidence(EvidenceType.PRODUCT, GOPKG_LOCK, "namespace", baseNamespace, Confidence.LOW);
+                    dep.addEvidence(EvidenceType.VENDOR, GOPKG_LOCK, "namespace", baseNamespace, Confidence.LOW);
+                }
 
                 dep.addEvidence(EvidenceType.PRODUCT, GOPKG_LOCK, "name", depName, Confidence.HIGHEST);
                 dep.addEvidence(EvidenceType.VENDOR, GOPKG_LOCK, "name", depName, Confidence.HIGHEST);
@@ -249,6 +253,10 @@ public class GolangDepAnalyzer extends AbstractFileTypeAnalyzer {
             id = new GenericIdentifier(value.toString(), Confidence.HIGH);
         }
         dep.addSoftwareIdentifier(id);
+        dep.setSha1sum(Checksum.getSHA1Checksum(id.toString()));
+        dep.setMd5sum(Checksum.getMD5Checksum(id.toString()));
+        dep.setSha256sum(Checksum.getSHA256Checksum(id.toString()));
+
         return dep;
     }
 }
