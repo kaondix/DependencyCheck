@@ -20,7 +20,7 @@ Copyright (c) 2012 - Jeremy Long. All Rights Reserved.
     <parent>
         <groupId>org.owasp</groupId>
         <artifactId>dependency-check-parent</artifactId>
-        <version>5.0.0-SNAPSHOT</version>
+        <version>5.1.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>dependency-check-cli</artifactId>
@@ -30,7 +30,7 @@ Copyright (c) 2012 - Jeremy Long. All Rights Reserved.
     <description>dependency-check-cli is an command line tool that uses dependency-check-core to detect publicly disclosed vulnerabilities associated with the scanned project dependencies. The tool will generate a report listing the dependency, any identified Common Platform Enumeration (CPE) identifiers, and the associated Common Vulnerability and Exposure (CVE) entries.</description>
     <scm>
         <connection>scm:git:https://github.com/jeremylong/DependencyCheck.git</connection>
-        <url>https://github.com/jeremylong/DependencyCheck/cli</url>
+        <url>https://github.com/jeremylong/DependencyCheck/tree/master/cli</url>
         <developerConnection>scm:git:git@github.com:jeremylong/DependencyCheck.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
@@ -40,10 +40,8 @@ Copyright (c) 2012 - Jeremy Long. All Rights Reserved.
             <resource>
                 <directory>src/main/resources</directory>
                 <includes>
-                    <include>**/*.properties</include>
                     <include>logback.xml</include>
                 </includes>
-                <filtering>true</filtering>
             </resource>
             <resource>
                 <directory>${basedir}</directory>
@@ -118,6 +116,14 @@ Copyright (c) 2012 - Jeremy Long. All Rights Reserved.
     </build>
     <dependencies>
         <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+        </dependency>
+        <dependency>
             <groupId>commons-cli</groupId>
             <artifactId>commons-cli</artifactId>
         </dependency>
@@ -134,14 +140,6 @@ Copyright (c) 2012 - Jeremy Long. All Rights Reserved.
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.ant</groupId>

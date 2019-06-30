@@ -62,6 +62,10 @@ public class Check extends Update {
      */
     private Boolean nodeAuditAnalyzerEnabled;
     /**
+     * Sets whether or not the Node Audit Analyzer should use a local cache.
+     */
+    private Boolean nodeAuditAnalyzerUseCache;
+    /**
      * Whether or not the RetireJS Analyzer is enabled.
      */
     private Boolean retireJsAnalyzerEnabled;
@@ -105,6 +109,10 @@ public class Check extends Update {
      */
     private Boolean centralAnalyzerEnabled;
     /**
+     * Whether or not the Central Analyzer should use a local cache.
+     */
+    private Boolean centralAnalyzerUseCache;
+    /**
      * Whether or not the nexus analyzer is enabled.
      */
     private Boolean nexusAnalyzerEnabled;
@@ -125,6 +133,21 @@ public class Check extends Update {
      * Whether or not the defined proxy should be used when connecting to Nexus.
      */
     private Boolean nexusUsesProxy;
+
+    /**
+     * Sets whether the Golang Dependency analyzer is enabled. Default is true.
+     */
+    private Boolean golangDepEnabled;
+    /**
+     * Sets whether Golang Module Analyzer is enabled; this requires `go` to be
+     * installed. Default is true.
+     */
+    private Boolean golangModEnabled;
+    /**
+     * Sets the path to `go`.
+     */
+    private String pathToGo;
+
     /**
      * Additional ZIP File extensions to add analyze. This should be a
      * comma-separated list of file extensions to treat like ZIP files.
@@ -172,7 +195,8 @@ public class Check extends Update {
      */
     private final List<String> reportFormats = new ArrayList<>();
     /**
-     * Whether the JSON and XML reports should be pretty printed; the default is false.
+     * Whether the JSON and XML reports should be pretty printed; the default is
+     * false.
      */
     private Boolean prettyPrint = null;
 
@@ -249,12 +273,22 @@ public class Check extends Update {
      * Whether or not the Sonatype OSS Index analyzer is enabled.
      */
     private Boolean ossindexAnalyzerEnabled;
-
+    /**
+     * Whether or not the Sonatype OSS Index analyzer should cache results.
+     */
+    private Boolean ossindexAnalyzerUseCache;
     /**
      * URL of the Sonatype OSS Index service.
      */
     private String ossindexAnalyzerUrl;
-
+    /**
+     * The username to use for the Sonatype OSS Index service.
+     */
+    private String ossindexAnalyzerUsername;
+    /**
+     * The password to use for the Sonatype OSS Index service.
+     */
+    private String ossindexAnalyzerPassword;
     /**
      * Whether or not the Artifactory Analyzer is enabled.
      */
@@ -764,7 +798,7 @@ public class Check extends Update {
      * Sets if the Bundle Audit Analyzer is enabled.
      *
      * @param bundleAuditAnalyzerEnabled whether or not the analyzer should be
-     *                                   enabled
+     * enabled
      */
     public void setBundleAuditAnalyzerEnabled(Boolean bundleAuditAnalyzerEnabled) {
         this.bundleAuditAnalyzerEnabled = bundleAuditAnalyzerEnabled;
@@ -819,7 +853,7 @@ public class Check extends Update {
      * Sets the enabled state of the swift package manager analyzer.
      *
      * @param swiftPackageManagerAnalyzerEnabled the enabled state of the swift
-     *                                           package manager
+     * package manager
      */
     public void setSwiftPackageManagerAnalyzerEnabled(Boolean swiftPackageManagerAnalyzerEnabled) {
         this.swiftPackageManagerAnalyzerEnabled = swiftPackageManagerAnalyzerEnabled;
@@ -908,6 +942,24 @@ public class Check extends Update {
     }
 
     /**
+     * Get the value of nodeAuditAnalyzerUseCache.
+     *
+     * @return the value of nodeAuditAnalyzerUseCache
+     */
+    public Boolean isNodeAuditAnalyzerUseCache() {
+        return nodeAuditAnalyzerUseCache;
+    }
+
+    /**
+     * Set the value of nodeAuditAnalyzerUseCache.
+     *
+     * @param nodeAuditAnalyzerUseCache new value of nodeAuditAnalyzerUseCache
+     */
+    public void setNodeAuditAnalyzerUseCache(Boolean nodeAuditAnalyzerUseCache) {
+        this.nodeAuditAnalyzerUseCache = nodeAuditAnalyzerUseCache;
+    }
+
+    /**
      * Get the value of retireJsAnalyzerEnabled.
      *
      * @return the value of retireJsAnalyzerEnabled
@@ -956,7 +1008,7 @@ public class Check extends Update {
      * Set the value of retirejsFilterNonVulnerable.
      *
      * @param retirejsFilterNonVulnerable new value of
-     *                                    retirejsFilterNonVulnerable
+     * retirejsFilterNonVulnerable
      */
     public void setRetirejsFilterNonVulnerable(Boolean retirejsFilterNonVulnerable) {
         this.retirejsFilterNonVulnerable = retirejsFilterNonVulnerable;
@@ -977,7 +1029,7 @@ public class Check extends Update {
      * This is called by Ant.
      *
      * @param retirejsFilter the regular expression used to filter based on file
-     *                       content
+     * content
      */
     public void addConfiguredRetirejsFilter(final RetirejsFilter retirejsFilter) {
         retirejsFilters.add(retirejsFilter.getRegex());
@@ -1032,7 +1084,7 @@ public class Check extends Update {
      * Set the value of pyDistributionAnalyzerEnabled.
      *
      * @param pyDistributionAnalyzerEnabled new value of
-     *                                      pyDistributionAnalyzerEnabled
+     * pyDistributionAnalyzerEnabled
      */
     public void setPyDistributionAnalyzerEnabled(Boolean pyDistributionAnalyzerEnabled) {
         this.pyDistributionAnalyzerEnabled = pyDistributionAnalyzerEnabled;
@@ -1057,6 +1109,24 @@ public class Check extends Update {
     }
 
     /**
+     * Get the value of centralAnalyzerUseCache.
+     *
+     * @return the value of centralAnalyzerUseCache
+     */
+    public Boolean isCentralAnalyzerUseCache() {
+        return centralAnalyzerUseCache;
+    }
+
+    /**
+     * Set the value of centralAnalyzerUseCache.
+     *
+     * @param centralAnalyzerUseCache new value of centralAnalyzerUseCache
+     */
+    public void setCentralAnalyzerUseCache(Boolean centralAnalyzerUseCache) {
+        this.centralAnalyzerUseCache = centralAnalyzerUseCache;
+    }
+
+    /**
      * Get the value of nexusAnalyzerEnabled.
      *
      * @return the value of nexusAnalyzerEnabled
@@ -1072,6 +1142,60 @@ public class Check extends Update {
      */
     public void setNexusAnalyzerEnabled(Boolean nexusAnalyzerEnabled) {
         this.nexusAnalyzerEnabled = nexusAnalyzerEnabled;
+    }
+
+    /**
+     * Get the value of golangDepEnabled.
+     *
+     * @return the value of golangDepEnabled
+     */
+    public Boolean isGolangDepEnabled() {
+        return nexusAnalyzerEnabled;
+    }
+
+    /**
+     * Set the value of golangDepEnabled.
+     *
+     * @param golangDepEnabled new value of golangDepEnabled
+     */
+    public void setGolangDepEnabled(Boolean golangDepEnabled) {
+        this.golangDepEnabled = golangDepEnabled;
+    }
+
+    /**
+     * Get the value of golangModEnabled.
+     *
+     * @return the value of golangModEnabled
+     */
+    public Boolean isGoModDepEnabled() {
+        return golangModEnabled;
+    }
+
+    /**
+     * Set the value of golangModEnabled.
+     *
+     * @param golangModEnabled new value of golangModEnabled
+     */
+    public void setGolangModEnabled(Boolean golangModEnabled) {
+        this.golangModEnabled = golangModEnabled;
+    }
+
+    /**
+     * Get the value of pathToCore.
+     *
+     * @return the value of pathToCore
+     */
+    public String getPathToGo() {
+        return pathToGo;
+    }
+
+    /**
+     * Set the value of pathToGo.
+     *
+     * @param pathToGo new value of pathToGo
+     */
+    public void setPathToGo(String pathToGo) {
+        this.pathToGo = pathToGo;
     }
 
     /**
@@ -1201,6 +1325,24 @@ public class Check extends Update {
     }
 
     /**
+     * Get value of {@link #ossindexAnalyzerUseCache}.
+     *
+     * @return the value of ossindexAnalyzerUseCache
+     */
+    public Boolean isOssindexAnalyzerUseCache() {
+        return ossindexAnalyzerUseCache;
+    }
+
+    /**
+     * Set value of {@link #ossindexAnalyzerUseCache}.
+     *
+     * @param ossindexAnalyzerUseCache new value of ossindexAnalyzerUseCache
+     */
+    public void setOssindexAnalyzerUseCache(Boolean ossindexAnalyzerUseCache) {
+        this.ossindexAnalyzerUseCache = ossindexAnalyzerUseCache;
+    }
+
+    /**
      * Get value of {@link #ossindexAnalyzerUrl}.
      *
      * @return the value of ossindexAnalyzerUrl
@@ -1216,6 +1358,42 @@ public class Check extends Update {
      */
     public void setOssindexAnalyzerUrl(String ossindexAnalyzerUrl) {
         this.ossindexAnalyzerUrl = ossindexAnalyzerUrl;
+    }
+
+    /**
+     * Get value of {@link #ossindexAnalyzerUsername}.
+     *
+     * @return the value of ossindexAnalyzerUsername
+     */
+    public String getOssindexAnalyzerUsername() {
+        return ossindexAnalyzerUsername;
+    }
+
+    /**
+     * Set value of {@link #ossindexAnalyzerUsername}.
+     *
+     * @param ossindexAnalyzerUsername new value of ossindexAnalyzerUsername
+     */
+    public void setOssindexAnalyzerUsername(String ossindexAnalyzerUsername) {
+        this.ossindexAnalyzerUsername = ossindexAnalyzerUsername;
+    }
+
+    /**
+     * Get value of {@link #ossindexAnalyzerPassword}.
+     *
+     * @return the value of ossindexAnalyzerPassword
+     */
+    public String getOssindexAnalyzerPassword() {
+        return ossindexAnalyzerPassword;
+    }
+
+    /**
+     * Set value of {@link #ossindexAnalyzerPassword}.
+     *
+     * @param ossindexAnalyzerPassword new value of ossindexAnalyzerPassword
+     */
+    public void setOssindexAnalyzerPassword(String ossindexAnalyzerPassword) {
+        this.ossindexAnalyzerPassword = ossindexAnalyzerPassword;
     }
 
     /**
@@ -1285,7 +1463,7 @@ public class Check extends Update {
      * Set the value of artifactoryAnalyzerUseProxy.
      *
      * @param artifactoryAnalyzerUseProxy new value of
-     *                                    artifactoryAnalyzerUseProxy
+     * artifactoryAnalyzerUseProxy
      */
     public void setArtifactoryAnalyzerUseProxy(Boolean artifactoryAnalyzerUseProxy) {
         this.artifactoryAnalyzerUseProxy = artifactoryAnalyzerUseProxy;
@@ -1304,7 +1482,7 @@ public class Check extends Update {
      * Set the value of artifactoryAnalyzerParallelAnalysis.
      *
      * @param artifactoryAnalyzerParallelAnalysis new value of
-     *                                            artifactoryAnalyzerParallelAnalysis
+     * artifactoryAnalyzerParallelAnalysis
      */
     public void setArtifactoryAnalyzerParallelAnalysis(Boolean artifactoryAnalyzerParallelAnalysis) {
         this.artifactoryAnalyzerParallelAnalysis = artifactoryAnalyzerParallelAnalysis;
@@ -1323,7 +1501,7 @@ public class Check extends Update {
      * Set the value of artifactoryAnalyzerUsername.
      *
      * @param artifactoryAnalyzerUsername new value of
-     *                                    artifactoryAnalyzerUsername
+     * artifactoryAnalyzerUsername
      */
     public void setArtifactoryAnalyzerUsername(String artifactoryAnalyzerUsername) {
         this.artifactoryAnalyzerUsername = artifactoryAnalyzerUsername;
@@ -1342,7 +1520,7 @@ public class Check extends Update {
      * Set the value of artifactoryAnalyzerApiToken.
      *
      * @param artifactoryAnalyzerApiToken new value of
-     *                                    artifactoryAnalyzerApiToken
+     * artifactoryAnalyzerApiToken
      */
     public void setArtifactoryAnalyzerApiToken(String artifactoryAnalyzerApiToken) {
         this.artifactoryAnalyzerApiToken = artifactoryAnalyzerApiToken;
@@ -1361,7 +1539,7 @@ public class Check extends Update {
      * Set the value of artifactoryAnalyzerBearerToken.
      *
      * @param artifactoryAnalyzerBearerToken new value of
-     *                                       artifactoryAnalyzerBearerToken
+     * artifactoryAnalyzerBearerToken
      */
     public void setArtifactoryAnalyzerBearerToken(String artifactoryAnalyzerBearerToken) {
         this.artifactoryAnalyzerBearerToken = artifactoryAnalyzerBearerToken;
@@ -1471,14 +1649,19 @@ public class Check extends Update {
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_COMPOSER_LOCK_ENABLED, composerAnalyzerEnabled);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_NODE_PACKAGE_ENABLED, nodeAnalyzerEnabled);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_NODE_AUDIT_ENABLED, nodeAuditAnalyzerEnabled);
+        getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_NODE_AUDIT_USE_CACHE, nodeAuditAnalyzerUseCache);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_RETIREJS_ENABLED, retireJsAnalyzerEnabled);
         getSettings().setStringIfNotNull(Settings.KEYS.ANALYZER_RETIREJS_REPO_JS_URL, retireJsUrl);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_RETIREJS_FILTER_NON_VULNERABLE, retirejsFilterNonVulnerable);
         getSettings().setArrayIfNotEmpty(Settings.KEYS.ANALYZER_RETIREJS_FILTERS, retirejsFilters);
+        getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_GOLANG_DEP_ENABLED, golangDepEnabled);
+        getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_GOLANG_MOD_ENABLED, golangModEnabled);
+        getSettings().setStringIfNotNull(Settings.KEYS.ANALYZER_GOLANG_PATH, pathToGo);
 
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_NUSPEC_ENABLED, nuspecAnalyzerEnabled);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_NUGETCONF_ENABLED, nugetconfAnalyzerEnabled);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_CENTRAL_ENABLED, centralAnalyzerEnabled);
+        getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_CENTRAL_USE_CACHE, centralAnalyzerUseCache);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_NEXUS_ENABLED, nexusAnalyzerEnabled);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_ARCHIVE_ENABLED, archiveAnalyzerEnabled);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_ASSEMBLY_ENABLED, assemblyAnalyzerEnabled);
@@ -1490,6 +1673,9 @@ public class Check extends Update {
         getSettings().setStringIfNotEmpty(Settings.KEYS.ANALYZER_ASSEMBLY_DOTNET_PATH, pathToCore);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_OSSINDEX_ENABLED, ossindexAnalyzerEnabled);
         getSettings().setStringIfNotEmpty(Settings.KEYS.ANALYZER_OSSINDEX_URL, ossindexAnalyzerUrl);
+        getSettings().setStringIfNotEmpty(Settings.KEYS.ANALYZER_OSSINDEX_USER, ossindexAnalyzerUsername);
+        getSettings().setStringIfNotEmpty(Settings.KEYS.ANALYZER_OSSINDEX_PASSWORD, ossindexAnalyzerPassword);
+        getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_OSSINDEX_USE_CACHE, ossindexAnalyzerUseCache);
         getSettings().setFloat(Settings.KEYS.JUNIT_FAIL_ON_CVSS, junitFailOnCVSS);
     }
 
@@ -1499,7 +1685,7 @@ public class Check extends Update {
      *
      * @param dependencies the list of dependency objects
      * @throws BuildException thrown if a CVSS score is found that is higher
-     *                        than the threshold set
+     * than the threshold set
      */
     private void checkForFailure(Dependency[] dependencies) throws BuildException {
         final StringBuilder ids = new StringBuilder();

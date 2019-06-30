@@ -20,7 +20,7 @@ Copyright (c) 2013 Jeremy Long. All Rights Reserved.
     <parent>
         <groupId>org.owasp</groupId>
         <artifactId>dependency-check-parent</artifactId>
-        <version>5.0.0-SNAPSHOT</version>
+        <version>5.1.1-SNAPSHOT</version>
     </parent>
     <artifactId>dependency-check-maven</artifactId>
     <packaging>maven-plugin</packaging>
@@ -32,12 +32,12 @@ Copyright (c) 2013 Jeremy Long. All Rights Reserved.
     </properties>
     <scm>
         <connection>scm:git:https://github.com/jeremylong/DependencyCheck.git</connection>
-        <url>https://github.com/jeremylong/DependencyCheck/maven</url>
+        <url>https://github.com/jeremylong/DependencyCheck/tree/master/maven</url>
         <developerConnection>scm:git:git@github.com:jeremylong/DependencyCheck.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
     <prerequisites>
-        <maven>${maven.api.version>}</maven>
+        <maven>${maven.api.version}</maven>
     </prerequisites>
     <build>
         <resources>

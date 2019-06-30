@@ -1,5 +1,5 @@
 /*
- * This file is part of dependency-check-core.
+ * This file is part of dependency-check-utils.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -230,7 +230,7 @@ public final class Checksum {
         try {
             return MessageDigest.getInstance(algorithm);
         } catch (NoSuchAlgorithmException e) {
-            LOGGER.error(e.getMessage());
+            LOGGER.error(e.getMessage(), e);
             final String msg = String.format("Failed to obtain the %s message digest.", algorithm);
             throw new IllegalStateException(msg, e);
         }

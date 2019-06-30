@@ -6,7 +6,7 @@ The following table lists the command line arguments:
 | Short | Argument Name | Parameter | Description | Requirement |
 |-------|---------------|-----------|-------------|-------------|
 |       | \-\-project            | \<name\>        | The name of the project being scanned. | Optional |
-| \-s   | \-\-scan               | \<path\>        | The path to scan \- this option can be specified multiple times. It is also possible to specify Ant style paths (e.g. directory/**/*.jar). | Required |
+| \-s   | \-\-scan               | \<path\>        | The path to scan \- this option can be specified multiple times. It is also possible to specify Ant style paths (e.g. 'directory/**/*.jar'); if using an Ant style path it is highly recommended that you quote the path so that the shell itself does not automatically perform replacements (see [issue #1812](https://github.com/jeremylong/DependencyCheck/issues/1812). | Required |
 |       | \-\-exclude            | \<pattern\>     | The path patterns to exclude from the scan \- this option can be specified multiple times. This accepts Ant style path patterns (e.g. **/exclude/**). | Optional |
 |       | \-\-symLink            | \<depth\>       | The depth that symbolic links will be followed; the default is 0 meaning symbolic links will not be followed. | Optional |
 | \-o   | \-\-out                | \<path\>        | The folder to write reports to. This defaults to the current directory. If the format is not set to ALL one could specify a specific file name. | Optional |
@@ -36,6 +36,7 @@ Advanced Options
 |       | \-\-disablePyPkg                       |                 | Sets whether the [experimental](../analyzers/index.html) Python Package Analyzer will be used.                               | false |
 |       | \-\-disableNodeJS                      |                 | Sets whether the Node.js Package Analyzer will be used.                                   | false |
 |       | \-\-disableNodeAudit                   |                 | Sets whether the Node Audit Analyzer will be used.                                                                           | false |
+|       | \-\-disableNodeAuditCache              |                 | When the argument is present the Node Audit Analyzer will not cache results. By default the results are cached for 24 hours. | false |  
 |       | \-\-disableRetireJS                    |                 | Sets whether the [experimental](../analyzers/index.html) RetireJS Analyzer will be used.                                     | false |
 |       | \-\-retireJsUrl                        | \<url\>         | The URL to the Retire JS repository.                                                                                         | https://raw.githubusercontent.com/Retirejs/retire.js/master/repository/jsrepository.json |
 |       | \-\-retirejsFilter                     | \<pattern\>     | The RetireJS Analyzers content filter used to exclude JS files when the content contains the given regular expression; this option can be specified multiple times. | &nbsp; |
@@ -52,7 +53,11 @@ Advanced Options
 |       | \-\-disableJar                         |                 | Sets whether the Jar Analyzer will be disabled.                                                                              | false |
 |       | \-\-disableComposer                    |                 | Sets whether the [experimental](../analyzers/index.html) PHP Composer Lock File Analyzer will be disabled.                   | false |
 |       | \-\-disableOssIndex                    |                 | Sets whether the OSS Index Analyzer will be disabled.                                                                        | false |
+|       | \-\-disableOssIndexCache               |                 | When the argument is present the OSS Index Analyzer will not cache results. By default results are cached for 24 hours.      | false |
+|       | \-\-ossIndexUsername                   | \<username\>    | The optional username to connect to Sonatype's OSS Index.                                                                    | &nbsp;|
+|       | \-\-ossIndexPassword                   | \<password\>    | The optional password to connect to Sonatype's OSS Index.                                                                    | &nbsp;|
 |       | \-\-disableCentral                     |                 | Sets whether the Central Analyzer will be used. **Disabling this analyzer is not recommended as it could lead to false negatives (e.g. libraries that have vulnerabilities may not be reported correctly).** If this analyzer is being disabled there is a good chance you also want to disable the Nexus Analyzer. | false |
+|       | \-\-disableCentralCache                |                 | When the argument is present the Central Analyzer will not cache results locally. By default results are cached locally for 30 days.  | false |
 |       | \-\-disableNexus                       |                 | Sets whether the Nexus Analyzer will be used (requires Nexus v2 or Pro v3). Note, this has been superceded by the Central Analyzer. However, you can configure the Nexus URL to utilize an internally hosted Nexus server. | false |
 |       | \-\-enableArtifactory                  |                 | Sets whether Artifactory analyzer will be used                                                                               | false |
 |       | \-\-artifactoryUrl                     | \<url\>         | The Artifactory server URL.                                                                                                  | &nbsp; |

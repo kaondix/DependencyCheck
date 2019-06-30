@@ -135,6 +135,9 @@ analyzers    | swiftEnabled          | Sets whether or not the [experimental](..
 analyzers    | bundleAuditEnabled    | Sets whether or not the [experimental](../analyzers/index.html) Ruby Bundle Audit Analyzer should be used.        | true
 analyzers    | pathToBundleAudit     | The path to bundle audit.                                                                                         | &nbsp;
 analyzers    | retiredEnabled        | Sets whether the [retired analyzers](../analyzers/index.html) will be used. If not set to true the analyzers marked as experimental (see below) will not be used | false
+analyzers    | golangDepEnabled      | Sets whether or not the [experimental](../analyzers/index.html) Golang Dependency Analyzer should be used.        | true
+analyzers    | golangModEnabled      | Sets whether or not the [experimental](../analyzers/index.html) Goland Module Analyzer should be used; requires `go` to be installed. | true
+analyzers    | pathToGo              | The path to `go`.                                                                                                 | &nbsp;
 
 #### Additional Analyzer Configuration
 
@@ -150,7 +153,9 @@ artifactory  | bearerToken           | The bearer token to connect to Artifactor
 retirejs     | enabled               | Sets whether the [experimental](../analyzers/index.html) RetireJS Analyzer should be used.                        | true
 retirejs     | filterNonVulnerable   | Configures the RetireJS Analyzer to remove non-vulnerable JS dependencies from the report.                        | false
 retirejs     | filters               | Configures the list of regular expessions used to filter JS files based on content.                               | &nbsp;
-
+ossIndex     | enabled               | Sets whether Sonatype's OSS Index will be used.                                                                   | true
+ossIndex     | username              | The optional user name to connect to Sonatype's OSS Index.                                                        | &nbsp;
+ossIndex     | password              | The optional passwod or API token to connect to Sonatype's OSS Index,                                             | &nbsp;
 
 #### Example
 ```groovy
@@ -164,6 +169,9 @@ dependencyCheck {
         retirejs {
             filters = ['(i)copyright Jeremy Long']
         }
+        ossIndex {
+            username = 'example@gmail.com'
+            password = '42cc601cd7ff12a531a0b1eada8dcf56d777b336'
     }
 }
 ```

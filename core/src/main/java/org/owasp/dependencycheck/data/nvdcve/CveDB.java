@@ -33,7 +33,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -485,7 +484,8 @@ public final class CveDB implements AutoCloseable {
         try {
             final String statementString = statementBundle.getString(key.name());
             if (key == INSERT_VULNERABILITY || key == INSERT_CPE) {
-                preparedStatement = connection.prepareStatement(statementString, Statement.RETURN_GENERATED_KEYS);
+                final String[] returnedColumns = {"id"};
+                preparedStatement = connection.prepareStatement(statementString, returnedColumns);
             } else {
                 preparedStatement = connection.prepareStatement(statementString);
             }
@@ -1140,21 +1140,20 @@ public final class CveDB implements AutoCloseable {
         }
     }
 
-    /**
-     * Used when updating a vulnerability - in some cases a CVE needs to be
-     * removed.
-     *
-     * @param vulnerabilityId the vulnerability ID
-     * @throws SQLException thrown if there is an error deleting the
-     * vulnerability
-     */
-    private synchronized void updateVulnerabilityDeleteVulnerability(int vulnerabilityId) throws SQLException {
-        try (PreparedStatement deleteVulnerability = prepareStatement(DELETE_VULNERABILITY)) {
-            deleteVulnerability.setInt(1, vulnerabilityId);
-            deleteVulnerability.executeUpdate();
-        }
-    }
-
+//    /**
+//     * Used when updating a vulnerability - in some cases a CVE needs to be
+//     * removed.
+//     *
+//     * @param vulnerabilityId the vulnerability ID
+//     * @throws SQLException thrown if there is an error deleting the
+//     * vulnerability
+//     */
+//    private synchronized void updateVulnerabilityDeleteVulnerability(int vulnerabilityId) throws SQLException {
+//        try (PreparedStatement deleteVulnerability = prepareStatement(DELETE_VULNERABILITY)) {
+//            deleteVulnerability.setInt(1, vulnerabilityId);
+//            deleteVulnerability.executeUpdate();
+//        }
+//    }
     /**
      * Used when updating a vulnerability - this method inserts the list of
      * vulnerable software.
@@ -1327,18 +1326,18 @@ public final class CveDB implements AutoCloseable {
 
         try {
             cpeEntries.forEach(entry -> {
-                        builder.cpe(parseCpe(entry, cve.getCve().getCVEDataMeta().getId()))
-                                .versionEndExcluding(entry.getVersionEndExcluding())
-                                .versionStartExcluding(entry.getVersionStartExcluding())
-                                .versionEndIncluding(entry.getVersionEndIncluding())
-                                .versionStartIncluding(entry.getVersionStartIncluding())
-                                .vulnerable(entry.getVulnerable());
-                        try {
-                            software.add(builder.build());
-                        } catch (CpeValidationException ex) {
-                            throw new LambdaExceptionWrapper(ex);
-                        }
-                    });
+                builder.cpe(parseCpe(entry, cve.getCve().getCVEDataMeta().getId()))
+                        .versionEndExcluding(entry.getVersionEndExcluding())
+                        .versionStartExcluding(entry.getVersionStartExcluding())
+                        .versionEndIncluding(entry.getVersionEndIncluding())
+                        .versionStartIncluding(entry.getVersionStartIncluding())
+                        .vulnerable(entry.getVulnerable());
+                try {
+                    software.add(builder.build());
+                } catch (CpeValidationException ex) {
+                    throw new LambdaExceptionWrapper(ex);
+                }
+            });
         } catch (LambdaExceptionWrapper ex) {
             throw (CpeValidationException) ex.getCause();
         }
@@ -1497,6 +1496,7 @@ public final class CveDB implements AutoCloseable {
         } catch (SQLException ex) {
             LOGGER.error("An unexpected SQL Exception occurred; please see the verbose log for more details.");
             LOGGER.debug("", ex);
+            throw new DatabaseException("Unexpected SQL Exception", ex);
         }
     }
 

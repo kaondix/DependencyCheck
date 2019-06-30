@@ -1,5 +1,5 @@
 /*
- * This file is part of dependency-check-core.
+ * This file is part of dependency-check-utils.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ public class HttpResourceConnection implements AutoCloseable {
     /**
      * Constructs a new HttpResourceConnection object.
      *
-     * @param settings  the configured settings
+     * @param settings the configured settings
      * @param usesProxy control whether this conn will use the defined proxy.
      */
     public HttpResourceConnection(Settings settings, boolean usesProxy) {
@@ -105,9 +105,11 @@ public class HttpResourceConnection implements AutoCloseable {
      * @param url the URL of the resource to download
      * @return the stream to read the retrieved content from
      * @throws org.owasp.dependencycheck.utils.DownloadFailedException is thrown
-     *                                                                 if there is an error downloading the resource
+     * if there is an error downloading the resource
+     * @throws TooManyRequestsException thrown when a 429 is received
+     * @throws ResourceNotFoundException thrown when a 404 is received
      */
-    public InputStream fetch(URL url) throws DownloadFailedException {
+    public InputStream fetch(URL url) throws DownloadFailedException, TooManyRequestsException, ResourceNotFoundException {
         if ("file".equalsIgnoreCase(url.getProtocol())) {
             final File file;
             try {
@@ -163,9 +165,11 @@ public class HttpResourceConnection implements AutoCloseable {
      * @param url the URL
      * @return the HTTP URL Connection
      * @throws DownloadFailedException thrown if there is an error creating the
-     *                                 HTTP URL Connection
+     * HTTP URL Connection
+     * @throws TooManyRequestsException thrown when a 429 is received
+     * @throws ResourceNotFoundException thrown when a 404 is received
      */
-    private HttpURLConnection obtainConnection(URL url) throws DownloadFailedException {
+    private HttpURLConnection obtainConnection(URL url) throws DownloadFailedException, TooManyRequestsException, ResourceNotFoundException {
         HttpURLConnection conn = null;
         try {
             LOGGER.debug("Attempting retrieval of {}", url.toString());
@@ -191,7 +195,21 @@ public class HttpResourceConnection implements AutoCloseable {
                 conn.connect();
                 status = conn.getResponseCode();
             }
-            if (status != 200) {
+            if (status == 404) {
+                try {
+                    conn.disconnect();
+                } finally {
+                    conn = null;
+                }
+                throw new ResourceNotFoundException("Requested resource does not exists - received a 404");
+            } else if (status == 429) {
+                try {
+                    conn.disconnect();
+                } finally {
+                    conn = null;
+                }
+                throw new TooManyRequestsException("Download fialed - too many connection requests");
+            } else if (status != 200) {
                 try {
                     conn.disconnect();
                 } finally {
@@ -230,7 +248,9 @@ public class HttpResourceConnection implements AutoCloseable {
      * @param url the URL to retrieve the timestamp from
      * @return an epoch timestamp
      * @throws org.owasp.dependencycheck.utils.DownloadFailedException is thrown
-     *                                                                 if an exception occurs making the HTTP request
+     * if an exception occurs making the HTTP request
+     * @deprecated this method is no longer used to check the last modified date
+     * of the NVD. This method will be removed in a future release.
      */
     @Deprecated
     public long getLastModified(URL url) throws DownloadFailedException {
@@ -242,12 +262,14 @@ public class HttpResourceConnection implements AutoCloseable {
      * given URL. If the file:// protocol is specified, then the lastTimestamp
      * of the file is returned.
      *
-     * @param url     the URL to retrieve the timestamp from
+     * @param url the URL to retrieve the timestamp from
      * @param isRetry indicates if this is a retry - to prevent endless loop and
-     *                stack overflow
+     * stack overflow
      * @return an epoch timestamp
      * @throws DownloadFailedException is thrown if an exception occurs making
-     *                                 the HTTP request
+     * the HTTP request
+     * @deprecated this method is no longer used to check the last modified date
+     * of the NVD. This method will be removed in a future release.
      */
     @Deprecated
     private long getLastModified(URL url, boolean isRetry) throws DownloadFailedException {
@@ -359,7 +381,7 @@ public class HttpResourceConnection implements AutoCloseable {
      *
      * @param ex the original exception
      * @throws org.owasp.dependencycheck.utils.DownloadFailedException a wrapper
-     *                                                                 exception that contains the original exception as the cause
+     * exception that contains the original exception as the cause
      */
     public void checkForCommonExceptionTypes(IOException ex) throws DownloadFailedException {
         Throwable cause = ex;

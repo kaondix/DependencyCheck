@@ -273,7 +273,8 @@ public final class CliParser {
 
         final Option path = Option.builder(ARGUMENT.SCAN_SHORT).argName("path").hasArg().longOpt(ARGUMENT.SCAN)
                 .desc("The path to scan - this option can be specified multiple times. Ant style"
-                        + " paths are supported (e.g. path/**/*.jar).")
+                        + " paths are supported (e.g. 'path/**/*.jar'); if using Ant style paths it is highly recommended"
+                        + " to quote the argument value.")
                 .build();
 
         final Option excludes = Option.builder().argName("pattern").hasArg().longOpt(ARGUMENT.EXCLUDE)
@@ -439,6 +440,8 @@ public final class CliParser {
                 .desc("Disable the Python Package Analyzer.").build();
         final Option disableComposerAnalyzer = Option.builder().longOpt(ARGUMENT.DISABLE_COMPOSER)
                 .desc("Disable the PHP Composer Analyzer.").build();
+        final Option disableGolangModAnalyzer = Option.builder().longOpt(ARGUMENT.DISABLE_GOLANG_MOD)
+                .desc("Disable the Golang Mod Analyzer.").build();
         final Option disableAutoconfAnalyzer = Option.builder()
                 .longOpt(ARGUMENT.DISABLE_AUTOCONF).desc("Disable the Autoconf Analyzer.").build();
         final Option disableOpenSSLAnalyzer = Option.builder().longOpt(ARGUMENT.DISABLE_OPENSSL)
@@ -456,7 +459,9 @@ public final class CliParser {
                 .desc("Disable the Nexus Analyzer.").build();
         final Option disableOssIndexAnalyzer = Option.builder().longOpt(ARGUMENT.DISABLE_OSSINDEX)
                 .desc("Disable the Sonatype OSS Index Analyzer.").build();
-
+        final Option disableGolangPackageAnalyzer = Option.builder().longOpt(ARGUMENT.DISABLE_GO_PKG)
+            .desc("Disable the Golang Package Analyzer.")
+            .build();
         final Option purge = Option.builder().longOpt(ARGUMENT.PURGE_NVD)
                 .desc("Purges the local NVD data cache").build();
         final Option retireJsFilters = Option.builder().argName("pattern").hasArg().longOpt(ARGUMENT.RETIREJS_FILTERS)
@@ -490,18 +495,26 @@ public final class CliParser {
                         .desc("Disable the Ruby Bundler-Audit Analyzer.").build())
                 .addOption(disableAutoconfAnalyzer)
                 .addOption(disableComposerAnalyzer)
+                .addOption(disableGolangModAnalyzer)
                 .addOption(disableOpenSSLAnalyzer)
                 .addOption(disableNuspecAnalyzer)
                 .addOption(disableNugetconfAnalyzer)
                 .addOption(disableCentralAnalyzer)
+                .addOption(Option.builder().longOpt(ARGUMENT.DISABLE_CENTRAL_CACHE)
+                        .desc("Disallow the Central Analyzer from caching results").build())
                 .addOption(disableNexusAnalyzer)
                 .addOption(disableOssIndexAnalyzer)
+                .addOption(Option.builder().longOpt(ARGUMENT.DISABLE_OSSINDEX_CACHE)
+                        .desc("Disallow the OSS Index Analyzer from caching results").build())
                 .addOption(cocoapodsAnalyzerEnabled)
                 .addOption(swiftPackageManagerAnalyzerEnabled)
+                .addOption(disableGolangPackageAnalyzer)
                 .addOption(Option.builder().longOpt(ARGUMENT.DISABLE_NODE_JS)
                         .desc("Disable the Node.js Package Analyzer.").build())
                 .addOption(Option.builder().longOpt(ARGUMENT.DISABLE_NODE_AUDIT)
                         .desc("Disable the Node Audit Analyzer.").build())
+                .addOption(Option.builder().longOpt(ARGUMENT.DISABLE_NODE_AUDIT_CACHE)
+                        .desc("Disallow the Node Audit Analyzer from caching results").build())
                 .addOption(Option.builder().longOpt(ARGUMENT.DISABLE_RETIRE_JS)
                         .desc("Disable the RetireJS Analyzer.").build())
                 .addOption(Option.builder().longOpt(ARGUMENT.RETIREJS_URL)
@@ -737,6 +750,16 @@ public final class CliParser {
     }
 
     /**
+     * Returns true if the disableGolangMod command line argument was specified.
+     *
+     * @return true if the disableGolangMod command line argument was specified;
+     * otherwise false
+     */
+    public boolean isGolangModDisabled() {
+        return hasDisableOption(ARGUMENT.DISABLE_GOLANG_MOD, Settings.KEYS.ANALYZER_GOLANG_MOD_ENABLED);
+    }
+
+    /**
      * Returns true if the disableComposer command line argument was specified.
      *
      * @return true if the disableComposer command line argument was specified;
@@ -764,6 +787,17 @@ public final class CliParser {
      */
     public boolean isOssIndexDisabled() {
         return hasDisableOption(ARGUMENT.DISABLE_OSSINDEX, Settings.KEYS.ANALYZER_OSSINDEX_ENABLED);
+    }
+
+    /**
+     * Returns true if the {@link ARGUMENT#DISABLE_OSSINDEX_CACHE} command line
+     * argument was specified.
+     *
+     * @return true if the Oss Index analyzer caching is disabled; otherwise
+     * false
+     */
+    public boolean isOssIndexCacheDisabled() {
+        return hasDisableOption(ARGUMENT.DISABLE_OSSINDEX_CACHE, Settings.KEYS.ANALYZER_OSSINDEX_USE_CACHE);
     }
 
     /**
@@ -802,6 +836,17 @@ public final class CliParser {
     }
 
     /**
+     * Returns true if the disableNodeAuditCache command line argument was
+     * specified.
+     *
+     * @return true if the disableNodeAuditCache command line argument was
+     * specified; otherwise false
+     */
+    public boolean isNodeAuditCacheDisabled() {
+        return hasDisableOption(ARGUMENT.DISABLE_NODE_AUDIT_CACHE, Settings.KEYS.ANALYZER_NODE_AUDIT_USE_CACHE);
+    }
+
+    /**
      * Returns true if the disableRetireJS command line argument was specified.
      *
      * @return true if the disableRetireJS command line argument was specified;
@@ -834,6 +879,17 @@ public final class CliParser {
     }
 
     /**
+     * Returns true if the disableSwiftPackageManagerAnalyzer command line
+     * argument was specified.
+     *
+     * @return true if the disableSwiftPackageManagerAnalyzer command line
+     * argument was specified; otherwise false
+     */
+    public boolean isGolangPackageAnalyzerDisabled() {
+        return hasDisableOption(ARGUMENT.DISABLE_GO_PKG, Settings.KEYS.ANALYZER_GOLANG_DEP_ENABLED);
+    }
+
+    /**
      * Returns true if the disableCentral command line argument was specified.
      *
      * @return true if the disableCentral command line argument was specified;
@@ -841,6 +897,17 @@ public final class CliParser {
      */
     public boolean isCentralDisabled() {
         return hasDisableOption(ARGUMENT.DISABLE_CENTRAL, Settings.KEYS.ANALYZER_CENTRAL_ENABLED);
+    }
+
+    /**
+     * Returns true if the disableCentralCache command line argument was
+     * specified.
+     *
+     * @return true if the disableCentralCache command line argument was
+     * specified; otherwise false
+     */
+    public boolean isCentralCacheDisabled() {
+        return hasDisableOption(ARGUMENT.DISABLE_CENTRAL_CACHE, Settings.KEYS.ANALYZER_CENTRAL_USE_CACHE);
     }
 
     /**
@@ -1550,9 +1617,17 @@ public final class CliParser {
          */
         public static final String DISABLE_PY_PKG = "disablePyPkg";
         /**
+         * Disables the Golang Package Analyzer.
+         */
+        public static final String DISABLE_GO_PKG = "disableGoPkg";
+        /**
          * Disables the Python Package Analyzer.
          */
         public static final String DISABLE_COMPOSER = "disableComposer";
+        /**
+         * Disables the Golang Mod Analyzer.
+         */
+        public static final String DISABLE_GOLANG_MOD = "disableGolangMod";
         /**
          * Disables the Ruby Gemspec Analyzer.
          */
@@ -1594,6 +1669,10 @@ public final class CliParser {
          */
         public static final String DISABLE_CENTRAL = "disableCentral";
         /**
+         * Disables the Central Analyzer's ability to cache results locally.
+         */
+        public static final String DISABLE_CENTRAL_CACHE = "disableCentralCache";
+        /**
          * Disables the Nexus Analyzer.
          */
         public static final String DISABLE_NEXUS = "disableNexus";
@@ -1601,6 +1680,11 @@ public final class CliParser {
          * Disables the Sonatype OSS Index Analyzer.
          */
         public static final String DISABLE_OSSINDEX = "disableOssIndex";
+        /**
+         * Disables the Sonatype OSS Index Analyzer's ability to cache results
+         * locally.
+         */
+        public static final String DISABLE_OSSINDEX_CACHE = "disableOssIndexCache";
         /**
          * Disables the OpenSSL Analyzer.
          */
@@ -1613,6 +1697,10 @@ public final class CliParser {
          * Disables the Node Audit Analyzer.
          */
         public static final String DISABLE_NODE_AUDIT = "disableNodeAudit";
+        /**
+         * Disables the Node Audit Analyzer's ability to cache results locally.
+         */
+        public static final String DISABLE_NODE_AUDIT_CACHE = "disableNodeAuditCache";
         /**
          * Disables the RetireJS Analyzer.
          */

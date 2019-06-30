@@ -17,12 +17,6 @@
  */
 package org.owasp.dependencycheck;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
-import ch.qos.logback.classic.filter.ThresholdFilter;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -32,20 +26,26 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.cli.ParseException;
+import org.apache.tools.ant.DirectoryScanner;
 import org.owasp.dependencycheck.data.nvdcve.DatabaseException;
 import org.owasp.dependencycheck.dependency.Dependency;
-import org.apache.tools.ant.DirectoryScanner;
 import org.owasp.dependencycheck.dependency.Vulnerability;
-import org.owasp.dependencycheck.utils.Settings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import ch.qos.logback.core.FileAppender;
 import org.apache.tools.ant.types.LogLevel;
 import org.owasp.dependencycheck.data.update.exception.UpdateException;
 import org.owasp.dependencycheck.exception.ExceptionCollection;
 import org.owasp.dependencycheck.exception.ReportException;
 import org.owasp.dependencycheck.utils.InvalidSettingException;
+import org.owasp.dependencycheck.utils.Settings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.impl.StaticLoggerBinder;
+
+import ch.qos.logback.core.FileAppender;
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
+import ch.qos.logback.classic.filter.ThresholdFilter;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
 
 /**
  * The command line interface for the DependencyCheck application.
@@ -131,23 +131,11 @@ public class App {
                     exitCode = -4;
                     return exitCode;
                 }
-                final File db;
-                try {
-                    db = new File(settings.getDataDirectory(), settings.getString(Settings.KEYS.DB_FILE_NAME, "odc.mv.db"));
-                    if (db.exists()) {
-                        if (db.delete()) {
-                            LOGGER.info("Database file purged; local copy of the NVD has been removed");
-                        } else {
-                            LOGGER.error("Unable to delete '{}'; please delete the file manually", db.getAbsolutePath());
-                            exitCode = -5;
-                        }
-                    } else {
-                        LOGGER.error("Unable to purge database; the database file does not exist: {}", db.getAbsolutePath());
-                        exitCode = -6;
+                try (Engine engine = new Engine(Engine.Mode.EVIDENCE_PROCESSING, settings)) {
+                    if (!engine.purge()) {
+                        exitCode = -7;
+                        return exitCode;
                     }
-                } catch (IOException ex) {
-                    LOGGER.error("Unable to delete the database");
-                    exitCode = -7;
                 } finally {
                     settings.cleanup();
                 }
@@ -178,7 +166,7 @@ public class App {
             try {
                 populateSettings(cli);
             } catch (InvalidSettingException ex) {
-                LOGGER.error(ex.getMessage());
+                LOGGER.error(ex.getMessage(), ex);
                 LOGGER.debug("Error loading properties file", ex);
                 exitCode = -4;
                 return exitCode;
@@ -196,9 +184,11 @@ public class App {
                 }
             } catch (DatabaseException ex) {
                 LOGGER.error(ex.getMessage());
+                LOGGER.debug("database exception", ex);
                 exitCode = -11;
             } catch (ReportException ex) {
                 LOGGER.error(ex.getMessage());
+                LOGGER.debug("report exception", ex);
                 exitCode = -12;
             } catch (ExceptionCollection ex) {
                 if (ex.isFatal()) {
@@ -227,23 +217,23 @@ public class App {
      * reportDirectory.
      *
      * @param reportDirectory the path to the directory where the reports will
-     *                        be written
-     * @param outputFormat    the output format of the report
+     * be written
+     * @param outputFormat the output format of the report
      * @param applicationName the application name for the report
-     * @param files           the files/directories to scan
-     * @param excludes        the patterns for files/directories to exclude
-     * @param symLinkDepth    the depth that symbolic links will be followed
-     * @param cvssFailScore   the score to fail on if a vulnerability is found
+     * @param files the files/directories to scan
+     * @param excludes the patterns for files/directories to exclude
+     * @param symLinkDepth the depth that symbolic links will be followed
+     * @param cvssFailScore the score to fail on if a vulnerability is found
      * @return the exit code if there was an error
-     * @throws ReportException     thrown when the report cannot be generated
-     * @throws DatabaseException   thrown when there is an error connecting to the
-     *                             database
+     * @throws ReportException thrown when the report cannot be generated
+     * @throws DatabaseException thrown when there is an error connecting to the
+     * database
      * @throws ExceptionCollection thrown when an exception occurs during
-     *                             analysis; there may be multiple exceptions contained within the
-     *                             collection.
+     * analysis; there may be multiple exceptions contained within the
+     * collection.
      */
     private int runScan(String reportDirectory, String outputFormat, String applicationName, String[] files,
-                        String[] excludes, int symLinkDepth, float cvssFailScore) throws DatabaseException,
+            String[] excludes, int symLinkDepth, float cvssFailScore) throws DatabaseException,
             ExceptionCollection, ReportException {
         Engine engine = null;
         try {
@@ -288,7 +278,7 @@ public class App {
      * Determines the return code based on if one of the dependencies scanned
      * has a vulnerability with a CVSS score above the cvssFailScore.
      *
-     * @param engine        the engine used during analysis
+     * @param engine the engine used during analysis
      * @param cvssFailScore the max allowed CVSS score
      * @return returns <code>1</code> if a severe enough vulnerability is
      * identified; otherwise <code>0</code>
@@ -314,8 +304,8 @@ public class App {
      * Scans the give Ant Style paths and collects the actual files.
      *
      * @param antStylePaths a list of ant style paths to scan for actual files
-     * @param symLinkDepth  the depth to traverse symbolic links
-     * @param excludes      an array of ant style excludes
+     * @param symLinkDepth the depth to traverse symbolic links
+     * @param excludes an array of ant style excludes
      * @return returns the set of identified files
      */
     private Set<File> scanAntStylePaths(List<String> antStylePaths, int symLinkDepth, String[] excludes) {
@@ -377,9 +367,9 @@ public class App {
     /**
      * Only executes the update phase of dependency-check.
      *
-     * @throws UpdateException   thrown if there is an error updating
+     * @throws UpdateException thrown if there is an error updating
      * @throws DatabaseException thrown if a fatal error occurred and a
-     *                           connection to the database could not be established
+     * connection to the database could not be established
      */
     private void runUpdateOnly() throws UpdateException, DatabaseException {
         try (Engine engine = new Engine(settings)) {
@@ -391,9 +381,9 @@ public class App {
      * Updates the global Settings.
      *
      * @param cli a reference to the CLI Parser that contains the command line
-     *            arguments used to set the corresponding settings in the core engine.
+     * arguments used to set the corresponding settings in the core engine.
      * @throws InvalidSettingException thrown when a user defined properties
-     *                                 file is unable to be loaded.
+     * file is unable to be loaded.
      */
     protected void populateSettings(CliParser cli) throws InvalidSettingException {
         final String connectionTimeout = cli.getConnectionTimeout();
@@ -474,8 +464,10 @@ public class App {
         settings.setBoolean(Settings.KEYS.ANALYZER_BUNDLE_AUDIT_ENABLED, !cli.isBundleAuditDisabled());
         settings.setBoolean(Settings.KEYS.ANALYZER_OPENSSL_ENABLED, !cli.isOpenSSLDisabled());
         settings.setBoolean(Settings.KEYS.ANALYZER_COMPOSER_LOCK_ENABLED, !cli.isComposerDisabled());
+        settings.setBoolean(Settings.KEYS.ANALYZER_GOLANG_MOD_ENABLED, !cli.isGolangModDisabled());
         settings.setBoolean(Settings.KEYS.ANALYZER_NODE_PACKAGE_ENABLED, !cli.isNodeJsDisabled());
         settings.setBoolean(Settings.KEYS.ANALYZER_NODE_AUDIT_ENABLED, !cli.isNodeAuditDisabled());
+        settings.setBoolean(Settings.KEYS.ANALYZER_NODE_AUDIT_USE_CACHE, !cli.isNodeAuditCacheDisabled());
         settings.setBoolean(Settings.KEYS.ANALYZER_RETIREJS_ENABLED, !cli.isRetireJSDisabled());
         settings.setBooleanIfNotNull(Settings.KEYS.PRETTY_PRINT, cli.isPrettyPrint());
         settings.setStringIfNotNull(Settings.KEYS.ANALYZER_RETIREJS_REPO_JS_URL, cli.getRetireJSUrl());
@@ -483,9 +475,12 @@ public class App {
         settings.setBoolean(Settings.KEYS.ANALYZER_COCOAPODS_ENABLED, !cli.isCocoapodsAnalyzerDisabled());
         settings.setBoolean(Settings.KEYS.ANALYZER_RUBY_GEMSPEC_ENABLED, !cli.isRubyGemspecDisabled());
         settings.setBoolean(Settings.KEYS.ANALYZER_CENTRAL_ENABLED, !cli.isCentralDisabled());
+        settings.setBoolean(Settings.KEYS.ANALYZER_CENTRAL_USE_CACHE, !cli.isCentralCacheDisabled());
         settings.setBoolean(Settings.KEYS.ANALYZER_NEXUS_ENABLED, !cli.isNexusDisabled());
         settings.setBoolean(Settings.KEYS.ANALYZER_OSSINDEX_ENABLED, !cli.isOssIndexDisabled());
+        settings.setBoolean(Settings.KEYS.ANALYZER_OSSINDEX_USE_CACHE, !cli.isOssIndexCacheDisabled());
         settings.setFloat(Settings.KEYS.JUNIT_FAIL_ON_CVSS, cli.getJunitFailOnCVSS());
+        settings.setBoolean(Settings.KEYS.ANALYZER_GOLANG_DEP_ENABLED, !cli.isGolangPackageAnalyzerDisabled());
 
         settings.setBooleanIfNotNull(Settings.KEYS.ANALYZER_ARTIFACTORY_ENABLED,
                 cli.hasArgument(CliParser.ARGUMENT.ARTIFACTORY_ENABLED));

@@ -75,7 +75,11 @@ archiveAnalyzerEnabled              | Sets whether the Archive Analyzer will be 
 zipExtensions                       | A comma-separated list of additional file extensions to be treated like a ZIP file, the contents will be extracted and analyzed. | &nbsp;
 jarAnalyzer                         | Sets whether the Jar Analyzer will be used.                                                                | true
 centralAnalyzerEnabled              | Sets whether the Central Analyzer will be used. **Disabling this analyzer for Ant builds is not recommended as it could lead to false negatives (e.g. libraries that have vulnerabilities may not be reported correctly).** If this analyzer is being disabled there is a good chance you also want to disable the Nexus Analyzer (see below).                                  | true
+centralAnalyzerUseCache             | Sets whether the Central Analyer will cache results. Cached results expire after 30 days.                  | true
 ossIndexAnalyzerEnabled             | Sets whether the OSS Index Analyzer will be enabled.                                                       | true
+ossindexAnalyzerUseCache            | Sets whether the OSS Index Analyzer will cache results. Cached results expire after 24 hours.              | true
+ossindexAnalyzerUsername            | Sets the username for OSS Index - note an account with OSS Index is not required.                          | &nbsp;
+ossindexAnalyzerPassword            | Sets the password for OSS Index.                                                                           | &nbsp;
 nexusAnalyzerEnabled                | Sets whether Nexus Analyzer will be used (requires Nexus Pro). This analyzer is superceded by the Central Analyzer; however, you can configure this to run against a Nexus Pro installation. | true
 nexusUrl                            | Defines the Nexus web service endpoint (example http://domain.enterprise/nexus/service/local/). If not set the Nexus Analyzer will be disabled. | &nbsp;
 nexusUser                           | The username to authenticate to the Nexus Server's web service end point. If not set the Nexus Analyzer will use an unauthenticated connection. | &nbsp;
@@ -96,7 +100,8 @@ cmakeAnalyzerEnabled                | Sets whether the [experimental](../analyze
 autoconfAnalyzerEnabled             | Sets whether the [experimental](../analyzers/index.html) autoconf Analyzer should be used.                 | true
 composerAnalyzerEnabled             | Sets whether the [experimental](../analyzers/index.html) PHP Composer Lock File Analyzer should be used.   | true
 nodeAnalyzerEnabled                 | Sets whether the [retired](../analyzers/index.html) Node.js Analyzer should be used.                       | true
-nodeAuditAnalyzerEnabled            | Sets whether the Node Audit Analyzer should be used.                                                              | true
+nodeAuditAnalyzerEnabled            | Sets whether the Node Audit Analyzer should be used.                                                       | true
+nodeAuditAnalyzerUseCache           | Sets whether the Node Audit Analyzer will cache results. Cached results expire after 24 hours.             | true
 retireJsAnalyzerEnabled             | Sets whether the [experimental](../analyzers/index.html) RetireJS Analyzer should be used.                 | true
 retirejsFilterNonVulnerable         | Configures the RetireJS Analyzer to remove non-vulnerable JS dependencies from the report.                 | false
 retirejsFilter                      | A nested configuration that can be specified multple times; The regex defined is used to filter JS files based on content. | &nbsp;
@@ -108,7 +113,10 @@ bundleAuditAnalyzerEnabled          | Sets whether the [experimental](../analyze
 bundleAuditPath                     | Sets the path to the bundle audit executable; only used if bundle audit analyzer is enabled and experimental analyzers are enabled.  | &nbsp;
 swiftPackageManagerAnalyzerEnabled  | Sets whether the [experimental](../analyzers/index.html) Switft Package Analyzer should be used.           | true
 assemblyAnalyzerEnabled             | Sets whether the .NET Assembly Analyzer should be used.                                                    | true
-pathToMono                          | The path to Mono for .NET assembly analysis on non-windows systems.                                        | &nbsp;
+pathToCore                          | The path to dotnet core .NET assembly analysis on non-windows systems.                                     | &nbsp;
+golangDepEnabled                    | Sets whether or not the [experimental](../analyzers/index.html) Golang Dependency Analyzer should be used. | true
+golangModEnabled                    | Sets whether or not the [experimental](../analyzers/index.html) Goland Module Analyzer should be used; requires `go` to be installed. | true
+pathToGo                            | The path to `go`.                                                                                          | &nbsp;
 
 Advanced Configuration
 ====================

@@ -54,6 +54,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
+import org.apache.commons.lang3.StringUtils;
+import org.sonatype.ossindex.service.client.transport.Transport.TransportException;
 
 /**
  * Enrich dependency information from Sonatype OSS index.
@@ -62,6 +64,7 @@ import javax.annotation.Nullable;
  * @since 5.0.0
  */
 public class OssIndexAnalyzer extends AbstractAnalyzer {
+
     /**
      * A reference to the logger.
      */
@@ -81,7 +84,6 @@ public class OssIndexAnalyzer extends AbstractAnalyzer {
      * A reference to the OSS Index Client.
      */
     private OssindexClient client;
-
 
     /**
      * Fetched reports.
@@ -149,9 +151,15 @@ public class OssIndexAnalyzer extends AbstractAnalyzer {
             if (!failed && reports == null) {
                 try {
                     reports = requestReports(engine.getDependencies());
+                } catch (TransportException ex) {
+                    failed = true;
+                    if (ex.getMessage() != null && ex.getMessage().endsWith("401")) {
+                        throw new AnalysisException("Invalid credentails provided for OSS Index", ex);
+                    }
+                    throw new AnalysisException("Failed to request component-reports: " + ex.getMessage(), ex);
                 } catch (Exception e) {
                     failed = true;
-                    throw new AnalysisException("Failed to request component-reports", e);
+                    throw new AnalysisException("Failed to request component-reports: " + e.getMessage(), e);
                 }
             }
         }
@@ -194,7 +202,7 @@ public class OssIndexAnalyzer extends AbstractAnalyzer {
             for (Identifier id : dependency.getSoftwareIdentifiers()) {
                 if (id instanceof PurlIdentifier) {
                     final PackageUrl purl = parsePackageUrl(id.getValue());
-                    if (purl != null) {
+                    if (purl != null && StringUtils.isNotBlank(purl.getVersion())) {
                         packages.add(purl);
                     }
                 }
@@ -224,7 +232,7 @@ public class OssIndexAnalyzer extends AbstractAnalyzer {
                 LOG.debug("  Package: {} -> {}", id, id.getConfidence());
 
                 final PackageUrl purl = parsePackageUrl(id.getValue());
-                if (purl != null) {
+                if (purl != null && StringUtils.isNotBlank(purl.getVersion())) {
                     try {
                         final ComponentReport report = reports.get(purl);
                         if (report == null) {

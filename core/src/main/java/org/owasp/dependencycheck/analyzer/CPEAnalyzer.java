@@ -653,10 +653,10 @@ public class CPEAnalyzer extends AbstractAnalyzer {
         boolean isValid = true;
 
         // Prepare the evidence values, e.g. remove the characters we used for splitting
-        List<String> evidenceValues = new ArrayList<>(evidence.size());
-        for (Evidence e : evidence) {
+        final List<String> evidenceValues = new ArrayList<>(evidence.size());
+        evidence.forEach((e) -> {
             evidenceValues.add(e.getValue().toLowerCase().replaceAll("[\\s_-]+", ""));
-        }
+        });
 
         for (String word : list) {
             word = word.toLowerCase();
@@ -732,7 +732,12 @@ public class CPEAnalyzer extends AbstractAnalyzer {
             return false;
         }
 
-        DependencyVersion bestGuess = new DependencyVersion("-");
+        DependencyVersion bestGuess;
+        if ("Golang".equals(dependency.getEcosystem()) && dependency.getVersion() == null) {
+            bestGuess = new DependencyVersion("*");
+        } else {
+            bestGuess = new DependencyVersion("-");
+        }
         Confidence bestGuessConf = null;
         String bestGuessURL = null;
         boolean hasBroadMatch = false;
@@ -755,7 +760,7 @@ public class CPEAnalyzer extends AbstractAnalyzer {
             final CharArraySet stopWords = SearchFieldAnalyzer.getStopWords();
             if (dependency.getName() != null && !dependency.getName().isEmpty()) {
                 final String name = dependency.getName();
-                for (String word : product.split("\b")) {
+                for (String word : product.split("[^a-zA-Z0-9]")) {
                     useDependencyVersion &= name.contains(word) || stopWords.contains(word);
                 }
             }
