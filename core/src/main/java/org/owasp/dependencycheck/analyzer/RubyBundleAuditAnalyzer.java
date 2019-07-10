@@ -149,12 +149,23 @@ public class RubyBundleAuditAnalyzer extends AbstractFileTypeAnalyzer {
                 bundleAudit = null;
             }
         }
-        args.add(bundleAudit != null && bundleAudit.isFile() ? bundleAudit.getAbsolutePath() : "bundle-audit");
+        args.add(bundleAudit != null ? bundleAudit.getAbsolutePath() : "bundle-audit");
         args.addAll(bundleAuditArgs);
         final ProcessBuilder builder = new ProcessBuilder(args);
-        builder.directory(folder);
+
+        final String bundleAuditWorkingDirectoryPath = getSettings().getString(Settings.KEYS.ANALYZER_BUNDLE_AUDIT_WORKING_DIRECTORY);
+        File bundleAuditWorkingDirectory = null;
+        if (bundleAuditWorkingDirectoryPath != null) {
+            bundleAuditWorkingDirectory = new File(bundleAuditWorkingDirectoryPath);
+            if (!bundleAuditWorkingDirectory.isDirectory()) {
+                LOGGER.warn("Supplied `bundleAuditWorkingDirectory` path is incorrect: {}", bundleAuditWorkingDirectoryPath);
+                bundleAuditWorkingDirectory = null;
+            }
+        }
+        File launchBundleAuditFromDirectory = bundleAuditWorkingDirectory != null ? bundleAuditWorkingDirectory : folder;
+        builder.directory(launchBundleAuditFromDirectory);
         try {
-            LOGGER.info("Launching: {} from {}", args, folder);
+            LOGGER.info("Launching: {} from {}", args, launchBundleAuditFromDirectory);
             return builder.start();
         } catch (IOException ioe) {
             throw new AnalysisException("bundle-audit initialization failure; this error can be ignored if you are not analyzing Ruby. "
