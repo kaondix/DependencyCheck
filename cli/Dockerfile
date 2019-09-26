@@ -37,7 +37,7 @@ RUN apk update                                                                  
     
 USER ${user}
 
-VOLUME ["/src", "/usr/share/dependency-check/data", "/report"]
+VOLUME ["/src", "/report"]
 
 WORKDIR /src
 
