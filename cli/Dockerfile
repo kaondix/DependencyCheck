@@ -30,6 +30,7 @@ RUN apk update                                                                  
         | tar -xz --directory "/usr/share/dependency-check/plugins" --strip-components=1 --no-same-owner \
             "mysql-connector-java-${MYSQL_DRIVER_VERSION}/mysql-connector-java-${MYSQL_DRIVER_VERSION}.jar" && \
     addgroup -S ${user} && adduser -S -G ${user} ${user}                                             && \
+    mkdir /usr/share/dependency-check/data                                                           && \
     chown -R ${user}:${user} /usr/share/dependency-check                                             && \
     mkdir /report                                                                                    && \
     chown -R ${user}:${user} /report                                                                 && \
