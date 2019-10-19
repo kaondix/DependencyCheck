@@ -332,8 +332,7 @@ public final class CliParser {
                 .build();
 
         final Option prettyPrint = Option.builder().longOpt(ARGUMENT.PRETTY_PRINT)
-                .desc("Specifies if the build should be failed if a CVSS score above a specified level is identified. "
-                        + "The default is 11; since the CVSS scores are 0-10, by default the build will never fail.")
+                .desc("When specified the JSON and XML report formats will be pretty printed.")
                 .build();
 
         //This is an option group because it can be specified more then once.
@@ -362,7 +361,7 @@ public final class CliParser {
                 .addOption(experimentalEnabled)
                 .addOption(retiredEnabled)
                 .addOption(failOnCVSS)
-                .addOption(Option.builder().argName("score").longOpt(ARGUMENT.FAIL_JUNIT_ON_CVSS)
+                .addOption(Option.builder().argName("score").hasArg().longOpt(ARGUMENT.FAIL_JUNIT_ON_CVSS)
                         .desc("Specifies the CVSS score that is considered a failure when generating the junit report. "
                                 + "The default is 0.").build());
     }
