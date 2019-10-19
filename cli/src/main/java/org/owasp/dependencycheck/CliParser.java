@@ -466,6 +466,13 @@ public final class CliParser {
                 .desc("Disable the Nexus Analyzer.").build();
         final Option disableOssIndexAnalyzer = Option.builder().longOpt(ARGUMENT.DISABLE_OSSINDEX)
                 .desc("Disable the Sonatype OSS Index Analyzer.").build();
+        final Option ossIndexUsername = Option.builder().argName("username").hasArg().longOpt(ARGUMENT.OSSINDEX_USERNAME)
+                                           .desc("The username to authenticate to Sonatype's OSS Index. "
+                                                 + "If not set the Sonatype OSS Index Analyzer will use an unauthenticated "
+                                                 + "connection.").build();
+        final Option ossIndexPassword = Option.builder().argName("password").hasArg().longOpt(ARGUMENT.OSSINDEX_PASSWORD)
+                                           .desc("The password to authenticate to Sonatype's OSS Index. "
+                                                 + "If not set the Sonatype OSS Index Analyzer will use an unauthenticated connection.").build();
         final Option disableGolangPackageAnalyzer = Option.builder().longOpt(ARGUMENT.DISABLE_GO_DEP)
                 .desc("Disable the Golang Package Analyzer.")
                 .build();
@@ -513,6 +520,8 @@ public final class CliParser {
                         .desc("Disallow the Central Analyzer from caching results").build())
                 .addOption(enableNexusAnalyzer)
                 .addOption(disableOssIndexAnalyzer)
+                .addOption(ossIndexUsername)
+                .addOption(ossIndexPassword)
                 .addOption(Option.builder().longOpt(ARGUMENT.DISABLE_OSSINDEX_CACHE)
                         .desc("Disallow the OSS Index Analyzer from caching results").build())
                 .addOption(cocoapodsAnalyzerEnabled)
@@ -822,6 +831,28 @@ public final class CliParser {
      */
     public boolean isOssIndexCacheDisabled() {
         return hasDisableOption(ARGUMENT.DISABLE_OSSINDEX_CACHE, Settings.KEYS.ANALYZER_OSSINDEX_USE_CACHE);
+    }
+
+    /**
+     * Returns the username to authenticate to Sonatype's OSS Index if one was
+     * specified.
+     *
+     * @return the username to authenticate to Sonatype's OSS Index; if none was
+     * specified this will return null;
+     */
+    public String getOssIndexUsername() {
+        return line.getOptionValue(ARGUMENT.OSSINDEX_USERNAME);
+    }
+
+    /**
+     * Returns the password to authenticate to Sonatype's OSS Index if one was
+     * specified.
+     *
+     * @return the password to authenticate to Sonatype's OSS Index; if none was
+     * specified this will return null;
+     */
+    public String getOssIndexPassword() {
+        return line.getOptionValue(ARGUMENT.OSSINDEX_PASSWORD);
     }
 
     /**
@@ -1736,6 +1767,14 @@ public final class CliParser {
          * locally.
          */
         public static final String DISABLE_OSSINDEX_CACHE = "disableOssIndexCache";
+        /**
+         * The username for the Sonatype OSS Index.
+         */
+        public static final String OSSINDEX_USERNAME = "ossIndexUsername";
+        /**
+         * The password for the Sonatype OSS Index.
+         */
+        public static final String OSSINDEX_PASSWORD = "ossIndexPassword";
         /**
          * Disables the OpenSSL Analyzer.
          */
