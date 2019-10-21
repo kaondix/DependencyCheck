@@ -284,10 +284,6 @@ public final class CliParser {
                         + " and it accepts Ant style exclusions.")
                 .build();
 
-        final Option props = Option.builder(ARGUMENT.PROP_SHORT).argName("file").hasArg().longOpt(ARGUMENT.PROP)
-                .desc("A property file to load.")
-                .build();
-
         final Option out = Option.builder(ARGUMENT.OUT_SHORT).argName("path").hasArg().longOpt(ARGUMENT.OUT)
                 .desc("The folder to write reports to. This defaults to the current directory. "
                         + "It is possible to set this to a specific file name if the format argument is not set to ALL.")
@@ -310,10 +306,6 @@ public final class CliParser {
                         + "suppression files")
                 .build();
 
-        final Option hintsFile = Option.builder().argName("file").hasArg().longOpt(ARGUMENT.HINTS_FILE)
-                .desc("The file path to the hints XML file.")
-                .build();
-
         final Option cveValidForHours = Option.builder().argName("hours").hasArg().longOpt(ARGUMENT.CVE_VALID_FOR_HOURS)
                 .desc("The number of hours to wait before checking for new updates from the NVD.")
                 .build();
@@ -332,8 +324,7 @@ public final class CliParser {
                 .build();
 
         final Option prettyPrint = Option.builder().longOpt(ARGUMENT.PRETTY_PRINT)
-                .desc("Specifies if the build should be failed if a CVSS score above a specified level is identified. "
-                        + "The default is 11; since the CVSS scores are 0-10, by default the build will never fail.")
+                .desc("When specified the JSON and XML report formats will be pretty printed.")
                 .build();
 
         //This is an option group because it can be specified more then once.
@@ -354,15 +345,13 @@ public final class CliParser {
                 .addOption(advancedHelp)
                 .addOption(noUpdate)
                 .addOption(symLinkDepth)
-                .addOption(props)
                 .addOption(verboseLog)
                 .addOption(suppressionFile)
-                .addOption(hintsFile)
                 .addOption(cveValidForHours)
                 .addOption(experimentalEnabled)
                 .addOption(retiredEnabled)
                 .addOption(failOnCVSS)
-                .addOption(Option.builder().argName("score").longOpt(ARGUMENT.FAIL_JUNIT_ON_CVSS)
+                .addOption(Option.builder().argName("score").hasArg().longOpt(ARGUMENT.FAIL_JUNIT_ON_CVSS)
                         .desc("Specifies the CVSS score that is considered a failure when generating the junit report. "
                                 + "The default is 0.").build());
     }
@@ -418,6 +407,9 @@ public final class CliParser {
                 .desc("The proxy username to use when downloading resources.").build();
         final Option proxyPassword = Option.builder().argName("pass").hasArg().longOpt(ARGUMENT.PROXY_PASSWORD)
                 .desc("The proxy password to use when downloading resources.").build();
+        final Option nonProxyHosts = Option.builder().argName("list").hasArg().longOpt(ARGUMENT.NON_PROXY_HOSTS)
+                .desc("The proxy exclusion list: hostnames (or patterns) for which proxy should not be used. "
+                        + "Use pipe, comma or colon as list separator.").build();
         final Option connectionString = Option.builder().argName("connStr").hasArg().longOpt(ARGUMENT.CONNECTION_STRING)
                 .desc("The connection string to the database.").build();
         final Option dbUser = Option.builder().argName("user").hasArg().longOpt(ARGUMENT.DB_NAME)
@@ -464,6 +456,13 @@ public final class CliParser {
                 .desc("Disable the Nexus Analyzer.").build();
         final Option disableOssIndexAnalyzer = Option.builder().longOpt(ARGUMENT.DISABLE_OSSINDEX)
                 .desc("Disable the Sonatype OSS Index Analyzer.").build();
+        final Option ossIndexUsername = Option.builder().argName("username").hasArg().longOpt(ARGUMENT.OSSINDEX_USERNAME)
+                                           .desc("The username to authenticate to Sonatype's OSS Index. "
+                                                 + "If not set the Sonatype OSS Index Analyzer will use an unauthenticated "
+                                                 + "connection.").build();
+        final Option ossIndexPassword = Option.builder().argName("password").hasArg().longOpt(ARGUMENT.OSSINDEX_PASSWORD)
+                                           .desc("The password to authenticate to Sonatype's OSS Index. "
+                                                 + "If not set the Sonatype OSS Index Analyzer will use an unauthenticated connection.").build();
         final Option disableGolangPackageAnalyzer = Option.builder().longOpt(ARGUMENT.DISABLE_GO_DEP)
                 .desc("Disable the Golang Package Analyzer.")
                 .build();
@@ -473,6 +472,14 @@ public final class CliParser {
                 .desc("Specify Retire JS content filter used to exclude files from analysis based on their content; most commonly used "
                         + "to exclude based on your applications own copyright line. This option can be specified multiple times.")
                 .build();
+
+        final Option hintsFile = Option.builder().argName("file").hasArg().longOpt(ARGUMENT.HINTS_FILE)
+                .desc("The file path to the hints XML file.")
+                .build();
+        final Option props = Option.builder(ARGUMENT.PROP_SHORT).argName("file").hasArg().longOpt(ARGUMENT.PROP)
+                .desc("A property file to load.")
+                .build();
+
         options.addOption(updateOnly)
                 .addOption(cveBase)
                 .addOption(cveModified)
@@ -480,6 +487,7 @@ public final class CliParser {
                 .addOption(proxyServer)
                 .addOption(proxyUsername)
                 .addOption(proxyPassword)
+                .addOption(nonProxyHosts)
                 .addOption(connectionTimeout)
                 .addOption(connectionString)
                 .addOption(dbUser)
@@ -510,6 +518,8 @@ public final class CliParser {
                         .desc("Disallow the Central Analyzer from caching results").build())
                 .addOption(enableNexusAnalyzer)
                 .addOption(disableOssIndexAnalyzer)
+                .addOption(ossIndexUsername)
+                .addOption(ossIndexPassword)
                 .addOption(Option.builder().longOpt(ARGUMENT.DISABLE_OSSINDEX_CACHE)
                         .desc("Disallow the OSS Index Analyzer from caching results").build())
                 .addOption(cocoapodsAnalyzerEnabled)
@@ -558,7 +568,9 @@ public final class CliParser {
                 .addOption(nexusUsesProxy)
                 .addOption(additionalZipExtensions)
                 .addOption(pathToCore)
-                .addOption(purge);
+                .addOption(purge)
+                .addOption(props)
+                .addOption(hintsFile);
     }
 
     /**
@@ -819,6 +831,28 @@ public final class CliParser {
      */
     public boolean isOssIndexCacheDisabled() {
         return hasDisableOption(ARGUMENT.DISABLE_OSSINDEX_CACHE, Settings.KEYS.ANALYZER_OSSINDEX_USE_CACHE);
+    }
+
+    /**
+     * Returns the username to authenticate to Sonatype's OSS Index if one was
+     * specified.
+     *
+     * @return the username to authenticate to Sonatype's OSS Index; if none was
+     * specified this will return null;
+     */
+    public String getOssIndexUsername() {
+        return line.getOptionValue(ARGUMENT.OSSINDEX_USERNAME);
+    }
+
+    /**
+     * Returns the password to authenticate to Sonatype's OSS Index if one was
+     * specified.
+     *
+     * @return the password to authenticate to Sonatype's OSS Index; if none was
+     * specified this will return null;
+     */
+    public String getOssIndexPassword() {
+        return line.getOptionValue(ARGUMENT.OSSINDEX_PASSWORD);
     }
 
     /**
@@ -1232,6 +1266,15 @@ public final class CliParser {
     }
 
     /**
+     * Returns the proxy exclusion list.
+     *
+     * @return the proxy proxy exclusion list
+     */
+    public String getNonProxyHosts() {
+        return line.getOptionValue(ARGUMENT.NON_PROXY_HOSTS);
+    }
+
+    /**
      * Get the value of dataDirectory.
      *
      * @return the value of dataDirectory
@@ -1568,6 +1611,10 @@ public final class CliParser {
          */
         public static final String PROXY_PASSWORD = "proxypass";
         /**
+         * The CLI argument name indicating the proxy proxy exclusion list.
+         */
+        public static final String NON_PROXY_HOSTS = "nonProxyHosts";
+        /**
          * The short CLI argument name indicating the connection timeout.
          */
         public static final String CONNECTION_TIMEOUT_SHORT = "c";
@@ -1720,6 +1767,14 @@ public final class CliParser {
          * locally.
          */
         public static final String DISABLE_OSSINDEX_CACHE = "disableOssIndexCache";
+        /**
+         * The username for the Sonatype OSS Index.
+         */
+        public static final String OSSINDEX_USERNAME = "ossIndexUsername";
+        /**
+         * The password for the Sonatype OSS Index.
+         */
+        public static final String OSSINDEX_PASSWORD = "ossIndexPassword";
         /**
          * Disables the OpenSSL Analyzer.
          */

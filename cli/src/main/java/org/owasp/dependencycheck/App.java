@@ -396,6 +396,7 @@ public class App {
         final String proxyPort = cli.getProxyPort();
         final String proxyUser = cli.getProxyUsername();
         final String proxyPass = cli.getProxyPassword();
+        final String nonProxyHosts = cli.getNonProxyHosts();
         final String dataDirectory = cli.getDataDirectory();
         final File propertiesFile = cli.getPropertiesFile();
         final String[] suppressionFiles = cli.getSuppressionFiles();
@@ -403,6 +404,8 @@ public class App {
         final String nexusUrl = cli.getNexusUrl();
         final String nexusUser = cli.getNexusUsername();
         final String nexusPass = cli.getNexusPassword();
+        final String ossIndexUser = cli.getOssIndexUsername();
+        final String ossIndexPass = cli.getOssIndexPassword();
         final String databaseDriverName = cli.getDatabaseDriverName();
         final String databaseDriverPath = cli.getDatabaseDriverPath();
         final String connectionString = cli.getConnectionString();
@@ -447,6 +450,7 @@ public class App {
         settings.setStringIfNotEmpty(Settings.KEYS.PROXY_PORT, proxyPort);
         settings.setStringIfNotEmpty(Settings.KEYS.PROXY_USERNAME, proxyUser);
         settings.setStringIfNotEmpty(Settings.KEYS.PROXY_PASSWORD, proxyPass);
+        settings.setStringIfNotEmpty(Settings.KEYS.PROXY_NON_PROXY_HOSTS, nonProxyHosts);
         settings.setStringIfNotEmpty(Settings.KEYS.CONNECTION_TIMEOUT, connectionTimeout);
         settings.setStringIfNotEmpty(Settings.KEYS.HINTS_FILE, hintsFile);
         settings.setIntIfNotNull(Settings.KEYS.CVE_CHECK_VALID_FOR_HOURS, cveValidForHours);
@@ -486,6 +490,8 @@ public class App {
         settings.setBooleanIfNotNull(Settings.KEYS.ANALYZER_NEXUS_ENABLED, cli.isNexusEnabled());
         settings.setBoolean(Settings.KEYS.ANALYZER_OSSINDEX_ENABLED, !cli.isOssIndexDisabled());
         settings.setBoolean(Settings.KEYS.ANALYZER_OSSINDEX_USE_CACHE, !cli.isOssIndexCacheDisabled());
+        settings.setStringIfNotEmpty(Settings.KEYS.ANALYZER_OSSINDEX_USER, ossIndexUser);
+        settings.setStringIfNotEmpty(Settings.KEYS.ANALYZER_OSSINDEX_PASSWORD, ossIndexPass);
         settings.setFloat(Settings.KEYS.JUNIT_FAIL_ON_CVSS, cli.getJunitFailOnCVSS());
 
         settings.setBooleanIfNotNull(Settings.KEYS.ANALYZER_ARTIFACTORY_ENABLED,
