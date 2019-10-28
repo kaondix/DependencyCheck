@@ -22,7 +22,7 @@ import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.data.nodeaudit.Advisory;
 import org.owasp.dependencycheck.data.nodeaudit.NodeAuditSearch;
-import org.owasp.dependencycheck.data.nodeaudit.SanitizePackage;
+import org.owasp.dependencycheck.data.nodeaudit.NpmPayloadBuilder;
 import org.owasp.dependencycheck.dependency.Dependency;
 import org.owasp.dependencycheck.dependency.Vulnerability;
 import org.owasp.dependencycheck.dependency.VulnerableSoftware;
@@ -35,7 +35,9 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.json.Json;
 import javax.json.JsonException;
@@ -166,10 +168,100 @@ public class NodeAuditAnalyzer extends AbstractNpmAnalyzer {
         if (dependency.getDisplayFileName().equals(dependency.getFileName())) {
             engine.removeDependency(dependency);
         }
-        final File file = dependency.getActualFile();
-        if (!file.isFile() || file.length() == 0 || !shouldProcess(file)) {
+        final File packageLock = dependency.getActualFile();
+        if (!packageLock.isFile() || packageLock.length() == 0 || !shouldProcess(packageLock)) {
             return;
         }
+        final File packageJson = new File(packageLock.getParentFile(), "package.json");
+        final List<Advisory> advisories;
+        final Map<String, String> dependencyMap = new HashMap<>();
+        if (packageJson.isFile()) {
+            advisories = analyzePackage(packageLock, packageJson, dependency, engine, dependencyMap);
+        } else {
+            advisories = legacyAnalysis(packageLock, dependency, engine, dependencyMap);
+        }
+        try {
+            processResults(advisories, engine, dependency, dependencyMap);
+        } catch (CpeValidationException ex) {
+            throw new UnexpectedAnalysisException(ex);
+        }
+    }
+
+    private void processResults(final List<Advisory> advisories, Engine engine, Dependency dependency, Map<String, String> dependencyMap) throws CpeValidationException {
+        for (Advisory advisory : advisories) {
+            //Create a new vulnerability out of the advisory returned by nsp.
+            final Vulnerability vuln = new Vulnerability();
+            vuln.setDescription(advisory.getOverview());
+            vuln.setName(String.valueOf(advisory.getId()));
+            vuln.setUnscoredSeverity(advisory.getSeverity());
+            vuln.setSource(Vulnerability.Source.NPM);
+            vuln.addReference(
+                    "Advisory " + advisory.getId() + ": " + advisory.getTitle(),
+                    advisory.getReferences(),
+                    null
+            );
+
+            //Create a single vulnerable software object - these do not use CPEs unlike the NVD.
+            final VulnerableSoftwareBuilder builder = new VulnerableSoftwareBuilder();
+            builder.part(Part.APPLICATION).product(advisory.getModuleName().replace(" ", "_"))
+                    .version(advisory.getVulnerableVersions().replace(" ", ""));
+            final VulnerableSoftware vs = builder.build();
+            vuln.setVulnerableSoftware(Collections.singleton(vs));
+
+            String version = advisory.getVersion();
+            if (version == null && dependencyMap.containsKey(advisory.getModuleName())) {
+                version = dependencyMap.get(advisory.getModuleName());
+            }
+
+            final Dependency existing = findDependency(engine, advisory.getModuleName(), version);
+            if (existing == null) {
+                final Dependency nodeModule = createDependency(dependency, advisory.getModuleName(), version, "transitive");
+                nodeModule.addVulnerability(vuln);
+                engine.addDependency(nodeModule);
+            } else {
+                existing.addVulnerability(vuln);
+            }
+        }
+    }
+
+    private List<Advisory> analyzePackage(final File lockFile, final File packageFile, Dependency dependency, Engine engine, Map<String, String> dependencyMap) throws UnexpectedAnalysisException, AnalysisException {
+        //TODO - import dependencies and devdependencies from package.json - this makes up
+        // the required.  Then use the dependencies from the package-lock.json.
+
+        try (JsonReader lockReader = Json.createReader(FileUtils.openInputStream(lockFile));
+                JsonReader packageReader = Json.createReader(FileUtils.openInputStream(packageFile))) {
+
+            // Retrieves the contents of package-lock.json from the Dependency
+            final JsonObject lockJson = lockReader.readObject();
+            // Retrieves the contents of package-lock.json from the Dependency
+            final JsonObject packageJson = packageReader.readObject();
+
+            // Modify the payload to meet the NPM Audit API requirements
+            final JsonObject payload = NpmPayloadBuilder.build(lockJson, packageJson, dependencyMap);
+
+            // Submits the package payload to the nsp check service
+            return searcher.submitPackage(payload);
+
+        } catch (URLConnectionFailureException e) {
+            this.setEnabled(false);
+            throw new AnalysisException("Failed to connect to the NPM Audit API (NodeAuditAnalyzer); the analyzer "
+                    + "is being disabled and may result in false negatives.", e);
+        } catch (IOException e) {
+            LOGGER.debug("Error reading dependency or connecting to NPM Audit API", e);
+            this.setEnabled(false);
+            throw new AnalysisException("Failed to read results from the NPM Audit API (NodeAuditAnalyzer); "
+                    + "the analyzer is being disabled and may result in false negatives.", e);
+        } catch (JsonException e) {
+            throw new AnalysisException(String.format("Failed to parse %s file from the NPM Audit API "
+                    + "(NodeAuditAnalyzer).", lockFile.getPath()), e);
+        } catch (SearchException ex) {
+            LOGGER.error("NodeAuditAnalyzer failed on {}", dependency.getActualFilePath());
+            throw ex;
+        }
+    }
+
+    private List<Advisory> legacyAnalysis(final File file, Dependency dependency, Engine engine, Map<String, String> dependencyMap)
+            throws UnexpectedAnalysisException, AnalysisException {
 
         try (JsonReader jsonReader = Json.createReader(FileUtils.openInputStream(file))) {
 
@@ -186,45 +278,11 @@ public class NodeAuditAnalyzer extends AbstractNpmAnalyzer {
             }
 
             // Modify the payload to meet the NPM Audit API requirements
-            final JsonObject payload = SanitizePackage.sanitize(packageJson);
+            final JsonObject payload = NpmPayloadBuilder.build(packageJson, dependencyMap);
 
             // Submits the package payload to the nsp check service
-            final List<Advisory> advisories = searcher.submitPackage(payload);
+            return searcher.submitPackage(payload);
 
-            for (Advisory advisory : advisories) {
-                /*
-                 * Create a new vulnerability out of the advisory returned by nsp.
-                 */
-                final Vulnerability vuln = new Vulnerability();
-                vuln.setDescription(advisory.getOverview());
-                vuln.setName(String.valueOf(advisory.getId()));
-                vuln.setUnscoredSeverity(advisory.getSeverity());
-                vuln.setSource(Vulnerability.Source.NPM);
-                vuln.addReference(
-                        "Advisory " + advisory.getId() + ": " + advisory.getTitle(),
-                        advisory.getReferences(),
-                        null
-                );
-
-                /*
-                 * Create a single vulnerable software object - these do not use CPEs unlike the NVD.
-                 */
-                final VulnerableSoftwareBuilder builder = new VulnerableSoftwareBuilder();
-                //< 3.1.3  || >= 4.0.0 <4.1.1
-                builder.part(Part.APPLICATION).product(advisory.getModuleName().replace(" ", "_"))
-                        .version(advisory.getVulnerableVersions().replace(" ", ""));
-                final VulnerableSoftware vs = builder.build();
-                vuln.setVulnerableSoftware(Collections.singleton(vs));
-
-                final Dependency existing = findDependency(engine, advisory.getModuleName(), advisory.getVersion());
-                if (existing == null) {
-                    final Dependency nodeModule = createDependency(dependency, advisory.getModuleName(), advisory.getVersion(), "transitive");
-                    nodeModule.addVulnerability(vuln);
-                    engine.addDependency(nodeModule);
-                } else {
-                    existing.addVulnerability(vuln);
-                }
-            }
         } catch (URLConnectionFailureException e) {
             this.setEnabled(false);
             throw new AnalysisException("Failed to connect to the NPM Audit API (NodeAuditAnalyzer); the analyzer "
@@ -240,8 +298,6 @@ public class NodeAuditAnalyzer extends AbstractNpmAnalyzer {
         } catch (SearchException ex) {
             LOGGER.error("NodeAuditAnalyzer failed on {}", dependency.getActualFilePath());
             throw ex;
-        } catch (CpeValidationException ex) {
-            throw new UnexpectedAnalysisException(ex);
         }
     }
 }
