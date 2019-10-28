@@ -187,7 +187,21 @@ public class NodeAuditAnalyzer extends AbstractNpmAnalyzer {
         }
     }
 
-    private void processResults(final List<Advisory> advisories, Engine engine, Dependency dependency, Map<String, String> dependencyMap) throws CpeValidationException {
+    /**
+     * Processes the advisories creating the appropriate dependency objects and
+     * adding the resulting vulnerabilities.
+     *
+     * @param advisories a collection of advisories from npm
+     * @param engine a reference to the analysis engine
+     * @param dependency a reference to the package-lock.json dependency
+     * @param dependencyMap a collection of module/version pairs obtained from
+     * the package-lock file - used in case the advisories do not include a
+     * version number
+     * @throws CpeValidationException thrown when a CPE cannot be created
+     */
+    private void processResults(final List<Advisory> advisories, Engine engine,
+            Dependency dependency, Map<String, String> dependencyMap)
+            throws CpeValidationException {
         for (Advisory advisory : advisories) {
             //Create a new vulnerability out of the advisory returned by nsp.
             final Vulnerability vuln = new Vulnerability();
@@ -224,10 +238,26 @@ public class NodeAuditAnalyzer extends AbstractNpmAnalyzer {
         }
     }
 
-    private List<Advisory> analyzePackage(final File lockFile, final File packageFile, Dependency dependency, Engine engine, Map<String, String> dependencyMap) throws UnexpectedAnalysisException, AnalysisException {
-        //TODO - import dependencies and devdependencies from package.json - this makes up
-        // the required.  Then use the dependencies from the package-lock.json.
-
+    /**
+     * Analyzes the package and package-lock files by extracting dependency
+     * information, creating a payload to submit to the npm audit API,
+     * submitting the payload, and returning the identified advisories.
+     *
+     * @param lockFile a reference to the package-lock.json
+     * @param packageFile a reference to the package.json
+     * @param dependency a reference to the dependency-object for the
+     * package-lock.json
+     * @param engine a reference to the analysis engine.
+     * @param dependencyMap a collection of module/version pairs; during
+     * creation of the payload the dependency map is populated with the
+     * module/version information.
+     * @return a list of advisories
+     * @throws AnalysisException thrown when there is an error creating or
+     * submitting the npm audit API payload
+     */
+    private List<Advisory> analyzePackage(final File lockFile, final File packageFile,
+            Dependency dependency, Engine engine, Map<String, String> dependencyMap)
+            throws AnalysisException {
         try (JsonReader lockReader = Json.createReader(FileUtils.openInputStream(lockFile));
                 JsonReader packageReader = Json.createReader(FileUtils.openInputStream(packageFile))) {
 
@@ -260,8 +290,24 @@ public class NodeAuditAnalyzer extends AbstractNpmAnalyzer {
         }
     }
 
+    /**
+     * Analyzes the package and package-lock files by extracting dependency
+     * information, creating a payload to submit to the npm audit API,
+     * submitting the payload, and returning the identified advisories.
+     *
+     * @param file a reference to the package-lock.json
+     * @param dependency a reference to the dependency-object for the
+     * package-lock.json
+     * @param engine a reference to the analysis engine.
+     * @param dependencyMap a collection of module/version pairs; during
+     * creation of the payload the dependency map is populated with the
+     * module/version information.
+     * @return a list of advisories
+     * @throws AnalysisException thrown when there is an error creating or
+     * submitting the npm audit API payload
+     */
     private List<Advisory> legacyAnalysis(final File file, Dependency dependency, Engine engine, Map<String, String> dependencyMap)
-            throws UnexpectedAnalysisException, AnalysisException {
+            throws AnalysisException {
 
         try (JsonReader jsonReader = Json.createReader(FileUtils.openInputStream(file))) {
 

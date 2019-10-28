@@ -17,9 +17,7 @@
  */
 package org.owasp.dependencycheck.data.nodeaudit;
 
-import java.math.BigDecimal;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import javax.json.Json;
@@ -44,11 +42,20 @@ public final class NpmPayloadBuilder {
         //empty
     }
 
+    /**
+     * Builds an npm audit API payload.
+     *
+     * @param lockJson the package-lock.json
+     * @param packageJson the package.json
+     * @param dependencyMap a collection of module/version pairs that is
+     * populated while building the payload
+     * @return the npm audit API payload
+     */
     public static JsonObject build(JsonObject lockJson, JsonObject packageJson, Map<String, String> dependencyMap) {
         final JsonObjectBuilder payloadBuilder = Json.createObjectBuilder();
         addProjectInfo(packageJson, payloadBuilder);
 
-        // NPM Audit expects 'requires' to be an object containing key/value 
+        // NPM Audit expects 'requires' to be an object containing key/value
         // pairs corresponding to the module name (key) and version (value).
         final JsonObjectBuilder requiresBuilder = Json.createObjectBuilder();
         packageJson.getJsonObject("dependencies").entrySet()
@@ -96,13 +103,15 @@ public final class NpmPayloadBuilder {
      * produce a payload that will fail.
      *
      * @param packageJson a raw package-lock.json file
+     * @param dependencyMap a collection of module/version pairs that is
+     * populated while building the payload
      * @return the JSON payload for NPN Audit
      */
     public static JsonObject build(JsonObject packageJson, Map<String, String> dependencyMap) {
         final JsonObjectBuilder payloadBuilder = Json.createObjectBuilder();
         addProjectInfo(packageJson, payloadBuilder);
 
-        // NPM Audit expects 'requires' to be an object containing key/value 
+        // NPM Audit expects 'requires' to be an object containing key/value
         // pairs corresponding to the module name (key) and version (value).
         final JsonObjectBuilder requiresBuilder = Json.createObjectBuilder();
         final JsonObjectBuilder dependenciesBuilder = Json.createObjectBuilder();
@@ -116,7 +125,7 @@ public final class NpmPayloadBuilder {
                 dependencyMap.put(entry.getKey(), version);
                 dependenciesBuilder.add(entry.getKey(), buildDependencies(dep, dependencyMap));
             } else {
-                //TODO I think the following is dead code and no real "dependencies" 
+                //TODO I think the following is dead code and no real "dependencies"
                 //     section in a lock file will look like this
                 final String tmp = entry.getValue().toString();
                 if (tmp.startsWith("\"")) {
@@ -135,6 +144,12 @@ public final class NpmPayloadBuilder {
         return payloadBuilder.build();
     }
 
+    /**
+     * Adds the project name and version to the npm audit API payload.
+     *
+     * @param packageJson a reference to the package-lock.json
+     * @param payloadBuilder a reference to the npm audit API payload builder
+     */
     private static void addProjectInfo(JsonObject packageJson, final JsonObjectBuilder payloadBuilder) {
         final String projectName = packageJson.getString("name", "");
         final String projectVersion = packageJson.getString("version", "");
@@ -146,6 +161,11 @@ public final class NpmPayloadBuilder {
         }
     }
 
+    /**
+     * Adds the constant data elements to the npm audit API payload.
+     *
+     * @param payloadBuilder a reference to the npm audit API payload builder
+     */
     private static void addConstantElements(final JsonObjectBuilder payloadBuilder) {
         payloadBuilder.add("install", Json.createArrayBuilder().build());
         payloadBuilder.add("remove", Json.createArrayBuilder().build());
@@ -156,6 +176,14 @@ public final class NpmPayloadBuilder {
         );
     }
 
+    /**
+     * Recursively builds the dependency structure - copying only the needed
+     * items from the package-lock.json into the npm audit API payload.
+     *
+     * @param dep the parent dependency
+     * @param dependencyMap the collection of child dependencies
+     * @return the dependencies structure needed for the npm audit API payload
+     */
     private static JsonObject buildDependencies(JsonObject dep, Map<String, String> dependencyMap) {
         final JsonObjectBuilder depBuilder = Json.createObjectBuilder();
         depBuilder.add("version", dep.getString("version"));
