@@ -17,8 +17,6 @@
  */
 package org.owasp.dependencycheck.data.nodeaudit;
 
-import netscape.javascript.JSObject;
-
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
