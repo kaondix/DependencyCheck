@@ -164,9 +164,9 @@ public class ReportGeneratorIT extends BaseDBTestCase {
             File nodeTest = BaseTest.getResourceAsFile(this, "nodejs");
             int vulnCount;
             try (Engine engine = new Engine(settings)) {
-//                engine.scan(struts);
-//                engine.scan(axis);
-//                engine.scan(jetty);
+                engine.scan(struts);
+                engine.scan(axis);
+                engine.scan(jetty);
                 engine.scan(nodeTest);
                 engine.analyzeDependencies();
 
