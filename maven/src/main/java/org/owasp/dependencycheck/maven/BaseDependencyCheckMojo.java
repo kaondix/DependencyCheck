@@ -403,6 +403,13 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
     @Parameter(property = "retireJsUrl")
     private String retireJsUrl;
     /**
+     * Whether the Retire JS repository will be updated regardless of the
+     * `autoupdate` settings.
+     */
+    @SuppressWarnings("CanBeFinal")
+    @Parameter(property = "retireJsForceUpdate")
+    private Boolean retireJsForceUpdate;
+    /**
      * Whether or not the .NET Assembly Analyzer is enabled.
      */
     @Parameter(property = "assemblyAnalyzerEnabled")
@@ -671,8 +678,8 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
 
     /**
      * Skip analysis for dependencies which type matches this regular
-     * expression. This filters on the `type` of dependency as defined
-     * in the dependency section: jar, pom, test-jar, etc.
+     * expression. This filters on the `type` of dependency as defined in the
+     * dependency section: jar, pom, test-jar, etc.
      */
     @SuppressWarnings("CanBeFinal")
     @Parameter(property = "skipArtifactType")
@@ -1160,12 +1167,14 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
         }
         return exCol;
     }
-    
+
     /**
      * @param project the {@link MavenProject}
      * @param dependencyNode the {@link DependencyNode}
-     * @return the name to be used when creating a {@link Dependency#getProjectReferences() project reference} in a {@link Dependency}.
-     * The behavior of this method returns {@link MavenProject#getName() project.getName()}<code> + ":" + </code> 
+     * @return the name to be used when creating a
+     * {@link Dependency#getProjectReferences() project reference} in a
+     * {@link Dependency}. The behavior of this method returns {@link MavenProject#getName() project.getName()}<code> + ":" +
+     * </code>
      * {@link DependencyNode#getArtifact() dependencyNode.getArtifact()}{@link Artifact#getScope() .getScope()}.
      */
     protected String createProjectReferenceName(MavenProject project, DependencyNode dependencyNode) {
@@ -1686,6 +1695,7 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
         settings.setBooleanIfNotNull(Settings.KEYS.ANALYZER_NODE_AUDIT_USE_CACHE, nodeAuditAnalyzerUseCache);
         settings.setBooleanIfNotNull(Settings.KEYS.ANALYZER_RETIREJS_ENABLED, retireJsAnalyzerEnabled);
         settings.setStringIfNotNull(Settings.KEYS.ANALYZER_RETIREJS_REPO_JS_URL, retireJsUrl);
+        settings.setBooleanIfNotNull(Settings.KEYS.ANALYZER_RETIREJS_FORCEUPDATE, retireJsForceUpdate);
         settings.setBooleanIfNotNull(Settings.KEYS.ANALYZER_BUNDLE_AUDIT_ENABLED, bundleAuditAnalyzerEnabled);
         settings.setStringIfNotNull(Settings.KEYS.ANALYZER_BUNDLE_AUDIT_PATH, bundleAuditPath);
         settings.setStringIfNotNull(Settings.KEYS.ANALYZER_BUNDLE_AUDIT_WORKING_DIRECTORY, bundleAuditWorkingDirectory);
