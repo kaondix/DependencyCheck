@@ -254,6 +254,7 @@ public class CPEAnalyzerIT extends BaseDBTestCase {
             instance.initialize(getSettings());
             instance.prepare(engine);
 
+            callDetermieIdentifiers("pivotal_software", "spring_framework", "4.3.4.release", "cpe:2.3:a:pivotal_software:spring_framework:4.3.4:release:*:*:*:*:*:*", instance);
             callDetermieIdentifiers("eclipse", "jetty", "20.4.8.v20171121", "cpe:2.3:a:eclipse:jetty:20.4.8:20171121:*:*:*:*:*:*", instance);
             callDetermieIdentifiers("openssl", "openssl", "1.0.1c", "cpe:2.3:a:openssl:openssl:1.0.1c:*:*:*:*:*:*:*", instance);
             callDetermieIdentifiers("jrebel", "zt-zip", "1.0", "cpe:2.3:a:jrebel:zt-zip:1.0:*:*:*:*:*:*:*", instance);
