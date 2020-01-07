@@ -34,13 +34,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * CPEAnalyzer is a utility class that takes a project dependency and attempts
- * to discern if there is an associated CPE. It uses the evidence contained
- * within the dependency to search the Lucene index.
+ * NpmCPEAnalyzer takes a project dependency and attempts to discern if there is
+ * an associated CPE. Unlike the CPEAnalyzer, the NpmCPEAnalyzer only includes
+ * product and vendor associates known to be related to node from the NVD data
+ * set. It uses the evidence contained within the dependency to search the
+ * Lucene index.
  *
  * @author Jeremy Long
  */
 @ThreadSafe
+@Experimental
 public class NpmCPEAnalyzer extends CPEAnalyzer {
 
     /**
