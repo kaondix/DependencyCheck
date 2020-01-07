@@ -128,16 +128,16 @@ public final class CpeMemoryIndex implements AutoCloseable {
     /**
      * Creates and loads data into an in memory index.
      *
-     * @param cve the data source to retrieve the cpe data
+     * @param data the CPE data
      * @param settings a reference to the dependency-check settings
      * @throws IndexException thrown if there is an error creating the index
      */
-    public synchronized void open(CveDB cve, Settings settings) throws IndexException {
+    public synchronized void open(Set<Pair<String, String>> data, Settings settings) throws IndexException {
         if (INSTANCE.usageCount.addAndGet(1) == 1) {
             try {
                 final File temp = settings.getTempDirectory();
                 index = new MMapDirectory(temp.toPath());
-                buildIndex(cve);
+                buildIndex(data);
 
                 indexReader = DirectoryReader.open(index);
             } catch (IOException ex) {
@@ -210,10 +210,10 @@ public final class CpeMemoryIndex implements AutoCloseable {
     /**
      * Builds the CPE Lucene Index based off of the data within the CveDB.
      *
-     * @param cve the data base containing the CPE data
+     * @param data the CPE data
      * @throws IndexException thrown if there is an issue creating the index
      */
-    private void buildIndex(CveDB cve) throws IndexException {
+    private void buildIndex(Set<Pair<String, String>> data) throws IndexException {
         try (Analyzer analyzer = createSearchingAnalyzer();
                 IndexWriter indexWriter = new IndexWriter(index,
                         new IndexWriterConfig(analyzer))) {
@@ -233,7 +233,6 @@ public final class CpeMemoryIndex implements AutoCloseable {
             doc.add(v);
             doc.add(p);
 
-            final Set<Pair<String, String>> data = cve.getVendorProductList();
             for (Pair<String, String> pair : data) {
                 if (pair.getLeft() != null && pair.getRight() != null) {
                     v.setStringValue(pair.getLeft());
