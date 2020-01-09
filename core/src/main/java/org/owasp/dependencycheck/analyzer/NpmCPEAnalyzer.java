@@ -52,6 +52,20 @@ public class NpmCPEAnalyzer extends CPEAnalyzer {
     private static final Logger LOGGER = LoggerFactory.getLogger(CPEAnalyzer.class);
 
     /**
+     * Returns the analysis phase that this analyzer should run in.
+     *
+     * @return the analysis phase that this analyzer should run in.
+     */
+    @Override
+    public AnalysisPhase getAnalysisPhase() {
+        //TODO this is a hack because we use the same singleton CPE Index as the CPE Analyzer
+        // thus to filter to just node products we can't run in the same phase.
+        // possibly extenend the CPE Index to include an ecosystem and use that
+        // as a filter for node..
+        return AnalysisPhase.PRE_IDENTIFIER_ANALYSIS;
+    }
+
+    /**
      * Returns the name of this analyzer.
      *
      * @return the name of this analyzer.
@@ -81,6 +95,7 @@ public class NpmCPEAnalyzer extends CPEAnalyzer {
      * @throws DatabaseException when the database throws an exception. This
      * usually occurs when the database is in use by another process.
      */
+    @Override
     public void open(CveDB cve) throws IOException, DatabaseException {
         setCveDB(cve);
         setCpeMemoryIndex(CpeMemoryIndex.getInstance());

@@ -1375,6 +1375,8 @@ public final class CveDB implements AutoCloseable {
                         ecosystem = NodeAuditAnalyzer.DEPENDENCY_ECOSYSTEM;
                     } else if (r.getUrl().contains("nodesecurity.io")) {
                         ecosystem = NodeAuditAnalyzer.DEPENDENCY_ECOSYSTEM;
+                    } else if (r.getUrl().contains("rustsec.org")) {
+                        ecosystem = "rust";
                     }
                 }
                 insertReference.setInt(1, vulnerabilityId);
