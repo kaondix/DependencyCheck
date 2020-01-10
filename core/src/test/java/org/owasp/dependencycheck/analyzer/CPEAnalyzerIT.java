@@ -105,8 +105,8 @@ public class CPEAnalyzerIT extends BaseDBTestCase {
 
             //callDetermineCPE_full("hazelcast-2.5.jar", "cpe:2.3:a:hazelcast:hazelcast:2.5:*:*:*:*:*:*:*", cpeAnalyzer, fnAnalyzer, jarAnalyzer, hAnalyzer, fp, cpeSuppression);
             callDetermineCPE_full("spring-context-support-2.5.5.jar", "cpe:2.3:a:springsource:spring_framework:2.5.5:*:*:*:*:*:*:*", cpeAnalyzer, fnAnalyzer, jarAnalyzer, hAnalyzer, fp, cpeSuppression);
-            callDetermineCPE_full("spring-core-3.0.0.RELEASE.jar", "cpe:2.3:a:pivotal_software:spring_framework:3.0.0:*:*:*:*:*:*:*", cpeAnalyzer, fnAnalyzer, jarAnalyzer, hAnalyzer, fp, cpeSuppression);
-            callDetermineCPE_full("spring-core-3.0.0.RELEASE.jar", "cpe:2.3:a:springsource:spring_framework:3.0.0:*:*:*:*:*:*:*", cpeAnalyzer, fnAnalyzer, jarAnalyzer, hAnalyzer, fp, cpeSuppression);
+            callDetermineCPE_full("spring-core-3.0.0.RELEASE.jar", "cpe:2.3:a:pivotal_software:spring_framework:3.0.0:release:*:*:*:*:*:*", cpeAnalyzer, fnAnalyzer, jarAnalyzer, hAnalyzer, fp, cpeSuppression);
+            callDetermineCPE_full("spring-core-3.0.0.RELEASE.jar", "cpe:2.3:a:springsource:spring_framework:3.0.0:release:*:*:*:*:*:*", cpeAnalyzer, fnAnalyzer, jarAnalyzer, hAnalyzer, fp, cpeSuppression);
             callDetermineCPE_full("jaxb-xercesImpl-1.5.jar", null, cpeAnalyzer, fnAnalyzer, jarAnalyzer, hAnalyzer, fp, cpeSuppression);
             callDetermineCPE_full("ehcache-core-2.2.0.jar", null, cpeAnalyzer, fnAnalyzer, jarAnalyzer, hAnalyzer, fp, cpeSuppression);
             callDetermineCPE_full("xstream-1.4.8.jar", "cpe:2.3:a:xstream_project:xstream:1.4.8:*:*:*:*:*:*:*", cpeAnalyzer, fnAnalyzer, jarAnalyzer, hAnalyzer, fp, cpeSuppression);
