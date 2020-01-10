@@ -211,7 +211,8 @@ public class NodePackageAnalyzer extends AbstractNpmAnalyzer {
 
     @Override
     protected void analyzeDependency(Dependency dependency, Engine engine) throws AnalysisException {
-        if (isNodeAuditEnabled(engine) && !PACKAGE_LOCK_JSON.equals(dependency.getFileName())) {
+        if (isNodeAuditEnabled(engine) 
+                && !(PACKAGE_LOCK_JSON.equals(dependency.getFileName()) || SHRINKWRAP_JSON.equals(dependency.getFileName()))) {
             engine.removeDependency(dependency);
         }
         final File dependencyFile = dependency.getActualFile();
