@@ -54,6 +54,7 @@ import org.owasp.dependencycheck.data.cpe.CpeMemoryIndex;
 import org.owasp.dependencycheck.data.cpe.Fields;
 import org.owasp.dependencycheck.data.cpe.IndexEntry;
 import org.owasp.dependencycheck.data.cpe.IndexException;
+import org.owasp.dependencycheck.data.cpe.MemoryIndex;
 import org.owasp.dependencycheck.data.lucene.LuceneUtils;
 import org.owasp.dependencycheck.data.lucene.SearchFieldAnalyzer;
 import org.owasp.dependencycheck.data.nvdcve.CveDB;
@@ -130,7 +131,7 @@ public class CPEAnalyzer extends AbstractAnalyzer {
     /**
      * The CPE in memory index.
      */
-    private CpeMemoryIndex cpe;
+    private MemoryIndex cpe;
     /**
      * The CVE Database.
      */
@@ -1225,22 +1226,39 @@ public class CPEAnalyzer extends AbstractAnalyzer {
         }
     }
 
+    /**
+     * Sets the reference to the CveDB.
+     * @param cveDb the CveDB
+     */
     protected void setCveDB(CveDB cveDb) {
         this.cve = cveDb;
     }
-
+    /**
+     * returns a reference to the CveDB.
+     * @return a reference to the CveDB
+     */
     protected CveDB getCveDB() {
         return this.cve;
     }
 
-    protected void setCpeMemoryIndex(CpeMemoryIndex idx) {
+    /**
+     * Sets the MemoryIndex.
+     * @param idx the memory index
+     */
+    protected void setMemoryIndex(MemoryIndex idx) {
         cpe = idx;
     }
-
-    protected CpeMemoryIndex getCpeMemoryIndex() {
+    /**
+     * Returns the memory index.
+     * @return the memory index
+     */
+    protected MemoryIndex getMemoryIndex() {
         return cpe;
     }
-
+    /**
+     * Sets the CPE Suppression Analyzer.
+     * @param suppression the CPE Suppression Analyzer
+     */
     protected void setCpeSuppressionAnalyzer(CpeSuppressionAnalyzer suppression) {
         this.suppression = suppression;
     }

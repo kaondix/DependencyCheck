@@ -19,13 +19,14 @@ package org.owasp.dependencycheck.analyzer;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.owasp.dependencycheck.BaseDBTestCase;
 import org.owasp.dependencycheck.utils.Settings;
 
 /**
  *
  * @author jeremy long
  */
-public class NpmCPEAnalyzerTest {
+public class NpmCPEAnalyzerTest extends BaseDBTestCase {
 
     /**
      * Test of getName method, of class CPEAnalyzer.

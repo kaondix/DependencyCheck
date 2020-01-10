@@ -26,6 +26,7 @@ import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.data.cpe.CpeMemoryIndex;
 import org.owasp.dependencycheck.data.cpe.IndexException;
+import org.owasp.dependencycheck.data.cpe.NpmCpeMemoryIndex;
 import org.owasp.dependencycheck.data.nvdcve.CveDB;
 import org.owasp.dependencycheck.data.nvdcve.DatabaseException;
 import org.owasp.dependencycheck.dependency.Dependency;
@@ -98,10 +99,10 @@ public class NpmCPEAnalyzer extends CPEAnalyzer {
     @Override
     public void open(CveDB cve) throws IOException, DatabaseException {
         setCveDB(cve);
-        setCpeMemoryIndex(CpeMemoryIndex.getInstance());
+        setMemoryIndex(NpmCpeMemoryIndex.getInstance());
         try {
             final long creationStart = System.currentTimeMillis();
-            getCpeMemoryIndex().open(cve.getVendorProductListForNode(), this.getSettings());
+            getMemoryIndex().open(cve.getVendorProductListForNode(), this.getSettings());
             final long creationSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - creationStart);
             LOGGER.info("Created CPE Index ({} seconds)", creationSeconds);
         } catch (IndexException ex) {
