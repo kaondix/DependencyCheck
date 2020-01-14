@@ -86,4 +86,22 @@ public class NpmPayloadBuilderTest {
             Assert.assertFalse(sanitized.containsKey("random"));
         }
     }
+
+    @Test
+    public void testSanitizeEmptyPackage() {
+        InputStream in = BaseTest.getResourceAsStream(this, "nodeaudit/empty-package-lock/package-lock.json");
+        Map<String, String> dependencyMap = new HashMap<>();
+        try (JsonReader jsonReader = Json.createReader(in)) {
+            JsonObject packageJson = jsonReader.readObject();
+            JsonObject sanitized = NpmPayloadBuilder.build(packageJson, dependencyMap);
+
+            Assert.assertTrue(sanitized.containsKey("name"));
+            Assert.assertTrue(sanitized.containsKey("version"));
+            Assert.assertTrue(sanitized.containsKey("dependencies"));
+            Assert.assertTrue(sanitized.containsKey("requires"));
+
+            JsonObject requires = sanitized.getJsonObject("requires");
+            Assert.assertFalse(sanitized.containsKey("lockfileVersion"));
+        }
+    }
 }

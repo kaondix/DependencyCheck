@@ -90,13 +90,16 @@ public final class NpmPayloadBuilder {
         payloadBuilder.add("requires", requiresBuilder.build());
 
         final JsonObjectBuilder dependenciesBuilder = Json.createObjectBuilder();
-        final JsonObject dependencies = lockJson.getJsonObject("dependencies");
-        dependencies.entrySet().forEach((entry) -> {
-            final JsonObject dep = ((JsonObject) entry.getValue());
-            final String version = dep.getString("version");
-            dependencyMap.put(entry.getKey(), version);
-            dependenciesBuilder.add(entry.getKey(), buildDependencies(dep, dependencyMap));
-        });
+
+        if(lockJson.containsKey("dependencies")){
+            lockJson.getJsonObject("dependencies").entrySet().forEach((entry) -> {
+                final JsonObject dep = ((JsonObject) entry.getValue());
+                final String version = dep.getString("version");
+                dependencyMap.put(entry.getKey(), version);
+                dependenciesBuilder.add(entry.getKey(), buildDependencies(dep, dependencyMap));
+            });
+        }
+
         payloadBuilder.add("dependencies", dependenciesBuilder.build());
 
         addConstantElements(payloadBuilder);
@@ -121,26 +124,27 @@ public final class NpmPayloadBuilder {
         final JsonObjectBuilder requiresBuilder = Json.createObjectBuilder();
         final JsonObjectBuilder dependenciesBuilder = Json.createObjectBuilder();
 
-        final JsonObject dependencies = packageJson.getJsonObject("dependencies");
-        dependencies.entrySet().forEach((entry) -> {
-            final String version;
-            if (entry.getValue().getValueType() == JsonValue.ValueType.OBJECT) {
-                final JsonObject dep = ((JsonObject) entry.getValue());
-                version = dep.getString("version");
-                dependencyMap.put(entry.getKey(), version);
-                dependenciesBuilder.add(entry.getKey(), buildDependencies(dep, dependencyMap));
-            } else {
-                //TODO I think the following is dead code and no real "dependencies"
-                //     section in a lock file will look like this
-                final String tmp = entry.getValue().toString();
-                if (tmp.startsWith("\"")) {
-                    version = tmp.substring(1, tmp.length() - 1);
+        if(packageJson.containsKey("dependencies")){
+            packageJson.getJsonObject("dependencies").entrySet().forEach((entry) -> {
+                final String version;
+                if (entry.getValue().getValueType() == JsonValue.ValueType.OBJECT) {
+                    final JsonObject dep = ((JsonObject) entry.getValue());
+                    version = dep.getString("version");
+                    dependencyMap.put(entry.getKey(), version);
+                    dependenciesBuilder.add(entry.getKey(), buildDependencies(dep, dependencyMap));
                 } else {
-                    version = tmp;
+                    //TODO I think the following is dead code and no real "dependencies"
+                    //     section in a lock file will look like this
+                    final String tmp = entry.getValue().toString();
+                    if (tmp.startsWith("\"")) {
+                        version = tmp.substring(1, tmp.length() - 1);
+                    } else {
+                        version = tmp;
+                    }
                 }
-            }
-            requiresBuilder.add(entry.getKey(), "^" + version);
-        });
+                requiresBuilder.add(entry.getKey(), "^" + version);
+            });
+        }
         payloadBuilder.add("requires", requiresBuilder.build());
 
         payloadBuilder.add("dependencies", dependenciesBuilder.build());
