@@ -553,7 +553,7 @@ public final class Settings {
         /**
          * The key to determine if the File Version analyzer is enabled.
          */
-        public static final String ANALYZER_FILE_VERSION_ENABLED = "analyzer.fileversion.enabled";
+        public static final String ANALYZER_PE_ENABLED = "analyzer.pe.enabled";
         /**
          * The key to determine if the Hint analyzer is enabled.
          */
