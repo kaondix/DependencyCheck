@@ -777,6 +777,13 @@ Getting Help: <a href="https://github.com/jeremylong/DependencyCheck/issues" tar
                             #end
                         #end
                             <b>File&nbsp;Path:</b>&nbsp;$enc.html($dependency.FilePath)<br/>
+                            #if ($dependency.coordinates && ($dependency.coordinates.groupId || $dependency.coordinates.artifactId || $dependency.coordinates.version))
+                                <b>Coordinates:</b><ul>
+                                <li><b>groupId:</b>$dependency.coordinates.groupId</li>
+                                <li><b>artifactId:</b>$dependency.coordinates.artifactId</li>
+                                <li><b>version:</b>$dependency.coordinates.version</li>
+                                </ul>
+                            #end
                             #if(!$dependency.isVirtual())
                             <b>MD5:</b>&nbsp;$enc.html($dependency.Md5sum)<br/>
                             <b>SHA1:</b>&nbsp;$enc.html($dependency.Sha1sum)<br/>

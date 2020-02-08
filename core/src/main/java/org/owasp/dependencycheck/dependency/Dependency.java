@@ -169,6 +169,11 @@ public class Dependency extends EvidenceCollection implements Serializable {
     private String ecosystem;
 
     /**
+     * Optional coordinates of the depencency (e.g. Maven-Coordinates)
+     */
+    private Coordinates coordinates;
+
+    /**
      * Constructs a new Dependency object.
      */
     public Dependency() {
@@ -938,6 +943,20 @@ public class Dependency extends EvidenceCollection implements Serializable {
      */
     public void setEcosystem(String ecosystem) {
         this.ecosystem = ecosystem;
+    }
+
+    /**
+     * @return the coordinates
+     */
+    public Coordinates getCoordinates() {
+        return coordinates;
+    }
+
+    /**
+     * @param coordinates the coordinates to set
+     */
+    public void setCoordinates(Coordinates coordinates) {
+        this.coordinates = coordinates;
     }
 
     /**

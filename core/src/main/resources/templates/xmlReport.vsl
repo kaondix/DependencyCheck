@@ -71,6 +71,13 @@ Copyright (c) 2018 Jeremy Long. All Rights Reserved.
     <dependencies>
 #foreach($dependency in $dependencies)
         <dependency isVirtual="#if($dependency.isVirtual())true#{else}false#end">
+#if ($dependency.coordinates && ($dependency.coordinates.groupId || $dependency.coordinates.artifactId || $dependency.coordinates.version))
+            <coordinates>
+              <groupId>$dependency.coordinates.groupId</groupId>
+              <artifactId>$dependency.coordinates.artifactId</artifactId>
+              <version>$dependency.coordinates.version</version>
+            </coordinates>
+#end
             <fileName>$enc.xml($dependency.DisplayFileName)</fileName>
             <filePath>$enc.xml($dependency.FilePath)</filePath>
             <md5>#if(!$dependency.isVirtual())$enc.xml($dependency.Md5sum)#end</md5>

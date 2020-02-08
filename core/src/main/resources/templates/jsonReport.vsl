@@ -55,6 +55,13 @@
         #foreach($dependency in $dependencies)#if($foreach.count > 1),#end{
             "isVirtual": #if($dependency.isVirtual())true#{else}false#end,
             "fileName": "$enc.json($dependency.DisplayFileName)",
+            #if ($dependency.coordinates && ($dependency.coordinates.groupId || $dependency.coordinates.artifactId || $dependency.coordinates.version))
+            "coordinates": {
+                "groupId": "$dependency.coordinates.groupId",
+                "artifactId": "$dependency.coordinates.artifactId",
+                "version": "$dependency.coordinates.version"
+            }
+            #end
             "filePath": "$enc.json($dependency.FilePath)"
             #if(!$dependency.isVirtual()),"md5": "$enc.json($dependency.Md5sum)",
             "sha1": "$enc.json($dependency.Sha1sum)",

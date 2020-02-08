@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.junit.Assert;
 import org.junit.Test;
 import org.owasp.dependencycheck.BaseTest;
 import org.owasp.dependencycheck.Engine;
@@ -57,6 +58,11 @@ public class JarAnalyzerTest extends BaseTest {
         instance.analyze(result, null);
         assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().toLowerCase().contains("apache"));
         assertTrue(result.getVendorWeightings().contains("apache"));
+
+        Assert.assertNotNull(result.getCoordinates());
+        Assert.assertEquals("org.apache.struts", result.getCoordinates().getGroupId());
+        Assert.assertEquals("struts-core", result.getCoordinates().getArtifactId());
+        Assert.assertEquals("2.1.2", result.getCoordinates().getVersion());
 
         file = BaseTest.getResourceAsFile(this, "dwr.jar");
         result = new Dependency(file);

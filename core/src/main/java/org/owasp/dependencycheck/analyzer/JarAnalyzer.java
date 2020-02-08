@@ -58,6 +58,7 @@ import org.jsoup.Jsoup;
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.dependency.Confidence;
+import org.owasp.dependencycheck.dependency.Coordinates;
 import org.owasp.dependencycheck.dependency.Dependency;
 import org.owasp.dependencycheck.dependency.EvidenceType;
 import org.owasp.dependencycheck.dependency.naming.GenericIdentifier;
@@ -441,6 +442,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
                             newDependency.setName(String.format("%s:%s", groupId, pom.getArtifactId()));
                             newDependency.setPackagePath(String.format("%s:%s:%s", groupId, pom.getArtifactId(), version));
                         }
+                        newDependency.setCoordinates(new Coordinates(groupId, artifactId, version));
                         newDependency.setDisplayFileName(String.format("%s (shaded: %s)",
                                 dependency.getDisplayFileName(), newDependency.getPackagePath()));
                         newDependency.setVersion(version);
@@ -559,6 +561,8 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
         String parentArtifactId = pom.getParentArtifactId();
         String version = pom.getVersion();
         String parentVersion = pom.getParentVersion();
+
+        dependency.setCoordinates(new Coordinates(groupid, artifactid, version));
 
         if (("org.sonatype.oss".equals(parentGroupId) && "oss-parent".equals(parentArtifactId))
                 || ("org.springframework.boot".equals(parentGroupId) && "spring-boot-starter-parent".equals(parentArtifactId))) {
