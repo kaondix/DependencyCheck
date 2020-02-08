@@ -61,7 +61,7 @@ public class JarAnalyzerTest extends BaseTest {
 
         Assert.assertNotNull(result.getCoordinates());
         Assert.assertEquals("org.apache.struts", result.getCoordinates().getGroupId());
-        Assert.assertEquals("struts-core", result.getCoordinates().getArtifactId());
+        Assert.assertEquals("struts2-core", result.getCoordinates().getArtifactId());
         Assert.assertEquals("2.1.2", result.getCoordinates().getVersion());
 
         file = BaseTest.getResourceAsFile(this, "dwr.jar");
