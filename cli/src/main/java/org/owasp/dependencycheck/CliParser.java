@@ -437,7 +437,6 @@ public final class CliParser {
 //    private void addDeprecatedOptions(final Options options) {
 //        //all deprecated arguments have been removed (for now)
 //    }
-
     /**
      * Determines if the 'version' command line argument was passed in.
      *
@@ -576,6 +575,7 @@ public final class CliParser {
         }
         return null;
     }
+
     /**
      * Returns the argument value for the given option.
      *
@@ -588,6 +588,7 @@ public final class CliParser {
         }
         return null;
     }
+
     /**
      * Returns the argument value for the given option.
      *

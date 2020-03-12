@@ -20,6 +20,8 @@ package org.owasp.dependencycheck.maven;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL.StandardTypes;
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.DefaultArtifact;
+import org.apache.maven.artifact.handler.DefaultArtifactHandler;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.doxia.sink.Sink;
 import org.apache.maven.execution.MavenSession;
@@ -94,7 +96,10 @@ import org.owasp.dependencycheck.dependency.naming.Identifier;
 import org.owasp.dependencycheck.dependency.naming.PurlIdentifier;
 import org.apache.maven.shared.dependency.graph.traversal.DependencyNodeVisitor;
 import org.apache.maven.shared.dependency.graph.traversal.FilteringDependencyNodeVisitor;
+import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.utils.SeverityUtil;
+import org.owasp.dependencycheck.xml.pom.Model;
+import org.owasp.dependencycheck.xml.pom.PomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.spi.LocationAwareLogger;
@@ -1069,6 +1074,7 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
     /**
      * Collect dependencies from the dependency management section.
      *
+     * @param engine reference to the ODC engine
      * @param buildingRequest the Maven project building request
      * @param project the project being analyzed
      * @param nodes the list of dependency nodes
@@ -1076,8 +1082,8 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
      * @return a collection of exceptions if any occurred; otherwise
      * <code>null</code>
      */
-    private ExceptionCollection collectDependencyManagementDependencies(ProjectBuildingRequest buildingRequest, MavenProject project,
-            List<DependencyNode> nodes, boolean aggregate) {
+    private ExceptionCollection collectDependencyManagementDependencies(Engine engine, ProjectBuildingRequest buildingRequest,
+            MavenProject project, List<DependencyNode> nodes, boolean aggregate) {
         if (skipDependencyManagement || project.getDependencyManagement() == null) {
             return null;
         }
@@ -1088,10 +1094,23 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
                 nodes.add(toDependencyNode(nodes, buildingRequest, null, dependency));
             } catch (ArtifactResolverException ex) {
                 getLog().debug(String.format("Aggregate : %s", aggregate));
-                if (exCol == null) {
-                    exCol = new ExceptionCollection();
+                boolean addException = true;
+                //CSOFF: EmptyBlock
+                if (!aggregate) {
+                    // do nothing, exception is to be reported
+                } else if (addReactorDependency(engine,
+                        new DefaultArtifact(dependency.getGroupId(), dependency.getArtifactId(),
+                            dependency.getVersion(), dependency.getScope(), dependency.getType(), dependency.getClassifier(),
+                            new DefaultArtifactHandler()))) {
+                    addException = false;
                 }
-                exCol.addException(ex);
+                //CSON: EmptyBlock
+                if (addException) {
+                    if (exCol == null) {
+                        exCol = new ExceptionCollection();
+                    }
+                    exCol.addException(ex);
+                }
             }
         }
         return exCol;
@@ -1113,7 +1132,7 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
     private ExceptionCollection collectMavenDependencies(Engine engine, MavenProject project,
             List<DependencyNode> nodes, ProjectBuildingRequest buildingRequest, boolean aggregate) {
 
-        ExceptionCollection exCol = collectDependencyManagementDependencies(buildingRequest, project, nodes, aggregate);
+        ExceptionCollection exCol = collectDependencyManagementDependencies(engine, buildingRequest, project, nodes, aggregate);
 
         for (DependencyNode dependencyNode : nodes) {
             if (artifactScopeExcluded.passes(dependencyNode.getArtifact().getScope())
@@ -1165,9 +1184,14 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
                     } catch (ArtifactResolverException ex) {
                         getLog().debug(String.format("Aggregate : %s", aggregate));
                         boolean addException = true;
-                        if (!aggregate || addReactorDependency(engine, dependencyNode.getArtifact())) {
+                        //CSOFF: EmptyBlock
+                        if (!aggregate) {
+                            // do nothing - the exception is to be reported
+                        } else if (addReactorDependency(engine, dependencyNode.getArtifact())) {
+                            // successfully resolved as a reactor dependency - swallow the exception
                             addException = false;
                         }
+                        //CSON: //CSOFF: EmptyBlock
                         if (addException) {
                             if (exCol == null) {
                                 exCol = new ExceptionCollection();
@@ -1223,6 +1247,20 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
                     final String msg = String.format("Skipping '%s:%s' in project %s as it uses an `import` scope",
                             dependencyNode.getArtifact().getId(), dependencyNode.getArtifact().getScope(), project.getName());
                     getLog().debug(msg);
+                } else if ("pom".equals(dependencyNode.getArtifact().getType())) {
+
+                    try {
+final                        Dependency d = new Dependency(artifactFile.getAbsoluteFile());
+     final                   Model pom = PomUtils.readPom(artifactFile.getAbsoluteFile());
+                        JarAnalyzer.setPomEvidence(d, pom, null, true);
+                        engine.addDependency(d);
+                    } catch (AnalysisException ex) {
+                        if (exCol == null) {
+                            exCol = new ExceptionCollection();
+                        }
+                        exCol.addException(ex);
+                        getLog().debug("Error reading pom " + artifactFile.getAbsoluteFile(), ex);
+                    }
                 } else {
                     final String msg = String.format("No analyzer could be found for '%s:%s' in project %s",
                             dependencyNode.getArtifact().getId(), dependencyNode.getArtifact().getScope(), project.getName());

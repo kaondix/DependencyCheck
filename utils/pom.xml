@@ -20,7 +20,7 @@ Copyright (c) 2014 - Jeremy Long. All Rights Reserved.
     <parent>
         <groupId>org.owasp</groupId>
         <artifactId>dependency-check-parent</artifactId>
-        <version>5.3.1-SNAPSHOT</version>
+        <version>5.3.1</version>
     </parent>
 
     <artifactId>dependency-check-utils</artifactId>
@@ -49,6 +49,10 @@ Copyright (c) 2014 - Jeremy Long. All Rights Reserved.
             <artifactId>gson</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <scope>compile</scope>
@@ -66,7 +70,11 @@ Copyright (c) 2014 - Jeremy Long. All Rights Reserved.
         <dependency>
             <groupId>org.mock-server</groupId>
             <artifactId>mockserver-netty</artifactId>
-            <version>5.8.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mock-server</groupId>
+            <artifactId>mockserver-junit-rule</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

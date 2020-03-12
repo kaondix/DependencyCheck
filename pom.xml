@@ -20,7 +20,7 @@ Copyright (c) 2012 - Jeremy Long
 
     <groupId>org.owasp</groupId>
     <artifactId>dependency-check-parent</artifactId>
-    <version>5.3.1-SNAPSHOT</version>
+    <version>5.3.1</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -130,8 +130,8 @@ Copyright (c) 2012 - Jeremy Long
         <logback.version>1.2.3</logback.version>
         <!-- Note that Maven will use classes from the distro, ignoring declared dependencies for Maven core... -->
         <maven.api.version>3.1.0</maven.api.version>
-        <reporting.checkstyle-plugin.version>3.1.0</reporting.checkstyle-plugin.version>
-        <doxia-module-markdown.version>1.9</doxia-module-markdown.version>
+        <reporting.checkstyle-plugin.version>3.1.1</reporting.checkstyle-plugin.version>
+        <doxia-module-markdown.version>1.9.1</doxia-module-markdown.version>
         <maven-antrun-plugin.version>1.8</maven-antrun-plugin.version>
         <maven-dependency-plugin.version>3.1.1</maven-dependency-plugin.version>
         <maven-javadoc-plugin.version>3.1.1</maven-javadoc-plugin.version>
@@ -144,7 +144,7 @@ Copyright (c) 2012 - Jeremy Long
         <taglist-maven-plugin.version>2.4</taglist-maven-plugin.version>
         <versions-maven-plugin.version>2.7</versions-maven-plugin.version>
 
-        <jetbrains.annotations.version>18.0.0</jetbrains.annotations.version>
+        <jetbrains.annotations.version>19.0.0</jetbrains.annotations.version>
 
         <com.google.code.gson.version>2.8.6</com.google.code.gson.version>
         <com.h2database.version>1.4.199</com.h2database.version>
@@ -157,22 +157,22 @@ Copyright (c) 2012 - Jeremy Long
         <junit.version>4.13</junit.version>
         <hamcrest-core.version>2.2</hamcrest-core.version>
         <jmockit.version>1.49</jmockit.version>
-        <mockito-core.version>3.2.4</mockito-core.version>
-        <jsoup.version>1.12.1</jsoup.version>
+        <mockito-core.version>3.3.0</mockito-core.version>
+        <jsoup.version>1.13.1</jsoup.version>
         <commons-compress.version>1.19</commons-compress.version>
         <org.apache.maven.shared.file-management.version>3.0.0</org.apache.maven.shared.file-management.version>
         <maven-plugin-testing-harness.version>3.3.0</maven-plugin-testing-harness.version>
         <maven-plugin-annotations.version>3.6.0</maven-plugin-annotations.version>
         <maven-reporting-api.version>3.0</maven-reporting-api.version>
         <commons-collections.version>3.2.2</commons-collections.version>
-        <org.apache.velocity.version>2.1</org.apache.velocity.version>
+        <org.apache.velocity.version>2.2</org.apache.velocity.version>
         <plexus-sec-dispatcher.version>1.4</plexus-sec-dispatcher.version>
         <maven-dependency-tree.version>3.0.1</maven-dependency-tree.version>
 
         <!-- upgrading beyond 1.0.4 will cause the build to fail on Java 7 --> 
         <org.glassfish.javax.json.version>1.0.4</org.glassfish.javax.json.version>
         <maven-artifact-transfer.version>0.12.0</maven-artifact-transfer.version>
-        <groovy-all.version>2.4.18</groovy-all.version>
+        <groovy-all.version>2.4.19</groovy-all.version>
         <gmavenplus-plugin.version>1.8.1</gmavenplus-plugin.version>
         <com.h3xstream.retirejs.core.version>3.0.2</com.h3xstream.retirejs.core.version>
         <com.google.guava.version>28.2-jre</com.google.guava.version>
@@ -438,7 +438,7 @@ Copyright (c) 2012 - Jeremy Long
                     <dependency>
                         <groupId>org.codehaus.plexus</groupId>
                         <artifactId>plexus-compiler-javac-errorprone</artifactId>
-                        <version>2.8.5</version>
+                        <version>2.8.6</version>
                     </dependency>
                     <!-- override plexus-compiler-javac-errorprone's dependency on Error Prone with the latest version -->
                     <dependency>
@@ -657,9 +657,9 @@ Copyright (c) 2012 - Jeremy Long
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
+                <groupId>org.sonarsource.scanner.maven</groupId>
                 <artifactId>sonar-maven-plugin</artifactId>
-                <version>3.6.0.1398</version>
+                <version>3.7.0.1746</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -870,7 +870,13 @@ Copyright (c) 2012 - Jeremy Long
             <dependency>
                 <groupId>org.mock-server</groupId>
                 <artifactId>mockserver-netty</artifactId>
-                <version>5.8.1</version>
+                <version>5.9.0</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mock-server</groupId>
+                <artifactId>mockserver-junit-rule</artifactId>
+                <version>5.9.0</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
@@ -911,6 +917,11 @@ Copyright (c) 2012 - Jeremy Long
                 <version>${spotbugs.maven.plugin.version}</version>
                 <scope>compile</scope>
                 <optional>true</optional>
+            </dependency>
+            <dependency>
+                <groupId>org.whitesource</groupId>
+                <artifactId>pecoff4j</artifactId>
+                <version>0.0.2.1</version>
             </dependency>
             <dependency>
                 <groupId>com.vdurmont</groupId>
