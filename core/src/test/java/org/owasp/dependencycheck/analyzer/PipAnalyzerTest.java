@@ -36,9 +36,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Unit tests for NodePackageAnalyzer.
- *
- * @author Dale Visser
+ * Unit tests for PipAnalyzerTest.
  */
 public class PipAnalyzerTest extends BaseDBTestCase {
 
