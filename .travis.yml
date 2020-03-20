@@ -31,10 +31,12 @@ cache:
     - "$HOME/.m2/repository"
     - "$HOME/.sonar/cache"
 
-# Install binary for golang
+# Install binary for golang via gimme and mix_audit for Elixir
 install:
   - eval "$(curl -sL https://raw.githubusercontent.com/travis-ci/gimme/master/gimme | GIMME_GO_VERSION=1.12 bash)"
-  - mix escript.install hex mix_audit
+  - mix local.hex --force
+  - mix escript.install --force hex mix_audit
+
 matrix:
   include:
     - jdk: oraclejdk8
