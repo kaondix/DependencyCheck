@@ -69,7 +69,7 @@ public class MixAuditJsonParser {
     /**
      * Creates a MixAuditJsonParser from a Reader.
      *
-     * @param Reader the reader to parse
+     * @param reader - the java.io.Reader to read the json character stream from
      */
     public MixAuditJsonParser(Reader reader) {
         LOGGER.debug("Creating a MixAuditJsonParser");
@@ -124,9 +124,9 @@ public class MixAuditJsonParser {
         } catch (JsonException jsone) {
             throw new AnalysisException("Error reading stream", jsone);
         } catch (IllegalStateException ise) {
-            throw new AnalysisException("Illegal state in go mod stream", ise);
+            throw new AnalysisException("Illegal state while parsing mix_audit output", ise);
         } catch (ClassCastException cce) {
-            throw new AnalysisException("JSON not exactly matching output of `go mod edit -json`", cce);
+            throw new AnalysisException("JSON not exactly matching output of `mix_audit --format json`", cce);
         }
     }
 
