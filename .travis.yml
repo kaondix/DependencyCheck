@@ -19,6 +19,13 @@ addons:
     token:
       secure: "YVDnYmonPug885Hmr2pLWBko+rQ+oKyTUA95ry0PGGyfgs0z6kPCjmWBDVm7K4GM7NOluldWb5gLMf0QXoHGstdp9L6fQCQElt8hZMOwJf+IR3bWjiG3VfVyyB3gJWBWlcJFM9NVyfICidwBH5ZiJ0+LXhKUgnNqarTh/YmNj9w="
 
+before_install:
+  - wget https://dot.net/v1/dotnet-install.sh -O /tmp/dotnet-install.sh
+  - chmod +x /tmp/dotnet-install.sh
+  - /tmp/dotnet-install.sh -v 3.1
+  - export DOTNET_ROOT=/home/travis/.dotnet
+  - export PATH=/home/travis/.dotnet:/home/travis/.dotnet/tools:$PATH
+  
 cache:
   directories:
     - "core/target/data"
