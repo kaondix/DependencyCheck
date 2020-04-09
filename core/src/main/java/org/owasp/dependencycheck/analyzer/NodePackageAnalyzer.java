@@ -284,8 +284,6 @@ public class NodePackageAnalyzer extends AbstractNpmAnalyzer {
         if (json.containsKey("dependencies")) {
             final JsonObject deps = json.getJsonObject("dependencies");
             for (Map.Entry<String, JsonValue> entry : deps.entrySet()) {
-            final JsonObject deps = json.getJsonObject("dependencies");
-            for (Map.Entry<String, JsonValue> entry : deps.entrySet()) {
                 final String name = entry.getKey();
 
                 String version;
