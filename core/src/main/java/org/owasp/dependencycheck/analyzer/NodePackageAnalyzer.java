@@ -248,21 +248,31 @@ public class NodePackageAnalyzer extends AbstractNpmAnalyzer {
         if (json.containsKey("dependencies")) {
             final JsonObject deps = json.getJsonObject("dependencies");
             for (Map.Entry<String, JsonValue> entry : deps.entrySet()) {
-                final JsonObject jo = (JsonObject) entry.getValue();
+            final JsonObject deps = json.getJsonObject("dependencies");
+            for (Map.Entry<String, JsonValue> entry : deps.entrySet()) {
                 final String name = entry.getKey();
-                final String version = jo.getString("version");
-                final boolean optional = jo.getBoolean("optional", false);
+                String version;
+                boolean optional = false;
+
                 final File base = Paths.get(baseDir.getPath(), "node_modules", name).toFile();
                 final File f = new File(base, PACKAGE_JSON);
 
-                if (optional && !f.exists()) {
-                    LOGGER.warn("node module {} seems optional and not installed, skip it", name);
-                    continue;
-                }
+                if(entry.getValue().getClass().equals(JsonObject.class)){
+                    final JsonObject jo = (JsonObject) entry.getValue();
+                    version = jo.getString("version");
+                    optional = jo.getBoolean("optional", false);
 
-                if (jo.containsKey("dependencies")) {
-                    final String subPackageName = String.format("%s/%s:%s", parentPackage, name, version);
-                    processDependencies(jo, base, rootFile, subPackageName, engine);
+                    if (optional && !f.exists()) {
+                        LOGGER.warn("node module {} seems optional and not installed, skip it", name);
+                        continue;
+                    }
+
+                    if (jo.containsKey("dependencies")) {
+                        final String subPackageName = String.format("%s/%s:%s", parentPackage, name, version);
+                        processDependencies(jo, base, rootFile, subPackageName, engine);
+                    }
+                } else {
+                    version = entry.getValue().toString();
                 }
 
                 final Dependency child;
