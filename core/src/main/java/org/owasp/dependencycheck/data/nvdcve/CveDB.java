@@ -38,15 +38,6 @@ import java.util.stream.Collectors;
 
 import static org.apache.commons.collections.map.AbstractReferenceMap.HARD;
 import static org.apache.commons.collections.map.AbstractReferenceMap.SOFT;
-import org.apache.commons.lang3.StringUtils;
-import org.owasp.dependencycheck.analyzer.AbstractNpmAnalyzer;
-import org.owasp.dependencycheck.analyzer.CMakeAnalyzer;
-import org.owasp.dependencycheck.analyzer.ComposerLockAnalyzer;
-import org.owasp.dependencycheck.analyzer.JarAnalyzer;
-import org.owasp.dependencycheck.analyzer.NodeAuditAnalyzer;
-import org.owasp.dependencycheck.analyzer.PythonPackageAnalyzer;
-import org.owasp.dependencycheck.analyzer.RubyBundleAuditAnalyzer;
-import org.owasp.dependencycheck.analyzer.RubyGemspecAnalyzer;
 import org.owasp.dependencycheck.analyzer.exception.LambdaExceptionWrapper;
 import org.owasp.dependencycheck.analyzer.exception.UnexpectedAnalysisException;
 import org.owasp.dependencycheck.data.nvd.json.BaseMetricV2;
@@ -126,110 +117,10 @@ public final class CveDB implements AutoCloseable {
     private final Settings settings;
 
     /**
-     * Analyzes the description to determine if the vulnerability/software is
-     * for a specific known ecosystem. The ecosystem can be used later for
-     * filtering CPE matches.
-     *
-     * @param description the description to analyze
-     * @return the ecosystem if one could be identified; otherwise
-     * <code>null</code>
+     * Utility to extract information from
+     * {@linkplain org.owasp.dependencycheck.data.nvd.json.DefCveItem}.
      */
-    private String determineBaseEcosystem(String description) {
-        if (description == null) {
-            return null;
-        }
-        int idx = StringUtils.indexOfIgnoreCase(description, ".php");
-        if ((idx > 0 && (idx + 4 == description.length() || !Character.isLetterOrDigit(description.charAt(idx + 4))))
-                || StringUtils.containsIgnoreCase(description, "wordpress")
-                || StringUtils.containsIgnoreCase(description, "drupal")
-                || StringUtils.containsIgnoreCase(description, "joomla")
-                || StringUtils.containsIgnoreCase(description, "moodle")
-                || StringUtils.containsIgnoreCase(description, "typo3")) {
-            return ComposerLockAnalyzer.DEPENDENCY_ECOSYSTEM;
-        }
-        if (StringUtils.containsIgnoreCase(description, " npm ")
-                || StringUtils.containsIgnoreCase(description, " node.js")) {
-            return AbstractNpmAnalyzer.NPM_DEPENDENCY_ECOSYSTEM;
-        }
-        idx = StringUtils.indexOfIgnoreCase(description, ".pm");
-        if (idx > 0 && (idx + 3 == description.length() || !Character.isLetterOrDigit(description.charAt(idx + 3)))) {
-            return "perl";
-        } else {
-            idx = StringUtils.indexOfIgnoreCase(description, ".pl");
-            if (idx > 0 && (idx + 3 == description.length() || !Character.isLetterOrDigit(description.charAt(idx + 3)))) {
-                return "perl";
-            }
-        }
-        idx = StringUtils.indexOfIgnoreCase(description, ".java");
-        if (idx > 0 && (idx + 5 == description.length() || !Character.isLetterOrDigit(description.charAt(idx + 5)))) {
-            return JarAnalyzer.DEPENDENCY_ECOSYSTEM;
-        } else {
-            idx = StringUtils.indexOfIgnoreCase(description, ".jsp");
-            if (idx > 0 && (idx + 4 == description.length() || !Character.isLetterOrDigit(description.charAt(idx + 4)))) {
-                return JarAnalyzer.DEPENDENCY_ECOSYSTEM;
-            }
-        }
-        if (StringUtils.containsIgnoreCase(description, " grails ")) {
-            return JarAnalyzer.DEPENDENCY_ECOSYSTEM;
-        }
-
-        idx = StringUtils.indexOfIgnoreCase(description, ".rb");
-        if (idx > 0 && (idx + 3 == description.length() || !Character.isLetterOrDigit(description.charAt(idx + 3)))) {
-            return RubyBundleAuditAnalyzer.DEPENDENCY_ECOSYSTEM;
-        }
-        if (StringUtils.containsIgnoreCase(description, "ruby gem")) {
-            return RubyBundleAuditAnalyzer.DEPENDENCY_ECOSYSTEM;
-        }
-
-        idx = StringUtils.indexOfIgnoreCase(description, ".py");
-        if ((idx > 0 && (idx + 3 == description.length() || !Character.isLetterOrDigit(description.charAt(idx + 3))))
-                || StringUtils.containsIgnoreCase(description, "django")) {
-            return PythonPackageAnalyzer.DEPENDENCY_ECOSYSTEM;
-        }
-
-        if (StringUtils.containsIgnoreCase(description, "buffer overflow")
-                && !StringUtils.containsIgnoreCase(description, "android")) {
-            return CMakeAnalyzer.DEPENDENCY_ECOSYSTEM;
-        }
-        idx = StringUtils.indexOfIgnoreCase(description, ".c");
-        if (idx > 0 && (idx + 2 == description.length() || !Character.isLetterOrDigit(description.charAt(idx + 2)))) {
-            return CMakeAnalyzer.DEPENDENCY_ECOSYSTEM;
-        } else {
-            idx = StringUtils.indexOfIgnoreCase(description, ".cpp");
-            if (idx > 0 && (idx + 4 == description.length() || !Character.isLetterOrDigit(description.charAt(idx + 4)))) {
-                return CMakeAnalyzer.DEPENDENCY_ECOSYSTEM;
-            } else {
-                idx = StringUtils.indexOfIgnoreCase(description, ".h");
-                if (idx > 0 && (idx + 2 == description.length() || !Character.isLetterOrDigit(description.charAt(idx + 2)))) {
-                    return CMakeAnalyzer.DEPENDENCY_ECOSYSTEM;
-                }
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Attempts to determine the ecosystem based on the vendor, product and
-     * targetSw.
-     *
-     * @param baseEcosystem the base ecosystem
-     * @param vendor the vendor
-     * @param product the product
-     * @param targetSw the target software
-     * @return the ecosystem if one is identified
-     */
-    private String determineEcosystem(String baseEcosystem, String vendor, String product, String targetSw) {
-        if ("ibm".equals(vendor) && "java".equals(product)) {
-            return "c/c++";
-        }
-        if ("oracle".equals(vendor) && "vm".equals(product)) {
-            return "c/c++";
-        }
-        if ("*".equals(targetSw) || baseEcosystem != null) {
-            return baseEcosystem;
-        }
-        return targetSw;
-    }
+    private final CveItemOperator cveItemConverter = new CveItemOperator();
 
     /**
      * The enum value names must match the keys of the statements in the
@@ -244,6 +135,10 @@ public final class CveDB implements AutoCloseable {
          * Key for update ecosystem.
          */
         UPDATE_ECOSYSTEM,
+        /**
+         * Key for update ecosystem.
+         */
+        UPDATE_ECOSYSTEM2,
         /**
          * Key for SQL Statement.
          */
@@ -324,6 +219,10 @@ public final class CveDB implements AutoCloseable {
          * Key for SQL Statement.
          */
         SELECT_VENDOR_PRODUCT_LIST,
+        /**
+         * Key for SQL Statement.
+         */
+        SELECT_VENDOR_PRODUCT_LIST_FOR_NODE,
         /**
          * Key for SQL Statement.
          */
@@ -646,6 +545,36 @@ public final class CveDB implements AutoCloseable {
     }
 
     /**
+     * Returns the entire list of vendor/product combinations filtered for just
+     * Node JS related products.
+     *
+     * @return the list of vendor/product combinations that are known to be
+     * related to Node JS
+     * @throws DatabaseException thrown when there is an error retrieving the
+     * data from the DB
+     */
+    public synchronized Set<Pair<String, String>> getVendorProductListForNode() throws DatabaseException {
+        final Set<Pair<String, String>> data = new HashSet<>();
+        ResultSet rs = null;
+        try {
+            final PreparedStatement ps = getPreparedStatement(SELECT_VENDOR_PRODUCT_LIST_FOR_NODE);
+            if (ps == null) {
+                throw new SQLException("Database query does not exist in the resource bundle: " + SELECT_VENDOR_PRODUCT_LIST_FOR_NODE);
+            }
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                data.add(new Pair<>(rs.getString(1), rs.getString(2)));
+            }
+        } catch (SQLException ex) {
+            final String msg = "An unexpected SQL Exception occurred; please see the verbose log for more details.";
+            throw new DatabaseException(msg, ex);
+        } finally {
+            DBUtils.closeResultSet(rs);
+        }
+        return data;
+    }
+
+    /**
      * Returns a set of properties.
      *
      * @return the properties from the database
@@ -926,18 +855,16 @@ public final class CveDB implements AutoCloseable {
         try {
             int vulnerabilityId = updateVulnerabilityGetVulnerabilityId(cveId);
 
-            final String description = cve.getCve().getDescription().getDescriptionData().stream().filter((desc)
-                    -> "en".equals(desc.getLang())).map(d
-                    -> d.getValue()).collect(Collectors.joining(" "));
+            final String description = cveItemConverter.extractDescription(cve);
 
             if (vulnerabilityId != 0) {
-                if (description.trim().startsWith("** REJECT **")) {
+                if (cveItemConverter.isRejected(description)) {
                     updateVulnerabilityDeleteVulnerability(vulnerabilityId);
                 } else {
                     updateVulnerabilityUpdateVulnerability(vulnerabilityId, cve, description);
                 }
             } else {
-                if (description.trim().startsWith("** REJECT **")) {
+                if (cveItemConverter.isRejected(description)) {
                     return;
                 } else {
                     vulnerabilityId = updateVulnerabilityInsertVulnerability(cve, description);
@@ -946,8 +873,8 @@ public final class CveDB implements AutoCloseable {
 
             updateVulnerabilityInsertCwe(vulnerabilityId, cve);
 
-            String baseEcosystem = determineBaseEcosystem(description);
-            baseEcosystem = updateVulnerabilityInsertReferences(vulnerabilityId, cve, baseEcosystem);
+            final String baseEcosystem = cveItemConverter.extractBaseEcosystem(cve, description);
+            updateVulnerabilityInsertReferences(vulnerabilityId, cve);
 
             //parse the CPEs outside of a synchronized method
             final List<VulnerableSoftware> software = parseCpes(cve);
@@ -1266,8 +1193,7 @@ public final class CveDB implements AutoCloseable {
                     insertCpe.setString(9, parsedCpe.getTargetSw());
                     insertCpe.setString(10, parsedCpe.getTargetHw());
                     insertCpe.setString(11, parsedCpe.getOther());
-                    final String ecosystem = determineEcosystem(baseEcosystem, parsedCpe.getVendor(),
-                            parsedCpe.getProduct(), parsedCpe.getTargetSw());
+                    final String ecosystem = cveItemConverter.extractEcosystem(baseEcosystem, parsedCpe);
                     addNullableStringParameter(insertCpe, 12, ecosystem);
 
                     insertCpe.executeUpdate();
@@ -1313,36 +1239,15 @@ public final class CveDB implements AutoCloseable {
      *
      * @param vulnerabilityId the vulnerability id
      * @param cve the CVE entry that contains the list of references
-     * @param baseEcosystem the base ecosystem previously identified
-     * @return an updated ecosystem string if an ecosystem was identified;
-     * otherwise <code>null</code>
      * @throws SQLException thrown if there is an error inserting the data
      */
-    private synchronized String updateVulnerabilityInsertReferences(int vulnerabilityId, DefCveItem cve, String baseEcosystem) throws SQLException {
-        String ecosystem = baseEcosystem;
+    private synchronized void updateVulnerabilityInsertReferences(int vulnerabilityId, DefCveItem cve) throws SQLException {
         try (PreparedStatement insertReference = prepareStatement(INSERT_REFERENCE)) {
             if (insertReference == null) {
                 throw new SQLException("Database query does not exist in the resource bundle: " + INSERT_REFERENCE);
             }
             int countReferences = 0;
             for (Reference r : cve.getCve().getReferences().getReferenceData()) {
-                if (ecosystem == null) {
-                    if (r.getUrl().contains("elixir-security-advisories")) {
-                        ecosystem = "elixir";
-                    } else if (r.getUrl().contains("ruby-lang.org")) {
-                        ecosystem = RubyGemspecAnalyzer.DEPENDENCY_ECOSYSTEM;
-                    } else if (r.getUrl().contains("python.org")) {
-                        ecosystem = PythonPackageAnalyzer.DEPENDENCY_ECOSYSTEM;
-                    } else if (r.getUrl().contains("drupal.org")) {
-                        ecosystem = PythonPackageAnalyzer.DEPENDENCY_ECOSYSTEM;
-                    } else if (r.getUrl().contains("npm")) {
-                        ecosystem = NodeAuditAnalyzer.DEPENDENCY_ECOSYSTEM;
-                    } else if (r.getUrl().contains("nodejs.org")) {
-                        ecosystem = NodeAuditAnalyzer.DEPENDENCY_ECOSYSTEM;
-                    } else if (r.getUrl().contains("nodesecurity.io")) {
-                        ecosystem = NodeAuditAnalyzer.DEPENDENCY_ECOSYSTEM;
-                    }
-                }
                 insertReference.setInt(1, vulnerabilityId);
                 insertReference.setString(2, r.getName());
                 insertReference.setString(3, r.getUrl());
@@ -1366,7 +1271,6 @@ public final class CveDB implements AutoCloseable {
                 }
             }
         }
-        return ecosystem;
     }
 
     /**
@@ -1552,12 +1456,25 @@ public final class CveDB implements AutoCloseable {
         final long start = System.currentTimeMillis();
         clearCache();
         try (PreparedStatement psOrphans = getPreparedStatement(CLEANUP_ORPHANS);
-                PreparedStatement psEcosystem = getPreparedStatement(UPDATE_ECOSYSTEM)) {
+                PreparedStatement psEcosystem = getPreparedStatement(UPDATE_ECOSYSTEM);
+                PreparedStatement psEcosystem2 = getPreparedStatement(UPDATE_ECOSYSTEM2)) {
             if (psEcosystem != null) {
-                psEcosystem.executeUpdate();
+                final int count = psEcosystem.executeUpdate();
+                if (count > 0) {
+                    LOGGER.info("Updated the CPE ecosystem on {} NVD records", count);
+                }
+            }
+            if (psEcosystem2 != null) {
+                final int count = psEcosystem2.executeUpdate();
+                if (count > 0) {
+                    LOGGER.info("Removed the CPE ecosystem on {} NVD records", count);
+                }
             }
             if (psOrphans != null) {
-                psOrphans.executeUpdate();
+                final int count = psOrphans.executeUpdate();
+                if (count > 0) {
+                    LOGGER.info("Cleaned up {} orphaned NVD records", count);
+                }
             }
             final long millis = System.currentTimeMillis() - start;
             //final long seconds = TimeUnit.MILLISECONDS.toSeconds(millis);
@@ -1604,7 +1521,7 @@ public final class CveDB implements AutoCloseable {
     protected VulnerableSoftware getMatchingSoftware(Cpe cpe, Set<VulnerableSoftware> vulnerableSoftware) {
         VulnerableSoftware matched = null;
         for (VulnerableSoftware vs : vulnerableSoftware) {
-            if (vs.matchedBy(cpe)) {
+            if (vs.matches(cpe)) {
                 if (matched == null) {
                     matched = vs;
                 } else {

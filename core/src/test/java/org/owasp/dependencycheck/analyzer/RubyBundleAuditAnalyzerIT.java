@@ -43,7 +43,7 @@ import org.owasp.dependencycheck.exception.InitializationException;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import org.owasp.dependencycheck.dependency.EvidenceType;
@@ -71,8 +71,7 @@ public class RubyBundleAuditAnalyzerIT extends BaseDBTestCase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        //test testAddCriticalityToVulnerability requires CVE-2015-3225 so we must ensure db is updated.
-        //getSettings().setBoolean(Settings.KEYS.AUTO_UPDATE, false);
+        getSettings().setBoolean(Settings.KEYS.AUTO_UPDATE, false);
         getSettings().setBoolean(Settings.KEYS.ANALYZER_NEXUS_ENABLED, false);
         getSettings().setBoolean(Settings.KEYS.ANALYZER_CENTRAL_ENABLED, false);
         analyzer = new RubyBundleAuditAnalyzer();

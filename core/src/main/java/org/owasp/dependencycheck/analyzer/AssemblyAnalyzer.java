@@ -215,7 +215,7 @@ public class AssemblyAnalyzer extends AbstractFileTypeAnalyzer {
                 dependency.addEvidence(EvidenceType.VERSION, "grokassembly", "ProductVersion", data.getProductVersion(), Confidence.HIGHEST);
             }
             if (!StringUtils.isEmpty(data.getFileVersion())) {
-                dependency.addEvidence(EvidenceType.VERSION, "grokassembly", "FileVersion", data.getFileVersion(), Confidence.HIGHEST);
+                dependency.addEvidence(EvidenceType.VERSION, "grokassembly", "FileVersion", data.getFileVersion(), Confidence.HIGH);
             }
 
             if (data.getFileVersion() != null && data.getProductVersion() != null) {
@@ -256,10 +256,14 @@ public class AssemblyAnalyzer extends AbstractFileTypeAnalyzer {
                         }
                     }
                 }
-            } else if (data.getFileVersion() != null) {
+            }
+            if (dependency.getVersion() == null && data.getFileVersion() != null) {
                 final DependencyVersion version = DependencyVersionUtil.parseVersion(data.getFileVersion(), true);
-                dependency.setVersion(version.toString());
-            } else if (data.getProductVersion() != null) {
+                if (version != null) {
+                    dependency.setVersion(version.toString());
+                }
+            }
+            if (dependency.getVersion() == null && data.getProductVersion() != null) {
                 final DependencyVersion version = DependencyVersionUtil.parseVersion(data.getProductVersion(), true);
                 if (version != null) {
                     dependency.setVersion(version.toString());
@@ -366,7 +370,8 @@ public class AssemblyAnalyzer extends AbstractFileTypeAnalyzer {
             LOGGER.error("----------------------------------------------------");
             LOGGER.error(".NET Assembly Analyzer could not be initialized and at least one "
                     + "'exe' or 'dll' was scanned. The 'dotnet' executable could not be found on "
-                    + "the path; either disable the Assembly Analyzer or configure the path dotnet core.");
+                    + "the path; either disable the Assembly Analyzer or add the path to dotnet "
+                    + "core in the configuration.");
             LOGGER.error("----------------------------------------------------");
             return;
         }

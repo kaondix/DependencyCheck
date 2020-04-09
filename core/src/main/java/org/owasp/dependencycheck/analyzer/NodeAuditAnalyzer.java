@@ -45,6 +45,7 @@ import javax.json.JsonObject;
 import javax.json.JsonReader;
 import org.owasp.dependencycheck.analyzer.exception.SearchException;
 import org.owasp.dependencycheck.analyzer.exception.UnexpectedAnalysisException;
+import org.owasp.dependencycheck.dependency.Reference;
 import org.owasp.dependencycheck.dependency.VulnerableSoftwareBuilder;
 import org.owasp.dependencycheck.exception.InitializationException;
 import org.owasp.dependencycheck.utils.InvalidSettingException;
@@ -113,22 +114,28 @@ public class NodeAuditAnalyzer extends AbstractNpmAnalyzer {
      */
     @Override
     public void prepareFileTypeAnalyzer(Engine engine) throws InitializationException {
-        LOGGER.debug("Initializing {}", getName());
-        try {
-            searcher = new NodeAuditSearch(getSettings());
-        } catch (MalformedURLException ex) {
-            setEnabled(false);
-            throw new InitializationException("The configured URL to NPM Audit API is malformed", ex);
+        if (!isEnabled() || !getFilesMatched()) {
+            this.setEnabled(false);
+            return;
         }
-        try {
-            final Settings settings = engine.getSettings();
-            final boolean nodeEnabled = settings.getBoolean(Settings.KEYS.ANALYZER_NODE_PACKAGE_ENABLED);
-            if (!nodeEnabled) {
-                LOGGER.warn("The Node Package Analyzer has been disabled; the resulting report will only "
-                        + " contain the known vulnerable dependency - not a bill of materials for the node project.");
+        if (searcher == null) {
+            LOGGER.debug("Initializing {}", getName());
+            try {
+                searcher = new NodeAuditSearch(getSettings());
+            } catch (MalformedURLException ex) {
+                setEnabled(false);
+                throw new InitializationException("The configured URL to NPM Audit API is malformed", ex);
             }
-        } catch (InvalidSettingException ex) {
-            throw new InitializationException("Unable to read configuration settings", ex);
+            try {
+                final Settings settings = engine.getSettings();
+                final boolean nodeEnabled = settings.getBoolean(Settings.KEYS.ANALYZER_NODE_PACKAGE_ENABLED);
+                if (!nodeEnabled) {
+                    LOGGER.warn("The Node Package Analyzer has been disabled; the resulting report will only "
+                            + "contain the known vulnerable dependency - not a bill of materials for the node project.");
+                }
+            } catch (InvalidSettingException ex) {
+                throw new InitializationException("Unable to read configuration settings", ex);
+            }
         }
     }
 
@@ -176,9 +183,9 @@ public class NodeAuditAnalyzer extends AbstractNpmAnalyzer {
         final List<Advisory> advisories;
         final Map<String, String> dependencyMap = new HashMap<>();
         if (packageJson.isFile()) {
-            advisories = analyzePackage(packageLock, packageJson, dependency, engine, dependencyMap);
+            advisories = analyzePackage(packageLock, packageJson, dependency, dependencyMap);
         } else {
-            advisories = legacyAnalysis(packageLock, dependency, engine, dependencyMap);
+            advisories = legacyAnalysis(packageLock, dependency, dependencyMap);
         }
         try {
             processResults(advisories, engine, dependency, dependencyMap);
@@ -233,8 +240,31 @@ public class NodeAuditAnalyzer extends AbstractNpmAnalyzer {
                 nodeModule.addVulnerability(vuln);
                 engine.addDependency(nodeModule);
             } else {
-                existing.addVulnerability(vuln);
+                replaceOrAddVulnerability(existing, vuln);
             }
+        }
+    }
+
+    /**
+     * Evaluates if the vulnerability is already present; if it is the
+     * vulnerability is not added.
+     *
+     * @param dependency a reference to the dependency being analyzed
+     * @param vuln the vulnerability to add
+     */
+    private void replaceOrAddVulnerability(Dependency dependency, Vulnerability vuln) {
+        boolean found = false;
+        for (Vulnerability existing : dependency.getVulnerabilities()) {
+            for (Reference ref : existing.getReferences()) {
+                if (ref.getName() != null
+                        && vuln.getSource().toString().equals("NPM")
+                        && ref.getName().equals("https://nodesecurity.io/advisories/" + vuln.getName())) {
+                    found = true;
+                }
+            }
+        }
+        if (!found) {
+            dependency.addVulnerability(vuln);
         }
     }
 
@@ -247,7 +277,6 @@ public class NodeAuditAnalyzer extends AbstractNpmAnalyzer {
      * @param packageFile a reference to the package.json
      * @param dependency a reference to the dependency-object for the
      * package-lock.json
-     * @param engine a reference to the analysis engine.
      * @param dependencyMap a collection of module/version pairs; during
      * creation of the payload the dependency map is populated with the
      * module/version information.
@@ -256,7 +285,7 @@ public class NodeAuditAnalyzer extends AbstractNpmAnalyzer {
      * submitting the npm audit API payload
      */
     private List<Advisory> analyzePackage(final File lockFile, final File packageFile,
-            Dependency dependency, Engine engine, Map<String, String> dependencyMap)
+            Dependency dependency, Map<String, String> dependencyMap)
             throws AnalysisException {
         try (JsonReader lockReader = Json.createReader(FileUtils.openInputStream(lockFile));
                 JsonReader packageReader = Json.createReader(FileUtils.openInputStream(packageFile))) {
@@ -267,7 +296,8 @@ public class NodeAuditAnalyzer extends AbstractNpmAnalyzer {
             final JsonObject packageJson = packageReader.readObject();
 
             // Modify the payload to meet the NPM Audit API requirements
-            final JsonObject payload = NpmPayloadBuilder.build(lockJson, packageJson, dependencyMap);
+            final JsonObject payload = NpmPayloadBuilder.build(lockJson, packageJson, dependencyMap,
+                    getSettings().getBoolean(Settings.KEYS.ANALYZER_NODE_AUDIT_SKIPDEV, false));
 
             // Submits the package payload to the nsp check service
             return searcher.submitPackage(payload);
@@ -298,7 +328,6 @@ public class NodeAuditAnalyzer extends AbstractNpmAnalyzer {
      * @param file a reference to the package-lock.json
      * @param dependency a reference to the dependency-object for the
      * package-lock.json
-     * @param engine a reference to the analysis engine.
      * @param dependencyMap a collection of module/version pairs; during
      * creation of the payload the dependency map is populated with the
      * module/version information.
@@ -306,7 +335,7 @@ public class NodeAuditAnalyzer extends AbstractNpmAnalyzer {
      * @throws AnalysisException thrown when there is an error creating or
      * submitting the npm audit API payload
      */
-    private List<Advisory> legacyAnalysis(final File file, Dependency dependency, Engine engine, Map<String, String> dependencyMap)
+    private List<Advisory> legacyAnalysis(final File file, Dependency dependency, Map<String, String> dependencyMap)
             throws AnalysisException {
 
         try (JsonReader jsonReader = Json.createReader(FileUtils.openInputStream(file))) {

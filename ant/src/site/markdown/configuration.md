@@ -98,17 +98,22 @@ rubygemsAnalyzerEnabled             | Sets whether the [experimental](../analyze
 opensslAnalyzerEnabled              | Sets whether the openssl Analyzer should be used.                                                          | true
 cmakeAnalyzerEnabled                | Sets whether the [experimental](../analyzers/index.html) CMake Analyzer should be used.                    | true
 autoconfAnalyzerEnabled             | Sets whether the [experimental](../analyzers/index.html) autoconf Analyzer should be used.                 | true
+pipAnalyzerEnabled                  | Sets whether the [experimental](../analyzers/index.html) pip Analyzer should be used.                      | true
 composerAnalyzerEnabled             | Sets whether the [experimental](../analyzers/index.html) PHP Composer Lock File Analyzer should be used.   | true
 nodeAnalyzerEnabled                 | Sets whether the [retired](../analyzers/index.html) Node.js Analyzer should be used.                       | true
 nodeAuditAnalyzerEnabled            | Sets whether the Node Audit Analyzer should be used. This analyzer requires an internet connection.        | true
 nodeAuditAnalyzerUseCache           | Sets whether the Node Audit Analyzer will cache results. Cached results expire after 24 hours.             | true
-retireJsAnalyzerEnabled             | Sets whether the RetireJS Analyzer should be used.                 | true
+nodeAuditSkipDevDependencies        | Sets whether the Node Audit Analyzer will skip devDependencies.                                            | false
+retireJsAnalyzerEnabled             | Sets whether the RetireJS Analyzer should be used.                                                         | true
+retirejsForceupdate                 | Sets whether the RetireJS Analyzer should update regardless of the `autoupdate` setting.                   | false
 retirejsFilterNonVulnerable         | Configures the RetireJS Analyzer to remove non-vulnerable JS dependencies from the report.                 | false
 retirejsFilter                      | A nested configuration that can be specified multple times; The regex defined is used to filter JS files based on content. | &nbsp;
-retireJsUrl                         | The URL to the Retire JS repository. **Note** the file name must be `jsrepository.json`.                   | https://raw.githubusercontent.com/Retirejs/retire.js/master/repository/jsrepository.json
+retireJsUrl                         | The URL to the Retire JS repository.                                                                       | https://raw.githubusercontent.com/Retirejs/retire.js/master/repository/jsrepository.json
 nuspecAnalyzerEnabled               | Sets whether the .NET Nuget Nuspec Analyzer will be used.                                                  | true
 nugetconfAnalyzerEnabled            | Sets whether the [experimental](../analyzers/index.html) .NET Nuget packages.config Analyzer will be used. | true
 cocoapodsAnalyzerEnabled            | Sets whether the [experimental](../analyzers/index.html) Cocoapods Analyzer should be used.                | true
+mixAuditAnalyzerEnabled             | Sets whether the [experimental](../analyzers/index.html) Mix Audit Analyzer should be used.                | true
+mixAuditPath                        | Sets the path to the mix_audit executable; only used if mix audit analyzer is enabled and experimental analyzers are enabled.  | &nbsp;
 bundleAuditAnalyzerEnabled          | Sets whether the [experimental](../analyzers/index.html) Bundle Audit Analyzer should be used.             | true
 bundleAuditPath                     | Sets the path to the bundle audit executable; only used if bundle audit analyzer is enabled and experimental analyzers are enabled.  | &nbsp;
 swiftPackageManagerAnalyzerEnabled  | Sets whether the [experimental](../analyzers/index.html) Switft Package Analyzer should be used.           | true

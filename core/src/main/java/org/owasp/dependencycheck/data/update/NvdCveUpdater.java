@@ -394,13 +394,27 @@ public class NvdCveUpdater implements CachedWebDataSource {
                         final int end = Calendar.getInstance().get(Calendar.YEAR);
                         final String baseUrl = settings.getString(Settings.KEYS.CVE_BASE_JSON);
                         for (int i = start; i <= end; i++) {
-                            url = String.format(baseUrl, i);
-                            final MetaProperties meta = getMetaFile(url);
-                            final long currentTimestamp = getPropertyInSeconds(DatabaseProperties.LAST_UPDATED_BASE + i);
+                            try {
+                                url = String.format(baseUrl, i);
+                                final MetaProperties meta = getMetaFile(url);
+                                final long currentTimestamp = getPropertyInSeconds(DatabaseProperties.LAST_UPDATED_BASE + i);
 
-                            if (currentTimestamp < meta.getLastModifiedDate()) {
-                                final NvdCveInfo entry = new NvdCveInfo(Integer.toString(i), url, meta.getLastModifiedDate());
-                                updates.add(entry);
+                                if (currentTimestamp < meta.getLastModifiedDate()) {
+                                    final NvdCveInfo entry = new NvdCveInfo(Integer.toString(i), url, meta.getLastModifiedDate());
+                                    updates.add(entry);
+                                }
+                            } catch (UpdateException ex) {
+                                final Calendar date = Calendar.getInstance();
+                                final int year = date.get(Calendar.YEAR);
+                                final int month = date.get(Calendar.MONTH);
+                                final int day = date.get(Calendar.DATE);
+                                final int grace = settings.getInt(Settings.KEYS.NVD_NEW_YEAR_GRACE_PERIOD, 10);
+                                if (ex.getMessage().contains("Unable to download meta file")
+                                        && i == year && month == 0 && day < grace) {
+                                    LOGGER.warn("NVD Data for {} has not been published yet.", year);
+                                } else {
+                                    throw ex;
+                                }
                             }
                         }
                     }

@@ -234,6 +234,22 @@ public abstract class AbstractNpmAnalyzer extends AbstractFileTypeAnalyzer {
                         LOGGER.warn("JSON sub-value not string as expected: {}", subValue);
                     }
                 }
+            } else if (value instanceof JsonArray) {
+                final JsonArray jsonArray = (JsonArray) value;
+                jsonArray.forEach(entry -> {
+                    if (entry instanceof JsonObject) {
+                        ((JsonObject) entry).keySet().forEach(item -> {
+                            final JsonValue v = ((JsonObject) entry).get(item);
+                            if (v instanceof JsonString) {
+                                final String eStr = ((JsonString) v).getString();
+                                dep.addEvidence(t, PACKAGE_JSON,
+                                        String.format("%s.%s", key, item),
+                                        eStr,
+                                        Confidence.HIGHEST);
+                            }
+                        });
+                    }
+                });
             } else {
                 LOGGER.warn("JSON value not string or JSON object as expected: {}", value);
             }
@@ -278,20 +294,29 @@ public abstract class AbstractNpmAnalyzer extends AbstractFileTypeAnalyzer {
                 dependency.setName(valueString);
                 dependency.setPackagePath(valueString);
                 dependency.addEvidence(EvidenceType.PRODUCT, PACKAGE_JSON, "name", valueString, Confidence.HIGHEST);
-                dependency.addEvidence(EvidenceType.VENDOR, PACKAGE_JSON, "name", valueString, Confidence.HIGH);
+                dependency.addEvidence(EvidenceType.VENDOR, PACKAGE_JSON, "name", valueString, Confidence.HIGHEST);
+                dependency.addEvidence(EvidenceType.VENDOR, PACKAGE_JSON, "name", valueString + "_project", Confidence.HIGHEST);
             } else {
                 LOGGER.warn("JSON value not string as expected: {}", value);
             }
         }
         //TODO - if we start doing CPE analysis on node - we need to exclude description as it creates too many FP
-        final String desc = addToEvidence(dependency, EvidenceType.PRODUCT, json, "description");
+        final String desc = addToEvidence(dependency, EvidenceType.VENDOR, json, "description");
         dependency.setDescription(desc);
-        final String vendor = addToEvidence(dependency, EvidenceType.VENDOR, json, "author");
+        String vendor = addToEvidence(dependency, EvidenceType.VENDOR, json, "author");
+        if (vendor == null) {
+            vendor = addToEvidence(dependency, EvidenceType.VENDOR, json, "maintainers");
+        } else {
+            addToEvidence(dependency, EvidenceType.VENDOR, json, "maintainers");
+        }
+        addToEvidence(dependency, EvidenceType.VENDOR, json, "homepage");
+        addToEvidence(dependency, EvidenceType.VENDOR, json, "bugs");
+
         final String version = addToEvidence(dependency, EvidenceType.VERSION, json, "version");
         if (version != null) {
             displayName = String.format("%s:%s", displayName, version);
             dependency.setVersion(version);
-
+            dependency.setPackagePath(displayName);
             Identifier id;
             try {
                 final PackageURL purl = PackageURLBuilder.aPackageURL()

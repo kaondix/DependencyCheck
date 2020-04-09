@@ -31,7 +31,9 @@ import org.owasp.dependencycheck.utils.Settings;
 import java.io.File;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.owasp.dependencycheck.BaseDBTestCase;
 import org.owasp.dependencycheck.data.update.RetireJSDataSource;
@@ -48,7 +50,7 @@ public class RetireJsAnalyzerIT extends BaseDBTestCase {
         engine = new Engine(getSettings());
         engine.openDatabase(true, true);
         RetireJSDataSource ds = new RetireJSDataSource();
-        boolean updated = ds.update(engine);
+        ds.update(engine);
         analyzer = new RetireJsAnalyzer();
         analyzer.setFilesMatched(true);
         analyzer.initialize(getSettings());
@@ -154,7 +156,7 @@ public class RetireJsAnalyzerIT extends BaseDBTestCase {
         assertEquals("version", version.getName());
         assertEquals("1.2.27", version.getValue());
 
-        assertEquals(4, dependency.getVulnerabilities().size());
+        assertEquals(5, dependency.getVulnerabilities().size());
         assertTrue(dependency.getVulnerabilities().contains(new Vulnerability("Universal CSP bypass via add-on in Firefox")));
         assertTrue(dependency.getVulnerabilities().contains(new Vulnerability("XSS in $sanitize in Safari/Firefox")));
         assertTrue(dependency.getVulnerabilities().contains(new Vulnerability("DOS in $sanitize")));

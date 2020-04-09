@@ -43,11 +43,18 @@ import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.concurrent.ThreadSafe;
+import org.apache.commons.validator.routines.UrlValidator;
+import org.json.JSONException;
 import org.owasp.dependencycheck.data.nvdcve.DatabaseException;
+import org.owasp.dependencycheck.data.update.RetireJSDataSource;
+import org.owasp.dependencycheck.data.update.exception.UpdateException;
+import org.owasp.dependencycheck.dependency.Reference;
 import org.owasp.dependencycheck.dependency.naming.GenericIdentifier;
 import org.owasp.dependencycheck.dependency.naming.PurlIdentifier;
 import org.owasp.dependencycheck.exception.InitializationException;
@@ -128,12 +135,13 @@ public class RetireJsAnalyzer extends AbstractFileTypeAnalyzer {
     @Override
     public boolean accept(File pathname) {
         try {
-            final boolean filesMatched = super.getFilesMatched();
             final boolean accepted = super.accept(pathname);
+            if (accepted && !pathname.exists()) {
+                //file may not yet have been extracted from an archive
+                super.setFilesMatched(true);
+                return true;
+            }
             if (accepted && filters != null && FileContentSearch.contains(pathname, filters)) {
-                if (!filesMatched) {
-                    super.setFilesMatched(filesMatched);
-                }
                 return false;
             }
             return accepted;
@@ -165,9 +173,23 @@ public class RetireJsAnalyzer extends AbstractFileTypeAnalyzer {
      */
     @Override
     protected void prepareFileTypeAnalyzer(Engine engine) throws InitializationException {
+        final boolean autoupdate = getSettings().getBoolean(Settings.KEYS.AUTO_UPDATE, true);
+        final boolean forceupdate = getSettings().getBoolean(Settings.KEYS.ANALYZER_RETIREJS_FORCEUPDATE, false);
+        if (!autoupdate && forceupdate) {
+            final RetireJSDataSource ds = new RetireJSDataSource();
+            try {
+                ds.update(engine);
+            } catch (UpdateException ex) {
+                throw new InitializationException("Unable to initialize the Retire JS respository", ex);
+            }
+        }
+
         File repoFile = null;
         try {
-            repoFile = new File(getSettings().getDataDirectory(), "jsrepository.json");
+            final String configuredUrl = getSettings().getString(Settings.KEYS.ANALYZER_RETIREJS_REPO_JS_URL, RetireJSDataSource.DEFAULT_JS_URL);
+            final URL url = new URL(configuredUrl);
+            final File filepath = new File(url.getPath());
+            repoFile = new File(getSettings().getDataDirectory(), filepath.getName());
         } catch (FileNotFoundException ex) {
             this.setEnabled(false);
             throw new InitializationException(String.format("RetireJS repo does not exist locally (%s)", repoFile), ex);
@@ -177,7 +199,11 @@ public class RetireJsAnalyzer extends AbstractFileTypeAnalyzer {
         }
         try (FileInputStream in = new FileInputStream(repoFile)) {
             this.jsRepository = new VulnerabilitiesRepositoryLoader().loadFromInputStream(in);
-
+        } catch (JSONException ex) {
+            this.setEnabled(false);
+            throw new InitializationException("Failed to initialize the RetireJS repo: `" + repoFile.toString()
+                    + "` appears to be malformed. Please delete the file or run the dependency-check purge "
+                    + "command and re-try running dependency-check.", ex);
         } catch (IOException ex) {
             this.setEnabled(false);
             throw new InitializationException("Failed to initialize the RetireJS repo", ex);
@@ -225,8 +251,8 @@ public class RetireJsAnalyzer extends AbstractFileTypeAnalyzer {
      */
     @Override
     public void analyzeDependency(Dependency dependency, Engine engine) throws AnalysisException {
-        try {
-            final byte[] fileContent = IOUtils.toByteArray(new FileInputStream(dependency.getActualFile()));
+        try (InputStream fis = new FileInputStream(dependency.getActualFile())) {
+            final byte[] fileContent = IOUtils.toByteArray(fis);
             final ScannerFacade scanner = new ScannerFacade(jsRepository);
             final List<JsLibraryResult> results;
             try {
@@ -286,9 +312,12 @@ public class RetireJsAnalyzer extends AbstractFileTypeAnalyzer {
                                         vuln.setUnscoredSeverity(jsVuln.getSeverity());
                                         vuln.setSource(Vulnerability.Source.RETIREJS);
                                     }
-                                    for (String info : jsVuln.getInfo()) {
-                                        vuln.addReference("info", "info", info);
-                                    }
+                                    jsVuln.getInfo().stream().map((info) -> {
+                                        if (UrlValidator.getInstance().isValid(info)) {
+                                            return new Reference(info, "info", info);
+                                        }
+                                        return new Reference(info, "info", null);
+                                    }).forEach(vuln::addReference);
                                     vulns.add(vuln);
                                 }
                             } else if ("osvdb".equals(key)) {
@@ -298,7 +327,12 @@ public class RetireJsAnalyzer extends AbstractFileTypeAnalyzer {
                                     vuln.setName(osvdb);
                                     vuln.setSource(Vulnerability.Source.RETIREJS);
                                     vuln.setUnscoredSeverity(jsVuln.getSeverity());
-                                    jsVuln.getInfo().forEach((info) -> vuln.addReference("info", "info", info));
+                                    jsVuln.getInfo().stream().map((info) -> {
+                                        if (UrlValidator.getInstance().isValid(info)) {
+                                            return new Reference(info, "info", info);
+                                        }
+                                        return new Reference(info, "info", null);
+                                    }).forEach(vuln::addReference);
                                     vulns.add(vuln);
                                 });
                             }
@@ -315,29 +349,43 @@ public class RetireJsAnalyzer extends AbstractFileTypeAnalyzer {
                             // CSOFF: NeedBraces
                             if (null != key) {
                                 switch (key) {
-                                    case "issue":
-                                        individualVuln.setName(libraryResult.getLibrary().getName() + " issue: " + value.get(0));
-                                        individualVuln.addReference(key, key, value.get(0));
-                                        break;
-                                    case "bug":
-                                        individualVuln.setName(libraryResult.getLibrary().getName() + " bug: " + value.get(0));
-                                        individualVuln.addReference(key, key, value.get(0));
-                                        break;
-                                    case "pr":
-                                        individualVuln.setName(libraryResult.getLibrary().getName() + " pr: " + value.get(0));
-                                        individualVuln.addReference(key, key, value.get(0));
-                                        break;
                                     case "summary":
                                         if (null == individualVuln.getName()) {
                                             individualVuln.setName(value.get(0));
                                         }
                                         individualVuln.setDescription(value.get(0));
                                         break;
-                                    case "release":
-                                        individualVuln.addReference(key, key, value.get(0));
+                                    case "issue":
+                                        individualVuln.setName(libraryResult.getLibrary().getName() + " issue: " + value.get(0));
+                                        if (UrlValidator.getInstance().isValid(value.get(0))) {
+                                            individualVuln.addReference(key, key, value.get(0));
+                                        } else {
+                                            individualVuln.addReference(key, value.get(0), null);
+                                        }
                                         break;
+                                    case "bug":
+                                        individualVuln.setName(libraryResult.getLibrary().getName() + " bug: " + value.get(0));
+                                        if (UrlValidator.getInstance().isValid(value.get(0))) {
+                                            individualVuln.addReference(key, key, value.get(0));
+                                        } else {
+                                            individualVuln.addReference(key, value.get(0), null);
+                                        }
+                                        break;
+                                    case "pr":
+                                        individualVuln.setName(libraryResult.getLibrary().getName() + " pr: " + value.get(0));
+                                        if (UrlValidator.getInstance().isValid(value.get(0))) {
+                                            individualVuln.addReference(key, key, value.get(0));
+                                        } else {
+                                            individualVuln.addReference(key, value.get(0), null);
+                                        }
+                                        break;
+                                    //case "release":
                                     default:
-                                        individualVuln.addReference(key, key, value.get(0));
+                                        if (UrlValidator.getInstance().isValid(value.get(0))) {
+                                            individualVuln.addReference(key, key, value.get(0));
+                                        } else {
+                                            individualVuln.addReference(key, value.get(0), null);
+                                        }
                                         break;
                                 }
                             }
@@ -348,9 +396,13 @@ public class RetireJsAnalyzer extends AbstractFileTypeAnalyzer {
                         }
                         individualVuln.setSource(Vulnerability.Source.RETIREJS);
                         individualVuln.setUnscoredSeverity(jsVuln.getSeverity());
-                        for (String info : jsVuln.getInfo()) {
-                            individualVuln.addReference("info", "info", info);
-                        }
+                        jsVuln.getInfo().stream().map((info) -> {
+                            if (UrlValidator.getInstance().isValid(info)) {
+                                return new Reference(info, "info", info);
+                            }
+                            return new Reference(info, "info", null);
+                        }).forEach(individualVuln::addReference);
+
                         dependency.addVulnerability(individualVuln);
                     }
                 }

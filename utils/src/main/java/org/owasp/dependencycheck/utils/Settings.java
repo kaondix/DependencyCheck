@@ -36,6 +36,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.ProtectionDomain;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
@@ -281,6 +282,11 @@ public final class Settings {
          */
         public static final String ANALYZER_NODE_AUDIT_URL = "analyzer.node.audit.url";
         /**
+         * The properties key for configure whether the Node Audit analyzer
+         * should skip devDependencies.
+         */
+        public static final String ANALYZER_NODE_AUDIT_SKIPDEV = "analyzer.node.audit.skipdev";
+        /**
          * The properties key for whether node audit analyzer results will be
          * cached.
          */
@@ -304,6 +310,11 @@ public final class Settings {
          */
         public static final String ANALYZER_RETIREJS_REPO_JS_URL = "analyzer.retirejs.repo.js.url";
         /**
+         * The properties key for defining whether the RetireJS repository will
+         * be updated regardless of the autoupdate settings.
+         */
+        public static final String ANALYZER_RETIREJS_FORCEUPDATE = "analyzer.retirejs.forceupdate";
+        /**
          * The properties key to control the skipping of the check for CVE
          * updates.
          */
@@ -324,6 +335,15 @@ public final class Settings {
          */
         public static final String ANALYZER_PYTHON_PACKAGE_ENABLED = "analyzer.python.package.enabled";
         /**
+         * The properties key for whether the Elixir mix audit analyzer is
+         * enabled.
+         */
+        public static final String ANALYZER_MIX_AUDIT_ENABLED = "analyzer.mix.audit.enabled";
+        /**
+         * The path to mix_audit, if available.
+         */
+        public static final String ANALYZER_MIX_AUDIT_PATH = "analyzer.mix.audit.path";
+        /**
          * The properties key for whether the Golang Mod analyzer is enabled.
          */
         public static final String ANALYZER_GOLANG_MOD_ENABLED = "analyzer.golang.mod.enabled";
@@ -343,6 +363,10 @@ public final class Settings {
          * The properties key for whether the Autoconf analyzer is enabled.
          */
         public static final String ANALYZER_AUTOCONF_ENABLED = "analyzer.autoconf.enabled";
+        /**
+         * The properties key for whether the pip analyzer is enabled.
+         */
+        public static final String ANALYZER_PIP_ENABLED = "analyzer.pip.enabled";
         /**
          * The properties key for whether the CMake analyzer is enabled.
          */
@@ -516,6 +540,10 @@ public final class Settings {
          */
         public static final String ANALYZER_CPE_ENABLED = "analyzer.cpe.enabled";
         /**
+         * The key to determine if the NPM CPE analyzer is enabled.
+         */
+        public static final String ANALYZER_NPM_CPE_ENABLED = "analyzer.npm.cpe.enabled";
+        /**
          * The key to determine if the CPE Suppression analyzer is enabled.
          */
         public static final String ANALYZER_CPE_SUPPRESSION_ENABLED = "analyzer.cpesuppression.enabled";
@@ -535,6 +563,10 @@ public final class Settings {
          * The key to determine if the File Name analyzer is enabled.
          */
         public static final String ANALYZER_FILE_NAME_ENABLED = "analyzer.filename.enabled";
+        /**
+         * The key to determine if the File Version analyzer is enabled.
+         */
+        public static final String ANALYZER_PE_ENABLED = "analyzer.pe.enabled";
         /**
          * The key to determine if the Hint analyzer is enabled.
          */
@@ -609,7 +641,12 @@ public final class Settings {
          * The properties key setting which other keys should be considered
          * sensitive and subsequently masked when logged.
          */
-        private static final String MASKED_PROPERTIES = "odc.settings.mask";
+        public static final String MASKED_PROPERTIES = "odc.settings.mask";
+        /**
+         * The properties key setting indicating how many days past the new year
+         * that ODC will "skip" updating that years data feed if not present.
+         */
+        public static final String NVD_NEW_YEAR_GRACE_PERIOD = "nvd.newyear.grace.period";
 
         /**
          * private constructor because this is a "utility" class containing
@@ -689,18 +726,6 @@ public final class Settings {
     }
 
     /**
-     * Returns the list of keys to mask.
-     *
-     * @return the list of keys to mask
-     */
-    private List<Predicate<String>> getMaskedKeys() {
-        return Arrays.asList(getArray(Settings.KEYS.MASKED_PROPERTIES))
-                .stream()
-                .map(v -> Pattern.compile(v).asPredicate())
-                .collect(Collectors.toList());
-    }
-
-    /**
      * Check if a given key is considered to have a value with sensitive data.
      *
      * @param key the key to determine if the property should be masked
@@ -708,7 +733,10 @@ public final class Settings {
      * otherwise <code>false</code>
      */
     private boolean isKeyMasked(@NotNull String key) {
-        return getMaskedKeys().stream().anyMatch(maskExp -> maskExp.test(key));
+        if (maskedKeys == null || maskedKeys.isEmpty()) {
+            initMaskedKeys();
+        }
+        return maskedKeys.stream().anyMatch(maskExp -> maskExp.test(key));
     }
 
     /**
@@ -734,7 +762,15 @@ public final class Settings {
      * the call to initialize.
      */
     protected void initMaskedKeys() {
-        maskedKeys = getMaskedKeys();
+        final String[] masked = getArray(Settings.KEYS.MASKED_PROPERTIES);
+        if (masked == null) {
+            maskedKeys = new ArrayList<>();
+        } else {
+            maskedKeys = Arrays.asList(masked)
+                    .stream()
+                    .map(v -> Pattern.compile(v).asPredicate())
+                    .collect(Collectors.toList());
+        }
     }
 
     /**
@@ -772,7 +808,7 @@ public final class Settings {
      */
     public void setString(@NotNull final String key, @NotNull final String value) {
         props.setProperty(key, value);
-        LOGGER.debug("Setting: {}='{}'", key, value);
+        LOGGER.debug("Setting: {}='{}'", key, getPrintableValue(key, value));
     }
 
     /**
@@ -1115,7 +1151,8 @@ public final class Settings {
             value = Integer.parseInt(getString(key));
         } catch (NumberFormatException ex) {
             if (!getString(key, "").isEmpty()) {
-                LOGGER.debug("Could not convert property '{}={}' to an int; using {} instead.", key, getString(key), defaultValue);
+                LOGGER.debug("Could not convert property '{}={}' to an int; using {} instead.",
+                        key, getPrintableValue(key, getString(key)), defaultValue);
             }
             value = defaultValue;
         }

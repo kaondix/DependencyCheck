@@ -49,49 +49,58 @@ public final class NpmPayloadBuilder {
      * @param packageJson the package.json
      * @param dependencyMap a collection of module/version pairs that is
      * populated while building the payload
+     * @param skipDevDependencies whether devDependencies should be skipped
      * @return the npm audit API payload
      */
-    public static JsonObject build(JsonObject lockJson, JsonObject packageJson, Map<String, String> dependencyMap) {
+    public static JsonObject build(JsonObject lockJson, JsonObject packageJson,
+            Map<String, String> dependencyMap, boolean skipDevDependencies) {
         final JsonObjectBuilder payloadBuilder = Json.createObjectBuilder();
         addProjectInfo(packageJson, payloadBuilder);
 
         // NPM Audit expects 'requires' to be an object containing key/value
         // pairs corresponding to the module name (key) and version (value).
         final JsonObjectBuilder requiresBuilder = Json.createObjectBuilder();
-        packageJson.getJsonObject("dependencies").entrySet()
-                .stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (oldValue, newValue) -> newValue, TreeMap::new))
-                .entrySet()
-                .forEach((entry) -> {
-                    requiresBuilder.add(entry.getKey(), entry.getValue());
-                    dependencyMap.put(entry.getKey(), entry.getValue().toString());
-                });
 
-        packageJson.getJsonObject("devDependencies").entrySet()
-                .stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
-                        (oldValue, newValue) -> newValue, TreeMap::new))
-                .entrySet()
-                .forEach((entry) -> {
-                    requiresBuilder.add(entry.getKey(), entry.getValue());
-                    dependencyMap.put(entry.getKey(), entry.getValue().toString());
-                });
+        if (packageJson.containsKey("dependencies")) {
+            packageJson.getJsonObject("dependencies").entrySet()
+                    .stream()
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            Map.Entry::getValue,
+                            (oldValue, newValue) -> newValue, TreeMap::new))
+                    .entrySet()
+                    .forEach((entry) -> {
+                        requiresBuilder.add(entry.getKey(), entry.getValue());
+                        dependencyMap.put(entry.getKey(), entry.getValue().toString());
+                    });
+        }
+
+        if (!skipDevDependencies && packageJson.containsKey("devDependencies")) {
+            packageJson.getJsonObject("devDependencies").entrySet()
+                    .stream()
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            Map.Entry::getValue,
+                            (oldValue, newValue) -> newValue, TreeMap::new))
+                    .entrySet()
+                    .forEach((entry) -> {
+                        requiresBuilder.add(entry.getKey(), entry.getValue());
+                        dependencyMap.put(entry.getKey(), entry.getValue().toString());
+                    });
+        }
 
         payloadBuilder.add("requires", requiresBuilder.build());
 
         final JsonObjectBuilder dependenciesBuilder = Json.createObjectBuilder();
         final JsonObject dependencies = lockJson.getJsonObject("dependencies");
-        dependencies.entrySet().forEach((entry) -> {
-            final JsonObject dep = ((JsonObject) entry.getValue());
-            final String version = dep.getString("version");
-            dependencyMap.put(entry.getKey(), version);
-            dependenciesBuilder.add(entry.getKey(), buildDependencies(dep, dependencyMap));
-        });
+        if (dependencies != null) {
+            dependencies.entrySet().forEach((entry) -> {
+                final JsonObject dep = ((JsonObject) entry.getValue());
+                final String version = dep.getString("version");
+                dependencyMap.put(entry.getKey(), version);
+                dependenciesBuilder.add(entry.getKey(), buildDependencies(dep, dependencyMap));
+            });
+        }
         payloadBuilder.add("dependencies", dependenciesBuilder.build());
 
         addConstantElements(payloadBuilder);
@@ -117,25 +126,27 @@ public final class NpmPayloadBuilder {
         final JsonObjectBuilder dependenciesBuilder = Json.createObjectBuilder();
 
         final JsonObject dependencies = packageJson.getJsonObject("dependencies");
-        dependencies.entrySet().forEach((entry) -> {
-            final String version;
-            if (entry.getValue().getValueType() == JsonValue.ValueType.OBJECT) {
-                final JsonObject dep = ((JsonObject) entry.getValue());
-                version = dep.getString("version");
-                dependencyMap.put(entry.getKey(), version);
-                dependenciesBuilder.add(entry.getKey(), buildDependencies(dep, dependencyMap));
-            } else {
-                //TODO I think the following is dead code and no real "dependencies"
-                //     section in a lock file will look like this
-                final String tmp = entry.getValue().toString();
-                if (tmp.startsWith("\"")) {
-                    version = tmp.substring(1, tmp.length() - 1);
+        if (dependencies != null) {
+            dependencies.entrySet().forEach((entry) -> {
+                final String version;
+                if (entry.getValue().getValueType() == JsonValue.ValueType.OBJECT) {
+                    final JsonObject dep = ((JsonObject) entry.getValue());
+                    version = dep.getString("version");
+                    dependencyMap.put(entry.getKey(), version);
+                    dependenciesBuilder.add(entry.getKey(), buildDependencies(dep, dependencyMap));
                 } else {
-                    version = tmp;
+                    //TODO I think the following is dead code and no real "dependencies"
+                    //     section in a lock file will look like this
+                    final String tmp = entry.getValue().toString();
+                    if (tmp.startsWith("\"")) {
+                        version = tmp.substring(1, tmp.length() - 1);
+                    } else {
+                        version = tmp;
+                    }
                 }
-            }
-            requiresBuilder.add(entry.getKey(), "^" + version);
-        });
+                requiresBuilder.add(entry.getKey(), "^" + version);
+            });
+        }
         payloadBuilder.add("requires", requiresBuilder.build());
 
         payloadBuilder.add("dependencies", dependenciesBuilder.build());
@@ -187,7 +198,11 @@ public final class NpmPayloadBuilder {
     private static JsonObject buildDependencies(JsonObject dep, Map<String, String> dependencyMap) {
         final JsonObjectBuilder depBuilder = Json.createObjectBuilder();
         depBuilder.add("version", dep.getString("version"));
-        depBuilder.add("integrity", dep.getString("integrity"));
+
+        //not installed package (like, dependency of an optional dependency) doesn't contains integrity
+        if (dep.containsKey("integrity")) {
+            depBuilder.add("integrity", dep.getString("integrity"));
+        }
         if (dep.containsKey("requires")) {
             depBuilder.add("requires", dep.getJsonObject("requires"));
         }

@@ -98,6 +98,7 @@ public class Engine implements FileFilter, AutoCloseable {
                 INITIAL,
                 PRE_INFORMATION_COLLECTION,
                 INFORMATION_COLLECTION,
+                INFORMATION_COLLECTION2,
                 POST_INFORMATION_COLLECTION
         ),
         /**
@@ -207,6 +208,13 @@ public class Engine implements FileFilter, AutoCloseable {
      * The configured settings.
      */
     private final Settings settings;
+    /**
+     * Used to store the value of
+     * System.getProperty("javax.xml.accessExternalSchema") - ODC may change the
+     * value of this system property at runtime. We store the value to reset the
+     * property to its original value.
+     */
+    private String accessExternalSchema;
 
     /**
      * Creates a new {@link Mode#STANDALONE} Engine.
@@ -248,6 +256,7 @@ public class Engine implements FileFilter, AutoCloseable {
         this.settings = settings;
         this.serviceClassLoader = serviceClassLoader;
         this.mode = mode;
+        this.accessExternalSchema = System.getProperty("javax.xml.accessExternalSchema");
         initializeEngine();
     }
 
@@ -272,6 +281,11 @@ public class Engine implements FileFilter, AutoCloseable {
                 database.close();
                 database = null;
             }
+        }
+        if (accessExternalSchema != null) {
+            System.setProperty("javax.xml.accessExternalSchema", accessExternalSchema);
+        } else {
+            System.clearProperty("javax.xml.accessExternalSchema");
         }
         JCS.shutdown();
     }
@@ -1045,11 +1059,7 @@ public class Engine implements FileFilter, AutoCloseable {
                     database = new CveDB(settings);
                 }
             } catch (IOException ex) {
-                if (readOnly) {
-                    throw new DatabaseException("Unable to open database in read only mode", ex);
-                } else {
-                    throw new DatabaseException("Unable to open database", ex);
-                }
+                throw new DatabaseException("Unable to open database in read only mode", ex);
             } catch (H2DBLockException ex) {
                 throw new DatabaseException("Failed to obtain lock - unable to open database", ex);
             } finally {

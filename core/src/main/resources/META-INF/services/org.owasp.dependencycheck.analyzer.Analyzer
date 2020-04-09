@@ -1,8 +1,10 @@
 org.owasp.dependencycheck.analyzer.ArchiveAnalyzer
 org.owasp.dependencycheck.analyzer.FileNameAnalyzer
+org.owasp.dependencycheck.analyzer.PEAnalyzer
 org.owasp.dependencycheck.analyzer.JarAnalyzer
 org.owasp.dependencycheck.analyzer.HintAnalyzer
 org.owasp.dependencycheck.analyzer.CPEAnalyzer
+org.owasp.dependencycheck.analyzer.NpmCPEAnalyzer
 org.owasp.dependencycheck.analyzer.FalsePositiveAnalyzer
 org.owasp.dependencycheck.analyzer.DependencyBundlingAnalyzer
 org.owasp.dependencycheck.analyzer.DependencyMergingAnalyzer
@@ -17,6 +19,7 @@ org.owasp.dependencycheck.analyzer.MSBuildProjectAnalyzer
 org.owasp.dependencycheck.analyzer.AssemblyAnalyzer
 org.owasp.dependencycheck.analyzer.PythonDistributionAnalyzer
 org.owasp.dependencycheck.analyzer.PythonPackageAnalyzer
+org.owasp.dependencycheck.analyzer.PipAnalyzer
 org.owasp.dependencycheck.analyzer.AutoconfAnalyzer
 org.owasp.dependencycheck.analyzer.OpenSSLAnalyzer
 org.owasp.dependencycheck.analyzer.CMakeAnalyzer
@@ -28,6 +31,7 @@ org.owasp.dependencycheck.analyzer.RetireJsAnalyzer
 org.owasp.dependencycheck.analyzer.RubyGemspecAnalyzer
 org.owasp.dependencycheck.analyzer.RubyBundlerAnalyzer
 org.owasp.dependencycheck.analyzer.RubyBundleAuditAnalyzer
+org.owasp.dependencycheck.analyzer.ElixirMixAuditAnalyzer
 org.owasp.dependencycheck.analyzer.ComposerLockAnalyzer
 org.owasp.dependencycheck.analyzer.CocoaPodsAnalyzer
 org.owasp.dependencycheck.analyzer.SwiftPackageManagerAnalyzer

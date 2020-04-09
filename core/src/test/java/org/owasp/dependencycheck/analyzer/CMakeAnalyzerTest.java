@@ -34,7 +34,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
 import org.owasp.dependencycheck.dependency.Evidence;
 import org.owasp.dependencycheck.dependency.EvidenceType;
@@ -140,7 +140,7 @@ public class CMakeAnalyzerTest extends BaseDBTestCase {
         analyzer.analyze(result, null);
 
         //this one finds nothing so it falls through to the filename. Can we do better?
-        assertEquals("OpenCVDetectPython.cmake", result.getDisplayFileName());
+        assertEquals("numpy", result.getDisplayFileName());
     }
 
     private void assertProductEvidence(Dependency result, String product) {

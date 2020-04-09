@@ -181,10 +181,13 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
      */
     private static final AnalysisPhase ANALYSIS_PHASE = AnalysisPhase.INFORMATION_COLLECTION;
     /**
+     * The set of jar files to exclude from analysis.
+     */
+    private static final List<String> EXCLUDE_JARS = Arrays.asList("-doc.jar", "-src.jar", "-javadoc.jar", "-sources.jar");
+    /**
      * The set of file extensions supported by this analyzer.
      */
     private static final String[] EXTENSIONS = {"jar", "war", "aar"};
-
     /**
      * The file filter used to determine which files this analyzer supports.
      */
@@ -240,6 +243,25 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
     @Override
     public AnalysisPhase getAnalysisPhase() {
         return ANALYSIS_PHASE;
+    }
+
+    @Override
+    public boolean accept(File pathname) {
+        final boolean accepted = super.accept(pathname);
+        return accepted && !isExcludedJar(pathname);
+    }
+
+    /**
+     * Returns true if the JAR is a `*-sources.jar` or `*-javadoc.jar`;
+     * otherwise false.
+     *
+     * @param path the path to the dependency
+     * @return true if the JAR is a `*-sources.jar` or `*-javadoc.jar`;
+     * otherwise false.
+     */
+    private boolean isExcludedJar(File path) {
+        final String fileName = path.getName().toLowerCase();
+        return EXCLUDE_JARS.stream().anyMatch(exclude -> fileName.endsWith(exclude));
     }
     //</editor-fold>
 
@@ -472,7 +494,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
      */
     private Properties retrievePomProperties(String path, final JarFile jar) {
         Properties pomProperties = null;
-        final String propPath = path.substring(0, path.length() - 7) + "pom.properies";
+        final String propPath = path.substring(0, path.length() - 7) + "pom.properties";
         final ZipEntry propEntry = jar.getEntry(propPath);
         if (propEntry != null) {
             try (Reader reader = new InputStreamReader(jar.getInputStream(propEntry), StandardCharsets.UTF_8)) {
@@ -603,12 +625,17 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
         if (groupid != null && !groupid.isEmpty()) {
             foundSomething = true;
             dependency.addEvidence(EvidenceType.VENDOR, "pom", "groupid", groupid, Confidence.HIGHEST);
-            dependency.addEvidence(EvidenceType.PRODUCT, "pom", "groupid", groupid, Confidence.LOW);
+            //In several cases we are seeing the product name at the end of the group identifier.
+            // This may cause several FP on products that have a collection of dependencies (e.g. jetty).
+            //dependency.addEvidence(EvidenceType.PRODUCT, "pom", "groupid", groupid, Confidence.LOW);
+            dependency.addEvidence(EvidenceType.PRODUCT, "pom", "groupid", groupid, Confidence.HIGHEST);
             addMatchingValues(classes, groupid, dependency, EvidenceType.VENDOR);
             addMatchingValues(classes, groupid, dependency, EvidenceType.PRODUCT);
             if (parentGroupId != null && !parentGroupId.isEmpty() && !parentGroupId.equals(groupid)) {
                 dependency.addEvidence(EvidenceType.VENDOR, "pom", "parent-groupid", parentGroupId, Confidence.MEDIUM);
-                dependency.addEvidence(EvidenceType.PRODUCT, "pom", "parent-groupid", parentGroupId, Confidence.LOW);
+                //see note above for groupid
+                //dependency.addEvidence(EvidenceType.PRODUCT, "pom", "parent-groupid", parentGroupId, Confidence.LOW);
+                dependency.addEvidence(EvidenceType.PRODUCT, "pom", "parent-groupid", parentGroupId, Confidence.MEDIUM);
                 addMatchingValues(classes, parentGroupId, dependency, EvidenceType.VENDOR);
                 addMatchingValues(classes, parentGroupId, dependency, EvidenceType.PRODUCT);
             }

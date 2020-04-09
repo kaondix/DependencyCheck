@@ -43,9 +43,9 @@ hintsFile            | The file path to the XML hints file \- used to resolve [f
 skip                 | If set to true dependency-check analysis will be skipped.                                                          | false
 skipConfigurations   | A list of configurations that will be skipped. This is mutually exclusive with the scanConfigurations property.    | `[]` which means no configuration is skipped.
 scanConfigurations   | A list of configurations that will be scanned, all other configurations are skipped. This is mutually exclusive with the skipConfigurations property. | `[]` which implicitly means all configurations are scanned.
-scanProjects         | A list of projects that will be scanned, all other projects are skipped. This is mutually exclusive with the skipProjects property. | `[]` which implicitly means all projects get scanned.
-skipProjects         | A list of projects that will be skipped. This is mutually exclusive with the scanProjects property.                | `[]` which means no projects are skipped.
-scanSet              | A list of directories that will be scanned for additional dependencies.                                            | ['src/main/resources','src/main/webapp']
+scanProjects         | A list of projects that will be scanned, all other projects are skipped. The list or projects to skip must include a preceding colon: `scanProjects = [':app']`. This is mutually exclusive with the `skipProjects` property. | `[]` which implicitly means all projects get scanned.
+skipProjects         | A list of projects that will be skipped.  The list or projects to skip must include a preceding colon: `skipProjects = [':sub1']`. This is mutually exclusive with the `scanProjects` property. | `[]` which means no projects are skipped.
+scanSet              | A list of directories that will be scanned for additional dependencies.                                            | ['src/main/resources','src/main/webapp', './package.json', './package-lock.json', './npm-shrinkwrap.json', './Gopkg.lock', './go.mod']
 
 #### Example
 ```groovy
@@ -58,12 +58,13 @@ dependencyCheck {
 
 ### Proxy Configuration
 
-Config Group | Property          | Description                        | Default Value
+Config Group | Property          | Description                                | Default Value
 -------------|-------------------|------------------------------------|------------------
 proxy        | server            | The proxy server; see the [proxy configuration](../data/proxy.html) page for more information. | &nbsp;
-proxy        | port              | The proxy port.                    | &nbsp;
-proxy        | username          | Defines the proxy user name.       | &nbsp;
-proxy        | password          | Defines the proxy password.        | &nbsp;
+proxy        | port              | The proxy port.                            | &nbsp;
+proxy        | username          | Defines the proxy user name.               | &nbsp;
+proxy        | password          | Defines the proxy password.                | &nbsp;
+proxy        | nonProxyHosts     | The list of hosts that do not use a proxy. | &nbsp;
 
 #### Example
 ```groovy
@@ -115,7 +116,6 @@ analyzers    | archiveEnabled        | Sets whether the Archive Analyzer will be
 analyzers    | zipExtensions         | A comma-separated list of additional file extensions to be treated like a ZIP file, the contents will be extracted and analyzed. | &nbsp;
 analyzers    | jarEnabled            | Sets whether Jar Analyzer will be used.                                                                           | true
 analyzers    | centralEnabled        | Sets whether Central Analyzer will be used; by default in the Maven plugin this analyzer is disabled as all information gained from Central is already available in the build. | false
-analyzers    | ossIndexEnabled       | This configuration has been deprecated; please use `ossIndex` instead. Sets whether the [OSS Index Analyzer](../analyzers/oss-index-analyzer.html) will be enabled. This analyzer requires an internet connection. | true
 analyzers    | nexusEnabled          | Sets whether Nexus Analyzer will be used (requires Nexus Pro). This analyzer is superceded by the Central Analyzer; however, you can configure this to run against a Nexus Pro installation. | true
 analyzers    | nexusUrl              | Defines the Nexus Server's web service end point (example http://domain.enterprise/service/local/). If not set the Nexus Analyzer will be disabled. | &nbsp;
 analyzers    | nexusUsesProxy        | Whether or not the defined proxy should be used when connecting to Nexus.                                         | true
@@ -131,7 +131,6 @@ analyzers    | cmakeEnabled          | Sets whether or not the [experimental](..
 analyzers    | autoconfEnabled       | Sets whether or not the [experimental](../analyzers/index.html) autoconf Analyzer should be used.                 | true
 analyzers    | composerEnabled       | Sets whether or not the [experimental](../analyzers/index.html) PHP Composer Lock File Analyzer should be used.   | true
 analyzers    | nodeEnabled           | Sets whether or not the Node.js Analyzer should be used.                                                          | true
-analyzers    | nodeAuditEnabled      | Sets whether the Node Audit Analyzer should be used. This analyzer requires an internet connection.               | true
 analyzers    | cocoapodsEnabled      | Sets whether or not the [experimental](../analyzers/index.html) Cocoapods Analyzer should be used.                | true
 analyzers    | swiftEnabled          | Sets whether or not the [experimental](../analyzers/index.html) Swift Package Manager Analyzer should be used.    | true
 analyzers    | bundleAuditEnabled    | Sets whether or not the [experimental](../analyzers/index.html) Ruby Bundle Audit Analyzer should be used.        | true
@@ -140,7 +139,7 @@ analyzers    | golangDepEnabled      | Sets whether or not the [experimental](..
 analyzers    | golangModEnabled      | Sets whether or not the [experimental](../analyzers/index.html) Goland Module Analyzer should be used; requies `go` to be installed. | true
 analyzers    | pathToGo              | The path to `go`.                                                                                                 | &nbsp;
 
-#### Additional Analyzer Configuration
+#### Additional Configuration
 
 Config Group | Property              | Description                                                                                                       | Default Value
 -------------|-----------------------|-------------------------------------------------------------------------------------------------------------------|------------------
@@ -151,13 +150,19 @@ artifactory  | parallelAnalysis      | Whether the Artifactory analyzer should b
 artifactory  | username              | The user name (only used with API token) to connect to Artifactory instance.                                      | &nbsp;
 artifactory  | apiToken              | The API token to connect to Artifactory instance, only used if the username or the API key are not defined by artifactoryAnalyzerServerId,artifactoryAnalyzerUsername or artifactoryAnalyzerApiToken | &nbsp;
 artifactory  | bearerToken           | The bearer token to connect to Artifactory instance.                                                              | &nbsp;
-retirejs     | enabled               | Sets whether the RetireJS Analyzer should be used.                        | true
-retirejs     | retireJsUrl           | The URL to the Retire JS repository. **Note** the file name must be `jsrepository.json`.                          | https://raw.githubusercontent.com/Retirejs/retire.js/master/repository/jsrepository.json
+nodeAudit    | enabled               | Sets whether the Node Audit Analyzer should be used. This analyzer requires an internet connection.               | true
+nodeAudit    | useCache              | Sets whether the Node Audit Analyzer should cache results locally.                                                | true
+nodeAudit    | skipDevDependencies   | Sets whether the Node Audit Analyzer should skip devDependencies.                                                 | false
+retirejs     | enabled               | Sets whether the RetireJS Analyzer should be used.                                                                | true
+retirejs     | forceupdate           | Sets whether the RetireJS Analyzer should update regardless of the `autoupdate` setting.                          | false
+retirejs     | retireJsUrl           | The URL to the Retire JS repository.                                                                              | https://raw.githubusercontent.com/Retirejs/retire.js/master/repository/jsrepository.json
 retirejs     | filterNonVulnerable   | Configures the RetireJS Analyzer to remove non-vulnerable JS dependencies from the report.                        | false
 retirejs     | filters               | Configures the list of regular expessions used to filter JS files based on content.                               | &nbsp;
 ossIndex     | enabled               | Sets whether [OSS Index Analyzer](../analyzers/oss-index-analyzer.html) will be used. This analyzer requires an internet connection. | true
 ossIndex     | username              | The optional user name to connect to Sonatype's OSS Index.                                                        | &nbsp;
 ossIndex     | password              | The password or API token to connect to Sonatype's OSS Index.                                                     | &nbsp;
+slack        | enabled               | Whether or not slack notifications are enabled.                                                                   | false
+slack        | webhookUrl            | The custom incoming webhook URL to receive notifications.                                                         | &nbsp;
 
 
 #### Example

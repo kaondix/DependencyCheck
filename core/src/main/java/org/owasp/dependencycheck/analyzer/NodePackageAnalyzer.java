@@ -17,6 +17,9 @@
  */
 package org.owasp.dependencycheck.analyzer;
 
+import com.github.packageurl.MalformedPackageURLException;
+import com.github.packageurl.PackageURL;
+import com.github.packageurl.PackageURLBuilder;
 import org.apache.commons.io.FileUtils;
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
@@ -42,6 +45,7 @@ import javax.json.JsonValue;
 import org.owasp.dependencycheck.Engine.Mode;
 import org.owasp.dependencycheck.dependency.Confidence;
 import org.owasp.dependencycheck.dependency.EvidenceType;
+import org.owasp.dependencycheck.dependency.naming.PurlIdentifier;
 import org.owasp.dependencycheck.exception.InitializationException;
 import org.owasp.dependencycheck.utils.Checksum;
 import org.owasp.dependencycheck.utils.InvalidSettingException;
@@ -85,11 +89,11 @@ public class NodePackageAnalyzer extends AbstractNpmAnalyzer {
      */
     public static final String SHRINKWRAP_JSON = "npm-shrinkwrap.json";
     /**
-     * Filter that detects files named "package-lock.json" or
+     * Filter that detects files named "package.json", "package-lock.json", or
      * "npm-shrinkwrap.json".
      */
     private static final FileFilter PACKAGE_JSON_FILTER = FileFilterBuilder.newInstance()
-            .addFilenames(PACKAGE_LOCK_JSON, SHRINKWRAP_JSON).build();
+            .addFilenames(PACKAGE_JSON, PACKAGE_LOCK_JSON, SHRINKWRAP_JSON).build();
 
     /**
      * Returns the FileFilter
@@ -117,13 +121,20 @@ public class NodePackageAnalyzer extends AbstractNpmAnalyzer {
                 if (tmp != null) {
                     final List<String> skipEcosystems = Arrays.asList(tmp);
                     if (skipEcosystems.contains(DEPENDENCY_ECOSYSTEM)
+                            && !settings.getBoolean(Settings.KEYS.ANALYZER_OSSINDEX_ENABLED)) {
+                        if (!settings.getBoolean(Settings.KEYS.ANALYZER_NODE_AUDIT_ENABLED)) {
+                            final String msg = "Invalid Configuration: enabling the Node Package Analyzer without "
+                                    + "using the Node Audit Analyzer or OSS Index Analyzer is not supported.";
+                            throw new InitializationException(msg);
+                        } else if (!isNodeAuditEnabled(engine)) {
+                            final String msg = "Missing package.lock or npm-shrinkwrap.lock file: Unable to scan a node "
+                                    + "project without a package-lock.json or npm-shrinkwrap.json.";
+                            throw new InitializationException(msg);
+                        }
+                    } else if (skipEcosystems.contains(DEPENDENCY_ECOSYSTEM)
                             && !settings.getBoolean(Settings.KEYS.ANALYZER_NODE_AUDIT_ENABLED)) {
-                        LOGGER.debug("NodePackageAnalyzer enabled without a corresponding vulnerability analyzer");
-                        final String msg = "Invalid Configuration: enabling the Node Package Analyzer without "
-                                + "using the Node Audit Analyzer is not supported.";
-                        throw new InitializationException(msg);
-                    } else if (!skipEcosystems.contains(DEPENDENCY_ECOSYSTEM)) {
-                        LOGGER.warn("Using the CPE Analyzer with Node.js can result in many false positives.");
+                        LOGGER.warn("Using only the OSS Index Analyzer with Node.js can result in many false positives "
+                                + "- please enable the Node Audit Analyzer.");
                     }
                 }
             } catch (InvalidSettingException ex) {
@@ -173,20 +184,45 @@ public class NodePackageAnalyzer extends AbstractNpmAnalyzer {
     private boolean isNodeAuditEnabled(Engine engine) {
         for (Analyzer a : engine.getAnalyzers()) {
             if (a instanceof NodeAuditAnalyzer) {
+                if (a.isEnabled()) {
+                    try {
+                        ((NodeAuditAnalyzer) a).prepareFileTypeAnalyzer(engine);
+                    } catch (InitializationException ex) {
+                        LOGGER.debug("Error initializing the NodeAuditAnalyzer");
+                    }
+                }
                 return a.isEnabled();
             }
         }
         return false;
     }
 
+    /**
+     * Checks if a package lock file or equivalent exists for the NPM project.
+     *
+     * @param dependencyFile a reference to the `package.json` file
+     * @return <code>true</code> if no lock file is found; otherwise
+     * <code>true</code>
+     */
+    private boolean noLockFileExists(File dependencyFile) {
+        //TODO if we support yarn we need to add the check for the yarn.yml file
+        final File lock = new File(dependencyFile.getParentFile(), "package-lock.json");
+        final File shrinkwrap = new File(dependencyFile.getParentFile(), "npm-shrinkwrap.json");
+        return !(lock.isFile() || shrinkwrap.isFile());
+    }
+
     @Override
     protected void analyzeDependency(Dependency dependency, Engine engine) throws AnalysisException {
-        if (isNodeAuditEnabled(engine) && !PACKAGE_LOCK_JSON.equals(dependency.getFileName())) {
+        if (isNodeAuditEnabled(engine)
+                && !(PACKAGE_LOCK_JSON.equals(dependency.getFileName()) || SHRINKWRAP_JSON.equals(dependency.getFileName()))) {
             engine.removeDependency(dependency);
         }
         final File dependencyFile = dependency.getActualFile();
         if (!dependencyFile.isFile() || dependencyFile.length() == 0 || !shouldProcess(dependencyFile)) {
             return;
+        }
+        if (noLockFileExists(dependency.getActualFile())) {
+            LOGGER.warn("No lock file exists - this will result in false negatives; please run `npm install --package-lock`");
         }
         final File baseDir = dependencyFile.getParentFile();
         if (PACKAGE_JSON.equals(dependency.getFileName())) {
@@ -251,9 +287,9 @@ public class NodePackageAnalyzer extends AbstractNpmAnalyzer {
             final JsonObject deps = json.getJsonObject("dependencies");
             for (Map.Entry<String, JsonValue> entry : deps.entrySet()) {
                 final String name = entry.getKey();
+
                 String version;
                 boolean optional = false;
-
                 final File base = Paths.get(baseDir.getPath(), "node_modules", name).toFile();
                 final File f = new File(base, PACKAGE_JSON);
 
@@ -306,6 +342,13 @@ public class NodePackageAnalyzer extends AbstractNpmAnalyzer {
                     final String packagePath = String.format("%s:%s", name, version);
                     child.setDisplayFileName(packagePath);
                     child.setPackagePath(packagePath);
+                    try {
+                        final PackageURL purl = PackageURLBuilder.aPackageURL().withType("npm").withName(name).withVersion(version).build();
+                        final PurlIdentifier id = new PurlIdentifier(purl, Confidence.HIGHEST);
+                        child.addSoftwareIdentifier(id);
+                    } catch (MalformedPackageURLException ex) {
+                        LOGGER.debug("Unable to build package url for `" + packagePath + "`", ex);
+                    }
                 }
 
                 child.addProjectReference(parentPackage);

@@ -20,7 +20,7 @@ Copyright (c) 2012 Jeremy Long. All Rights Reserved.
     <parent>
         <groupId>org.owasp</groupId>
         <artifactId>dependency-check-parent</artifactId>
-        <version>5.2.3-SNAPSHOT</version>
+        <version>5.3.3-SNAPSHOT</version>
     </parent>
 
     <artifactId>dependency-check-core</artifactId>
@@ -169,6 +169,10 @@ Copyright (c) 2012 Jeremy Long. All Rights Reserved.
     </build>
     <dependencies>
         <dependency>
+            <groupId>org.whitesource</groupId>
+            <artifactId>pecoff4j</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-jcs-core</artifactId>
         </dependency>
@@ -284,7 +288,7 @@ Copyright (c) 2012 Jeremy Long. All Rights Reserved.
             <scope>test</scope>
         </dependency>
         <!-- The following dependencies are only used during testing
-             and must not be converted to a properties based version number -->
+        and must not be converted to a properties based version number -->
         <dependency>
             <groupId>io.github.faob-dev</groupId>
             <artifactId>aar</artifactId>
@@ -429,6 +433,14 @@ Copyright (c) 2012 Jeremy Long. All Rights Reserved.
             <scope>test</scope>
             <optional>true</optional>
         </dependency>
+        <dependency>
+            <groupId>commons-validator</groupId>
+            <artifactId>commons-validator</artifactId>
+        </dependency>
+        <dependency><!--upgrade transitive dependency of commons-validator due to reported vulns-->
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+        </dependency>
     </dependencies>
     <profiles>
         <profile>
@@ -485,7 +497,7 @@ Copyright (c) 2012 Jeremy Long. All Rights Reserved.
                 <dependency>
                     <groupId>org.postgresql</groupId>
                     <artifactId>postgresql</artifactId>
-                    <version>42.2.8</version>
+                    <version>42.2.12</version>
                 </dependency>
             </dependencies>
             <build>
