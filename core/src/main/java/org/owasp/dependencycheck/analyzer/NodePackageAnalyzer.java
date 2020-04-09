@@ -40,6 +40,7 @@ import javax.annotation.concurrent.ThreadSafe;
 import javax.json.Json;
 import javax.json.JsonException;
 import javax.json.JsonObject;
+import javax.json.JsonString;
 import javax.json.JsonReader;
 import javax.json.JsonValue;
 import org.owasp.dependencycheck.Engine.Mode;
@@ -285,9 +286,9 @@ public class NodePackageAnalyzer extends AbstractNpmAnalyzer {
             final JsonObject deps = json.getJsonObject("dependencies");
             for (Map.Entry<String, JsonValue> entry : deps.entrySet()) {
                 final String name = entry.getKey();
-
                 String version;
                 boolean optional = false;
+
                 final File base = Paths.get(baseDir.getPath(), "node_modules", name).toFile();
                 final File f = new File(base, PACKAGE_JSON);
 
@@ -306,8 +307,22 @@ public class NodePackageAnalyzer extends AbstractNpmAnalyzer {
                         processDependencies(jo, base, rootFile, subPackageName, engine);
                     }
                 } else {
-                    version = entry.getValue().toString();
+                    version = ((JsonString) entry.getValue()).getString();
                 }
+
+                // some package manager can handle alias, yarn for example, but npm doesn't support it
+                if(version.startsWith("npm:")){
+                    LOGGER.warn("package.json contain an alias for {} => {} npm audit doesn't support this, skip it", name, version.replace("npm:", ""));
+                    continue;
+                }
+
+                // this seems to produce crash sometimes, I need to tests
+                // using a local node_module is not supported by npm audit, it crash
+//                if(version.startsWith("file:")){
+//                    LOGGER.warn("package.json contain an local node_module for {} seems to be located {} npm audit doesn't support this, skip it", name, version.replace("file:", ""));
+//                    continue;
+//                }
+
 
                 final Dependency child;
                 if (f.exists()) {
