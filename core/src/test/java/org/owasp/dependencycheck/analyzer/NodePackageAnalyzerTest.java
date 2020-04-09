@@ -169,7 +169,7 @@ public class NodePackageAnalyzerTest extends BaseTest {
     }
 
     private void testLock() {
-        final boolean isMac = !System.getProperty("os.name").toLowerCase().contains("mac");
+        final boolean isMac = System.getProperty("os.name").toLowerCase().contains("mac");
 
         // test some dependencies
         boolean bracesFound = false;
@@ -193,9 +193,13 @@ public class NodePackageAnalyzerTest extends BaseTest {
                 expandRangeFound = true;
             }
 
-//            if("fake_submodule".equals(dep.getName())){
-//                fail("start with file: need to be skipped because it's a local package");
-//            }
+            if("fake_submodule".equals(dep.getName())){
+                fail("start with file: need to be skipped because it's a local package");
+            }
+
+            if("react-dom".equals(dep.getName())){
+                fail("start with file: need to be skipped because it's a local package");
+            }
 
             if ("dns-sync".equals(dep.getName())) {
                 result = dep;

@@ -268,6 +268,16 @@ public class NodePackageAnalyzer extends AbstractNpmAnalyzer {
         }
     }
 
+
+    /**
+     * should analyser the dependency ?
+     * Will return false if dependency can't be read, or if npm audit doesn't handle it
+     * @param name the name of the dependency
+     * @param version the version of the dependency
+     * @param optional is the dependency optional ?
+     * @param fileExist is the package.json available for this file ?
+     * @return should you skip this dependency ?
+     */
     private static boolean _shouldSkipDependency(String name, String version, boolean optional, boolean fileExist){
         // some package manager can handle alias, yarn for example, but npm doesn't support it
         if(version.startsWith("npm:")){
@@ -290,11 +300,22 @@ public class NodePackageAnalyzer extends AbstractNpmAnalyzer {
         return false;
     }
 
-
+    /**
+     * {@see} _shouldSkipDependency
+     * @param name
+     * @param version
+     * @return
+     */
     public static boolean shouldSkipDependency(String name, String version) {
         return _shouldSkipDependency(name, version, false, true);
     }
 
+    /**
+     * {@see} _shouldSkipDependency
+     * @param name
+     * @param version
+     * @return
+     */
     public static boolean shouldSkipDependency(String name, String version, boolean optional, boolean fileExist) {
         return _shouldSkipDependency(name, version, optional, fileExist);
     }

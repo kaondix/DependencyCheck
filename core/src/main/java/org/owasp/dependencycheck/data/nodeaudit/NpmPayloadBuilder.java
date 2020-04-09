@@ -86,6 +86,9 @@ public final class NpmPayloadBuilder {
                             (oldValue, newValue) -> newValue, TreeMap::new))
                     .entrySet()
                     .forEach((entry) -> {
+                        if(NodePackageAnalyzer.shouldSkipDependency(entry.getKey(), ((JsonString) entry.getValue()).getString())){
+                            return;
+                        }
                         requiresBuilder.add(entry.getKey(), entry.getValue());
                         dependencyMap.put(entry.getKey(), entry.getValue().toString());
                     });
@@ -133,9 +136,13 @@ public final class NpmPayloadBuilder {
                 final String version;
                 if (entry.getValue().getValueType() == JsonValue.ValueType.OBJECT) {
                     final JsonObject dep = ((JsonObject) entry.getValue());
+                    final String name = entry.getKey();
                     version = dep.getString("version");
-                    dependencyMap.put(entry.getKey(), version);
-                    dependenciesBuilder.add(entry.getKey(), buildDependencies(dep, dependencyMap));
+                    if(NodePackageAnalyzer.shouldSkipDependency(name, version)){
+                        return;
+                    }
+                    dependencyMap.put(name, version);
+                    dependenciesBuilder.add(name, buildDependencies(dep, dependencyMap));
                 } else {
                     //TODO I think the following is dead code and no real "dependencies"
                     //     section in a lock file will look like this
