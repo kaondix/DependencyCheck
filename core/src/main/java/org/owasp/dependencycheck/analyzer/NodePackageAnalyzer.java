@@ -268,6 +268,37 @@ public class NodePackageAnalyzer extends AbstractNpmAnalyzer {
         }
     }
 
+    private static boolean _shouldSkipDependency(String name, String version, boolean optional, boolean fileExist){
+        // some package manager can handle alias, yarn for example, but npm doesn't support it
+        if(version.startsWith("npm:")){
+            LOGGER.warn("package.json contain an alias for {} => {} npm audit doesn't support this, skip it", name, version.replace("npm:", ""));
+            return true;
+        }
+
+        if (optional && !fileExist) {
+            LOGGER.warn("node module {} seems optional and not installed, skip it", name);
+            return true;
+        }
+
+        // this seems to produce crash sometimes, I need to tests
+        // using a local node_module is not supported by npm audit, it crash
+        if(version.startsWith("file:")){
+            LOGGER.warn("package.json contain an local node_module for {} seems to be located {} npm audit doesn't support this, skip it", name, version.replace("file:", ""));
+            return true;
+        }
+
+        return false;
+    }
+
+
+    public static boolean shouldSkipDependency(String name, String version) {
+        return _shouldSkipDependency(name, version, false, true);
+    }
+
+    public static boolean shouldSkipDependency(String name, String version, boolean optional, boolean fileExist) {
+        return _shouldSkipDependency(name, version, optional, fileExist);
+    }
+
     /**
      * Process the dependencies in the lock file by first parsing its
      * dependencies and then finding the package.json for the module and adding
@@ -291,30 +322,32 @@ public class NodePackageAnalyzer extends AbstractNpmAnalyzer {
 
                 final File base = Paths.get(baseDir.getPath(), "node_modules", name).toFile();
                 final File f = new File(base, PACKAGE_JSON);
+                Dependency[] dependencies = null;
+                JsonObject jo = null;
 
-                if(entry.getValue().getClass().equals(JsonObject.class)){
-                    final JsonObject jo = (JsonObject) entry.getValue();
+
+                if(entry.getValue() instanceof JsonObject){
+                    jo = (JsonObject) entry.getValue();
                     version = jo.getString("version");
                     optional = jo.getBoolean("optional", false);
-
-                    if (optional && !f.exists()) {
-                        LOGGER.warn("node module {} seems optional and not installed, skip it", name);
-                        continue;
-                    }
-
-                    if (jo.containsKey("dependencies")) {
-                        final String subPackageName = String.format("%s/%s:%s", parentPackage, name, version);
-                        processDependencies(jo, base, rootFile, subPackageName, engine);
-                    }
                 } else {
                     version = ((JsonString) entry.getValue()).getString();
                 }
 
-                // some package manager can handle alias, yarn for example, but npm doesn't support it
-                if(version.startsWith("npm:")){
-                    LOGGER.warn("package.json contain an alias for {} => {} npm audit doesn't support this, skip it", name, version.replace("npm:", ""));
+                if(shouldSkipDependency(name, version, optional, f.exists())){
                     continue;
                 }
+
+                if (null != jo && jo.containsKey("dependencies")) {
+                    final String subPackageName = String.format("%s/%s:%s", parentPackage, name, version);
+                    processDependencies(jo, base, rootFile, subPackageName, engine);
+                }
+
+                // some package manager can handle alias, yarn for example, but npm doesn't support it
+//                if(version.startsWith("npm:")){
+//                    LOGGER.warn("package.json contain an alias for {} => {} npm audit doesn't support this, skip it", name, version.replace("npm:", ""));
+//                    continue;
+//                }
 
                 // this seems to produce crash sometimes, I need to tests
                 // using a local node_module is not supported by npm audit, it crash
