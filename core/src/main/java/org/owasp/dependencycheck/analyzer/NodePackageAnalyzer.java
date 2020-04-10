@@ -270,8 +270,8 @@ public class NodePackageAnalyzer extends AbstractNpmAnalyzer {
 
 
     /**
-     * should analyser the dependency ?
-     * Will return false if dependency can't be read, or if npm audit doesn't handle it
+     * should process the dependency ?
+     * Will return true if you need to skip it . (e.g. dependency can't be read, or if npm audit doesn't handle it)
      * @param name the name of the dependency
      * @param version the version of the dependency
      * @param optional is the dependency optional ?
