@@ -332,7 +332,7 @@ public final class ConnectionFactory {
             }
         } catch (IOException ex) {
             throw new DatabaseException("Unable to create database schema", ex);
-        } catch (NoSuchMethodError ex) {
+        } catch (LinkageError ex) {
             LOGGER.debug(new DefaultQuery(ex).call().toString());
         }
     }
