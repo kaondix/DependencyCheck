@@ -4,21 +4,7 @@
         <notes><![CDATA[
         FP per #2594
         ]]></notes>
-        <packageUrl regex="true">^pkg:maven/ch\.qos\.logback\.contrib/logback\-json\-core@.*$</packageUrl>
-        <cpe>cpe:/a:logback:logback</cpe>
-    </suppress>
-    <suppress base="true">
-        <notes><![CDATA[
-        FP per #2594
-        ]]></notes>
-        <packageUrl regex="true">^pkg:maven/ch\.qos\.logback\.contrib/logback\-jackson@.*$</packageUrl>
-        <cpe>cpe:/a:logback:logback</cpe>
-    </suppress>
-    <suppress>
-        <notes><![CDATA[
-        FP per #2594
-        ]]></notes>
-        <packageUrl regex="true">^pkg:maven/ch\.qos\.logback\.contrib/logback\-json\-classic@.*$</packageUrl>
+        <packageUrl regex="true">^pkg:maven/ch\.qos\.logback\.contrib/.*$</packageUrl>
         <cpe>cpe:/a:logback:logback</cpe>
     </suppress>
     <suppress base="true">
