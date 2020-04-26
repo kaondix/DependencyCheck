@@ -154,8 +154,7 @@ public class ReportGeneratorIT extends BaseDBTestCase {
             createParentFolder(writeJunitTo);
             createParentFolder(writeCsvTo);
 
-            //File struts = new File(this.getClass().getClassLoader().getResource("struts2-core-2.1.2.jar").getPath());
-            File struts = BaseTest.getResourceAsFile(this, "struts.jar");
+            File struts = new File(this.getClass().getClassLoader().getResource("struts2-core-2.1.2.jar").getPath());
             File war = BaseTest.getResourceAsFile(this, "war-4.0.war");
             File cfu = BaseTest.getResourceAsFile(this, "commons-fileupload-1.1.1.jar");
             
