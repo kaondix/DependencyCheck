@@ -278,47 +278,38 @@ public class NodePackageAnalyzer extends AbstractNpmAnalyzer {
      * @param fileExist is the package.json available for this file ?
      * @return should you skip this dependency ?
      */
-    private static boolean _shouldSkipDependency(String name, String version, boolean optional, boolean fileExist){
+    public static boolean shouldSkipDependency(String name, String version, boolean optional, boolean fileExist){
         // some package manager can handle alias, yarn for example, but npm doesn't support it
         if(version.startsWith("npm:")){
-            LOGGER.warn("package.json contain an alias for {} => {} npm audit doesn't support this, skip it", name, version.replace("npm:", ""));
+            //TODO make this an error that gets logged
+            LOGGER.warn("dependency skipped: package.json contain an alias for {} => {} npm audit doesn't support aliases", name, version.replace("npm:", ""));
             return true;
         }
 
         if (optional && !fileExist) {
-            LOGGER.warn("node module {} seems optional and not installed, skip it", name);
+            LOGGER.warn("dependency skipped: node module {} seems optional and not installed", name);
             return true;
         }
 
         // this seems to produce crash sometimes, I need to tests
         // using a local node_module is not supported by npm audit, it crash
         if(version.startsWith("file:")){
-            LOGGER.warn("package.json contain an local node_module for {} seems to be located {} npm audit doesn't support this, skip it", name, version.replace("file:", ""));
+            LOGGER.warn("dependency skipped: package.json contain an local node_module for {} seems to be located {} npm audit doesn't support locally referenced modules", name, version.replace("file:", ""));
             return true;
         }
-
         return false;
     }
 
     /**
-     * {@see} _shouldSkipDependency
+     * @see NodePackageAnalyzer#shouldSkipDependency(java.lang.String, java.lang.String, boolean, boolean)
      * @param name
      * @param version
      * @return
      */
     public static boolean shouldSkipDependency(String name, String version) {
-        return _shouldSkipDependency(name, version, false, true);
+        return shouldSkipDependency(name, version, false, true);
     }
 
-    /**
-     * {@see} _shouldSkipDependency
-     * @param name
-     * @param version
-     * @return
-     */
-    public static boolean shouldSkipDependency(String name, String version, boolean optional, boolean fileExist) {
-        return _shouldSkipDependency(name, version, optional, fileExist);
-    }
 
     /**
      * Process the dependencies in the lock file by first parsing its
@@ -346,7 +337,6 @@ public class NodePackageAnalyzer extends AbstractNpmAnalyzer {
                 Dependency[] dependencies = null;
                 JsonObject jo = null;
 
-
                 if(entry.getValue() instanceof JsonObject){
                     jo = (JsonObject) entry.getValue();
                     version = jo.getString("version");
@@ -363,20 +353,6 @@ public class NodePackageAnalyzer extends AbstractNpmAnalyzer {
                     final String subPackageName = String.format("%s/%s:%s", parentPackage, name, version);
                     processDependencies(jo, base, rootFile, subPackageName, engine);
                 }
-
-                // some package manager can handle alias, yarn for example, but npm doesn't support it
-//                if(version.startsWith("npm:")){
-//                    LOGGER.warn("package.json contain an alias for {} => {} npm audit doesn't support this, skip it", name, version.replace("npm:", ""));
-//                    continue;
-//                }
-
-                // this seems to produce crash sometimes, I need to tests
-                // using a local node_module is not supported by npm audit, it crash
-//                if(version.startsWith("file:")){
-//                    LOGGER.warn("package.json contain an local node_module for {} seems to be located {} npm audit doesn't support this, skip it", name, version.replace("file:", ""));
-//                    continue;
-//                }
-
 
                 final Dependency child;
                 if (f.exists()) {

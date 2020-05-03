@@ -181,23 +181,23 @@ public class NodePackageAnalyzerTest extends BaseTest {
                 fail("fsevents need to be skipped on non mac");
             }
 
-            if("react-dom".equals(dep.getName())){
+            if ("react-dom".equals(dep.getName())) {
                 fail("react-dom need to be skipped because it's an alias");
             }
 
-            if("braces".equals(dep.getName())){
+            if ("braces".equals(dep.getName())) {
                 bracesFound = true;
             }
 
-            if("expand-range".equals(dep.getName())){
+            if ("expand-range".equals(dep.getName())) {
                 expandRangeFound = true;
             }
 
-            if("fake_submodule".equals(dep.getName())){
+            if ("fake_submodule".equals(dep.getName())) {
                 fail("start with file: need to be skipped because it's a local package");
             }
 
-            if("react-dom".equals(dep.getName())){
+            if ("react-dom".equals(dep.getName())) {
                 fail("start with file: need to be skipped because it's a local package");
             }
 
@@ -205,7 +205,6 @@ public class NodePackageAnalyzerTest extends BaseTest {
                 result = dep;
             }
         }
-
 
         assertTrue("need to contain braces", bracesFound);
         //check if dependencies of dependencies are imported
@@ -223,7 +222,6 @@ public class NodePackageAnalyzerTest extends BaseTest {
         // with npm install run on a "non-macOs" system, 90 else
         // dependencies length change often, maybe not a good idea to test the length, check some dependencies instead
         //  assertEquals("Expected 40 dependencies", 40, engine.getDependencies().length);
-
         // shrinkWrap is not removed because the NodeAudit analyzer is enabled
         //assertFalse(shrinkwrap.equals(engine.getDependencies()[0]));
     }
@@ -249,10 +247,8 @@ public class NodePackageAnalyzerTest extends BaseTest {
         assertEquals(shrinkwrap, engine.getDependencies()[0]);
         analyzer.analyze(shrinkwrap, engine);
 
-
         testLock();
     }
-
 
     /**
      * Test of inspect method, of class PythonDistributionAnalyzer.
@@ -268,8 +264,7 @@ public class NodePackageAnalyzerTest extends BaseTest {
         engine.addDependency(packageJson);
         analyzer.analyze(packageJson, engine);
 
-        final boolean isMac = System.getProperty("os.name").toLowerCase() .indexOf("mac") < 0;
-
+        final boolean isMac = System.getProperty("os.name").toLowerCase().indexOf("mac") < 0;
 
         assertEquals("Expected 1 dependencies", 1, engine.getDependencies().length);
     }

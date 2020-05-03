@@ -143,10 +143,7 @@ public class AssemblyAnalyzerTest extends BaseTest {
     public void testWithSettingMono() throws Exception {
 
         //This test doesn't work on Windows.
-        if(System.getProperty("os.name").startsWith("Windows")){
-            return;
-        }
-//        assumeFalse(System.getProperty("os.name").startsWith("Windows"));
+        assumeFalse(System.getProperty("os.name").startsWith("Windows"));
 
         String oldValue = getSettings().getString(Settings.KEYS.ANALYZER_ASSEMBLY_DOTNET_PATH);
         // if oldValue is null, that means that neither the system property nor the setting has
