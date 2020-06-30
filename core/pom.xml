@@ -312,7 +312,7 @@ Copyright (c) 2012 Jeremy Long. All Rights Reserved.
         <dependency>
             <groupId>org.jslipc</groupId>
             <artifactId>jslipc</artifactId>
-            <version>0.2.0</version>
+            <version>0.2.3</version>
             <scope>test</scope>
             <optional>true</optional>
         </dependency>
