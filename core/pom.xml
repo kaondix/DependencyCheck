@@ -319,7 +319,7 @@ Copyright (c) 2012 Jeremy Long. All Rights Reserved.
         <dependency>
             <groupId>org.apache.maven.scm</groupId>
             <artifactId>maven-scm-provider-cvsexe</artifactId>
-            <version>1.8.1</version>
+            <version>1.11.2</version>
             <scope>test</scope>
             <optional>true</optional>
         </dependency>
