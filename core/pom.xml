@@ -347,7 +347,7 @@ Copyright (c) 2012 Jeremy Long. All Rights Reserved.
         <dependency>
             <groupId>net.sf.ehcache</groupId>
             <artifactId>ehcache-core</artifactId>
-            <version>2.2.0</version>
+            <version>2.6.11</version>
             <scope>test</scope>
             <optional>true</optional>
         </dependency>
