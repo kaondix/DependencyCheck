@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Parses json output from `go mod edit -json`.
+ * Parses json output from `go list -json -m all`.
  *
  * @author Matthijs van den Bos
  */
