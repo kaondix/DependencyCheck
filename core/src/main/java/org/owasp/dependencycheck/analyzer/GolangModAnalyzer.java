@@ -304,8 +304,8 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
                 }
             }
             if (!error.toString().equals("")) {
-                LOGGER.warn(error.toString());
-                throw new AnalysisException(error.toString());
+                LOGGER.warn("Warnings from go {}", error.toString());
+                //throw new AnalysisException(error.toString());
             }
             GoModJsonParser.process(process.getInputStream()).forEach(goDep
                     -> engine.addDependency(goDep.toDependency(dependency))
