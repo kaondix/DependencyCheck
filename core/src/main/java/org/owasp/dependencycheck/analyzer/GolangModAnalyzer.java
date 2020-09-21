@@ -126,7 +126,7 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
      */
     private String getGo() {
         final String goPath = getSettings().getString(Settings.KEYS.ANALYZER_GOLANG_PATH);
-        
+
         if (goPath == null) {
             LOGGER.warn(
                     "Path to `go` executable not set. Trying default location. If you do want to set it, please set the `{}` property",
@@ -139,34 +139,39 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
                 return goFile.getAbsolutePath();
             }
         }
-        
+
         LOGGER.warn("Path to `go` exec executable does not exist: {}. Trying default location", goPath);
         return "go";
     }
 
-    
-        /**
+    /**
      * Launches `go mod help` to test if go is installed.
      *
      * @return a reference to the launched process
      * @throws AnalysisException thrown if there is an issue launching `go mod`
      */
-    private Process testGoMod() throws AnalysisException {
+    private Process testGoMod(File folder) throws AnalysisException {
+        if (!folder.isDirectory()) {
+            throw new AnalysisException(String.format("%s should have been a directory.", folder.getAbsolutePath()));
+        }
+
         final List<String> args = new ArrayList<>();
         args.add(getGo());
         args.add("mod");
-        args.add("help");
-        
+        args.add("edit");
+        args.add("-json");
+
         final ProcessBuilder builder = new ProcessBuilder(args);
+        builder.directory(folder);
         try {
-            LOGGER.info("Launching: {}", args);
+            LOGGER.info("Launching: {} from {}", args, folder);
             return builder.start();
         } catch (IOException ioe) {
             throw new AnalysisException("go initialization failure; this error can be ignored if you are not analyzing Go. "
                     + "Otherwise ensure that go is installed and the path to go is correctly specified", ioe);
         }
     }
-    
+
     /**
      * Launches `go mod` in the given folder.
      *
@@ -178,15 +183,14 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
         if (!folder.isDirectory()) {
             throw new AnalysisException(String.format("%s should have been a directory.", folder.getAbsolutePath()));
         }
-        
+
         final List<String> args = new ArrayList<>();
         args.add(getGo());
-        args.add("mod");
         args.add("list");
         args.add("-json");
         args.add("-m");
         args.add("all");
-        
+
         final ProcessBuilder builder = new ProcessBuilder(args);
         builder.directory(folder);
         try {
@@ -211,12 +215,14 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
         setEnabled(false);
         final Process process;
         try {
-            process = testGoMod();
+            process = testGoMod(getSettings().getTempDirectory());
         } catch (AnalysisException ae) {
             final String msg = String.format("Exception from go process: %s. Disabling %s", ae.getCause(), ANALYZER_NAME);
             throw new InitializationException(msg, ae);
+        } catch (IOException ex) {
+            throw new InitializationException("Unable to create temporary file, the Go Mod Analyzer will be disabled", ex);
         }
-        
+
         final int exitValue;
         try {
             exitValue = process.waitFor();
@@ -225,11 +231,11 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
             Thread.currentThread().interrupt();
             throw new InitializationException(msg);
         }
-        
+
         final int expectedNoModuleFoundExitValue = 1;
         final int possiblyGoTooOldExitValue = 2;
         final int goExecutableNotFoundExitValue = 127;
-        
+
         switch (exitValue) {
             case expectedNoModuleFoundExitValue:
                 setEnabled(true);
@@ -275,9 +281,10 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
      */
     @Override
     protected void analyzeDependency(Dependency dependency, Engine engine) throws AnalysisException {
+        //engine.removeDependency(dependency);
         final File parentFile = dependency.getActualFile().getParentFile();
         final Process process = launchGoMod(parentFile);
-        
+
         final int exitValue;
         try {
             exitValue = process.waitFor();
@@ -300,9 +307,7 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
                 LOGGER.warn(error.toString());
                 throw new AnalysisException(error.toString());
             }
-            final GoModJsonParser parser = new GoModJsonParser(process.getInputStream());
-            parser.process();
-            parser.getDependencies().forEach(goDep
+            GoModJsonParser.process(process.getInputStream()).forEach(goDep
                     -> engine.addDependency(goDep.toDependency(dependency))
             );
         } catch (IOException ioe) {
