@@ -164,6 +164,7 @@ public class PipfileAnalyzer extends AbstractFileTypeAnalyzer {
                     d.setSha1sum(Checksum.getSHA1Checksum(filePath));
                     d.setSha256sum(Checksum.getSHA256Checksum(filePath));
                     d.setMd5sum(Checksum.getMD5Checksum(filePath));
+                    d.addEvidence(EvidenceType.VENDOR, REQUIREMENTS, "vendor", identifiedPackage, Confidence.HIGHEST);
                     d.addEvidence(EvidenceType.PRODUCT, REQUIREMENTS, "product", identifiedPackage, Confidence.HIGHEST);
                     d.addEvidence(EvidenceType.VERSION, REQUIREMENTS, "version", identifiedVersion, Confidence.HIGHEST);
                     engine.addDependency(d);
