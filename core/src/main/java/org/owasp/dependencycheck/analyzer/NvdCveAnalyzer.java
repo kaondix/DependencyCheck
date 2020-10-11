@@ -142,7 +142,14 @@ public class NvdCveAnalyzer extends AbstractAnalyzer {
         dependency.addVulnerabilities(vulns);
     }
 
-    private List<Vulnerability>  filterEcosystem(String ecosystem, List<Vulnerability> vulnerabilities) {
+    /**
+     * Filters the list of vulnerabilities for the given ecosystem.
+     *
+     * @param ecosystem the dependency's ecosystem
+     * @param vulnerabilities the list of vulnerabilities to filter
+     * @return the filtered list of vulnerabilities
+     */
+    private List<Vulnerability> filterEcosystem(String ecosystem, List<Vulnerability> vulnerabilities) {
         List<Vulnerability> remove = new ArrayList<>();
         vulnerabilities.forEach((v) -> {
             boolean found = false;
@@ -168,6 +175,16 @@ public class NvdCveAnalyzer extends AbstractAnalyzer {
         return vulnerabilities;
     }
 
+    /**
+     * Determines if the target software matches the given ecosystem. Currently,
+     * this is very Node JS specific and broadly returns matches for everything
+     * else.
+     *
+     * @param ecosystem the ecosystem to match against
+     * @param targetSoftware the target software from the NVD
+     * @return <code>true</code> if there is a match; otherwise
+     * <code>false</code>
+     */
     private boolean ecosystemMatchesTargetSoftware(String ecosystem, String targetSoftware) {
         if ("*".equals(targetSoftware) || "-".equals(targetSoftware)) {
             return true;
