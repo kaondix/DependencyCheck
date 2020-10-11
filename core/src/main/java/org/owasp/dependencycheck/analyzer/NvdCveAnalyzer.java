@@ -17,17 +17,20 @@
  */
 package org.owasp.dependencycheck.analyzer;
 
+import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.concurrent.ThreadSafe;
 
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.analyzer.exception.LambdaExceptionWrapper;
+import org.owasp.dependencycheck.data.nvd.ecosystem.Ecosystem;
 import org.owasp.dependencycheck.data.nvdcve.CveDB;
 import org.owasp.dependencycheck.data.nvdcve.DatabaseException;
 import org.owasp.dependencycheck.dependency.Dependency;
 import org.owasp.dependencycheck.dependency.Vulnerability;
 import org.owasp.dependencycheck.dependency.Vulnerability.Source;
+import org.owasp.dependencycheck.dependency.VulnerableSoftware;
 import org.owasp.dependencycheck.dependency.naming.CpeIdentifier;
 import org.owasp.dependencycheck.utils.Settings;
 
@@ -59,8 +62,9 @@ public class NvdCveAnalyzer extends AbstractAnalyzer {
                     .map(i -> (CpeIdentifier) i)
                     .forEach(i -> {
                         try {
-                            final List<Vulnerability> vulns = cveDB.getVulnerabilities(i.getCpe());
-                            if ("npm".equals(dependency.getEcosystem())) {
+                            final List<Vulnerability> vulns = filterEcosystem(dependency.getEcosystem(), cveDB.getVulnerabilities(i.getCpe()));
+
+                            if (Ecosystem.NODEJS.equals(dependency.getEcosystem())) {
                                 replaceOrAddVulnerability(dependency, vulns);
                             } else {
                                 dependency.addVulnerabilities(vulns);
@@ -136,5 +140,55 @@ public class NvdCveAnalyzer extends AbstractAnalyzer {
             });
         });
         dependency.addVulnerabilities(vulns);
+    }
+
+    private List<Vulnerability>  filterEcosystem(String ecosystem, List<Vulnerability> vulnerabilities) {
+        List<Vulnerability> remove = new ArrayList<>();
+        vulnerabilities.forEach((v) -> {
+            boolean found = false;
+            List<VulnerableSoftware> removeSoftare = new ArrayList<>();
+            for (VulnerableSoftware s : v.getVulnerableSoftware()) {
+                if (ecosystemMatchesTargetSoftware(ecosystem, s.getTargetSw())) {
+                    found = true;
+                } else {
+                    removeSoftare.add(s);
+                }
+            }
+            if (found) {
+                if (!removeSoftare.isEmpty()) {
+                    v.getVulnerableSoftware().removeAll(removeSoftare);
+                }
+            } else {
+                remove.add(v);
+            }
+        });
+        if (!remove.isEmpty()) {
+            vulnerabilities.removeAll(remove);
+        }
+        return vulnerabilities;
+    }
+
+    private boolean ecosystemMatchesTargetSoftware(String ecosystem, String targetSoftware) {
+        if ("*".equals(targetSoftware) || "-".equals(targetSoftware)) {
+            return true;
+        }
+        if (Ecosystem.NODEJS.equals(ecosystem)) {
+            switch (targetSoftware.toLowerCase()) {
+                case "nodejs":
+                    return true;
+                case "node.js":
+                    return true;
+                //not actually in NVD...just future proofing
+                case "npm":
+                    return true;
+                case "node_js":
+                    return true;
+                case "node-js":
+                    return true;
+                default:
+                    return false;
+            }
+        }
+        return true;
     }
 }
