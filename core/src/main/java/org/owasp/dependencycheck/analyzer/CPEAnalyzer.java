@@ -601,6 +601,11 @@ public class CPEAnalyzer extends AbstractAnalyzer {
         return isValid;
     }
 
+    /**
+     * Only returns alpha numeric characters contained in a given package name.
+     * @param name the package name to cleanse
+     * @return the cleansed packaage name
+     */
     private String cleanPackageName(String name) {
         if (name == null) {
             return "";
