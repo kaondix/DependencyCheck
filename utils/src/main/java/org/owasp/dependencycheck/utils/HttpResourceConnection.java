@@ -78,13 +78,14 @@ public class HttpResourceConnection implements AutoCloseable {
     private boolean usesProxy;
 
     /**
-     *  The settings key for the username to be used.
+     * The settings key for the username to be used.
      */
     private String userKey = null;
     /**
      * The settings key for the password to be used.
      */
     private String passwordKey = null;
+
     /**
      * Constructs a new HttpResourceConnection object.
      *
@@ -198,7 +199,7 @@ public class HttpResourceConnection implements AutoCloseable {
         try {
             LOGGER.debug("Attempting retrieval of {}", url.toString());
             conn = connFactory.createHttpURLConnection(url, this.usesProxy);
-            if (userKey!=null && passwordKey !=null) {
+            if (userKey != null && passwordKey != null) {
                 connFactory.addBasicAuthentication(conn, userKey, passwordKey);
             }
             conn.setRequestProperty("Accept-Encoding", "gzip, deflate");
