@@ -1,9 +1,9 @@
-DROP USER dcuser CASCADE;
-CREATE USER dcuser IDENTIFIED BY "DC-Pass1337!";
-GRANT UNLIMITED TABLESPACE TO dcuser;
-GRANT CREATE SESSION to dcuser;
+-- DROP USER dcuser CASCADE;
+-- CREATE USER dcuser IDENTIFIED BY "DC-Pass1337!";
+-- GRANT UNLIMITED TABLESPACE TO dcuser;
+-- GRANT CREATE SESSION to dcuser;
 
-ALTER SESSION SET CURRENT_SCHEMA=dcuser;
+-- ALTER SESSION SET CURRENT_SCHEMA=dcuser;
 
 
 
@@ -313,24 +313,31 @@ CREATE OR REPLACE PROCEDURE insert_software(p_vulnerabilityId IN software.cveid%
                                  p_versionStartExcluding IN software.versionStartExcluding%type,
                                  p_versionStartIncluding IN software.versionStartIncluding%type,
                                  p_vulnerable IN software.vulnerable%type) AS
-    cpeId INT := 0;
+    cpeId INT;
     currentEcosystem VARCHAR(255);
 BEGIN
-    SELECT id, ecosystem
-    INTO cpeId, currentEcosystem
-    FROM cpeEntry
-    WHERE part = p_part
-      AND vendor = p_vendor
-      AND product = p_product
-      AND version = p_version
-      AND update_version = p_update_version
-      AND edition = p_edition
-      AND lang = p_lang
-      AND sw_edition = p_sw_edition
-      AND target_sw = p_target_sw
-      AND target_hw = p_target_hw
-      AND other = p_other;
-    SELECT COALESCE(cpeId,0) INTO cpeId FROM DUAL;
+    BEGIN
+        SELECT id, ecosystem
+        INTO cpeId, currentEcosystem
+        FROM cpeEntry
+        WHERE part = p_part
+          AND vendor = p_vendor
+          AND product = p_product
+          AND version = p_version
+          AND update_version = p_update_version
+          AND edition = p_edition
+          AND lang = p_lang
+          AND sw_edition = p_sw_edition
+          AND target_sw = p_target_sw
+          AND target_hw = p_target_hw
+          AND other = p_other;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+           cpeId := 0;
+           currentEcosystem := NULL;
+        WHEN OTHERS THEN
+           RAISE;
+    END;
 
     IF cpeId > 0 THEN
         IF currentEcosystem IS NULL AND p_ecosystem IS NOT NULL THEN
