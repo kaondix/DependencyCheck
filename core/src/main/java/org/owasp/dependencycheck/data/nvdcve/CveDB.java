@@ -924,10 +924,6 @@ public final class CveDB implements AutoCloseable {
             if (callUpdate == null) {
                 throw new SQLException("Database query does not exist in the resource bundle: " + UPDATE_VULNERABILITY);
             }
-            int parmOffset = 0;
-            if (isOracle) {
-                parmOffset = 1; // first parameter for Oracle is the return value (OUT parameter) of the stored procedure
-            }
 //            String 1.cve, String 2.description, String 3.v2Severity, Float 4.v2ExploitabilityScore,
 //            Float 5.v2ImpactScore, Boolean 6.v2AcInsufInfo, Boolean 7.v2ObtainAllPrivilege,
 //            Boolean 8.v2ObtainUserPrivilege, Boolean 9.v2ObtainOtherPrivilege, Boolean 10.v2UserInteractionRequired,
@@ -938,87 +934,86 @@ public final class CveDB implements AutoCloseable {
 //            String 23.v3PrivilegesRequired, String 24.v3UserInteraction, String 25.v3Scope,
 //            String 26.v3ConfidentialityImpact, String 27.v3IntegrityImpact, String 28.v3AvailabilityImpact,
 //            Float 29.v3BaseScore, String 30.v3BaseSeverity, String 31.v3Version
-//            For Oracle due to the return-value parameter all offsets are 1 higher
-            callUpdate.setString(1+parmOffset, cve.getCve().getCVEDataMeta().getId());
-            callUpdate.setString(2+parmOffset, description);
+            callUpdate.setString(1, cve.getCve().getCVEDataMeta().getId());
+            callUpdate.setString(2, description);
             if (cve.getImpact().getBaseMetricV2() != null) {
                 final BaseMetricV2 cvssv2 = cve.getImpact().getBaseMetricV2();
                 Map<String, Object> props = cvssv2.getAdditionalProperties();
-                callUpdate.setString(3+parmOffset, cvssv2.getSeverity());
-                setFloatValue(callUpdate, 4+parmOffset, props, "exploitabilityScore");
-                setFloatValue(callUpdate, 5+parmOffset, props, "impactScore");
-                setBooleanValue(callUpdate, 6+parmOffset, props, "acInsufInfo");
-                setBooleanValue(callUpdate, 7+parmOffset, props, "obtainAllPrivilege");
-                setBooleanValue(callUpdate, 8+parmOffset, props, "obtainUserPrivilege");
-                setBooleanValue(callUpdate, 9+parmOffset, props, "obtainOtherPrivilege");
-                setBooleanValue(callUpdate, 10+parmOffset, props, "userInteractionRequired");
-                callUpdate.setFloat(11+parmOffset, cvssv2.getCvssV2().getBaseScore().floatValue());
-                callUpdate.setString(12+parmOffset, cvssv2.getCvssV2().getAccessVector().value());
-                callUpdate.setString(13+parmOffset, cvssv2.getCvssV2().getAccessComplexity().value());
-                callUpdate.setString(14+parmOffset, cvssv2.getCvssV2().getAuthentication().value());
-                callUpdate.setString(15+parmOffset, cvssv2.getCvssV2().getConfidentialityImpact().value());
-                callUpdate.setString(16+parmOffset, cvssv2.getCvssV2().getIntegrityImpact().value());
-                callUpdate.setString(17+parmOffset, cvssv2.getCvssV2().getAvailabilityImpact().value());
+                callUpdate.setString(3, cvssv2.getSeverity());
+                setFloatValue(callUpdate, 4, props, "exploitabilityScore");
+                setFloatValue(callUpdate, 5, props, "impactScore");
+                setBooleanValue(callUpdate, 6, props, "acInsufInfo");
+                setBooleanValue(callUpdate, 7, props, "obtainAllPrivilege");
+                setBooleanValue(callUpdate, 8, props, "obtainUserPrivilege");
+                setBooleanValue(callUpdate, 9, props, "obtainOtherPrivilege");
+                setBooleanValue(callUpdate, 10, props, "userInteractionRequired");
+                callUpdate.setFloat(11, cvssv2.getCvssV2().getBaseScore().floatValue());
+                callUpdate.setString(12, cvssv2.getCvssV2().getAccessVector().value());
+                callUpdate.setString(13, cvssv2.getCvssV2().getAccessComplexity().value());
+                callUpdate.setString(14, cvssv2.getCvssV2().getAuthentication().value());
+                callUpdate.setString(15, cvssv2.getCvssV2().getConfidentialityImpact().value());
+                callUpdate.setString(16, cvssv2.getCvssV2().getIntegrityImpact().value());
+                callUpdate.setString(17, cvssv2.getCvssV2().getAvailabilityImpact().value());
                 props = cvssv2.getCvssV2().getAdditionalProperties();
-                setStringValue(callUpdate, 18+parmOffset, props, "version");
+                setStringValue(callUpdate, 18, props, "version");
             } else {
-                callUpdate.setNull(3+parmOffset, java.sql.Types.NULL);
-                callUpdate.setNull(4+parmOffset, java.sql.Types.NULL);
-                callUpdate.setNull(5+parmOffset, java.sql.Types.NULL);
-                callUpdate.setNull(6+parmOffset, java.sql.Types.NULL);
-                callUpdate.setNull(7+parmOffset, java.sql.Types.NULL);
-                callUpdate.setNull(8+parmOffset, java.sql.Types.NULL);
-                callUpdate.setNull(9+parmOffset, java.sql.Types.NULL);
-                callUpdate.setNull(10+parmOffset, java.sql.Types.NULL);
-                callUpdate.setNull(11+parmOffset, java.sql.Types.NULL);
-                callUpdate.setNull(12+parmOffset, java.sql.Types.NULL);
-                callUpdate.setNull(13+parmOffset, java.sql.Types.NULL);
-                callUpdate.setNull(14+parmOffset, java.sql.Types.NULL);
-                callUpdate.setNull(15+parmOffset, java.sql.Types.NULL);
-                callUpdate.setNull(16+parmOffset, java.sql.Types.NULL);
-                callUpdate.setNull(17+parmOffset, java.sql.Types.NULL);
-                callUpdate.setNull(18+parmOffset, java.sql.Types.NULL);
+                callUpdate.setNull(3, java.sql.Types.NULL);
+                callUpdate.setNull(4, java.sql.Types.NULL);
+                callUpdate.setNull(5, java.sql.Types.NULL);
+                callUpdate.setNull(6, java.sql.Types.NULL);
+                callUpdate.setNull(7, java.sql.Types.NULL);
+                callUpdate.setNull(8, java.sql.Types.NULL);
+                callUpdate.setNull(9, java.sql.Types.NULL);
+                callUpdate.setNull(10, java.sql.Types.NULL);
+                callUpdate.setNull(11, java.sql.Types.NULL);
+                callUpdate.setNull(12, java.sql.Types.NULL);
+                callUpdate.setNull(13, java.sql.Types.NULL);
+                callUpdate.setNull(14, java.sql.Types.NULL);
+                callUpdate.setNull(15, java.sql.Types.NULL);
+                callUpdate.setNull(16, java.sql.Types.NULL);
+                callUpdate.setNull(17, java.sql.Types.NULL);
+                callUpdate.setNull(18, java.sql.Types.NULL);
             }
             if (cve.getImpact().getBaseMetricV3() != null) {
                 final BaseMetricV3 cvssv3 = cve.getImpact().getBaseMetricV3();
                 Map<String, Object> props = cvssv3.getAdditionalProperties();
-                setFloatValue(callUpdate, 19+parmOffset, props, "exploitabilityScore");
-                setFloatValue(callUpdate, 20+parmOffset, props, "impactScore");
+                setFloatValue(callUpdate, 19, props, "exploitabilityScore");
+                setFloatValue(callUpdate, 20, props, "impactScore");
 
-                callUpdate.setString(21+parmOffset, cvssv3.getCvssV3().getAttackVector().value());
-                callUpdate.setString(22+parmOffset, cvssv3.getCvssV3().getAttackComplexity().value());
-                callUpdate.setString(23+parmOffset, cvssv3.getCvssV3().getPrivilegesRequired().value());
-                callUpdate.setString(24+parmOffset, cvssv3.getCvssV3().getUserInteraction().value());
-                callUpdate.setString(25+parmOffset, cvssv3.getCvssV3().getScope().value());
-                callUpdate.setString(26+parmOffset, cvssv3.getCvssV3().getConfidentialityImpact().value());
-                callUpdate.setString(27+parmOffset, cvssv3.getCvssV3().getIntegrityImpact().value());
-                callUpdate.setString(28+parmOffset, cvssv3.getCvssV3().getAvailabilityImpact().value());
-                callUpdate.setFloat(29+parmOffset, cvssv3.getCvssV3().getBaseScore().floatValue());
-                callUpdate.setString(30+parmOffset, cvssv3.getCvssV3().getBaseSeverity().value());
+                callUpdate.setString(21, cvssv3.getCvssV3().getAttackVector().value());
+                callUpdate.setString(22, cvssv3.getCvssV3().getAttackComplexity().value());
+                callUpdate.setString(23, cvssv3.getCvssV3().getPrivilegesRequired().value());
+                callUpdate.setString(24, cvssv3.getCvssV3().getUserInteraction().value());
+                callUpdate.setString(25, cvssv3.getCvssV3().getScope().value());
+                callUpdate.setString(26, cvssv3.getCvssV3().getConfidentialityImpact().value());
+                callUpdate.setString(27, cvssv3.getCvssV3().getIntegrityImpact().value());
+                callUpdate.setString(28, cvssv3.getCvssV3().getAvailabilityImpact().value());
+                callUpdate.setFloat(29, cvssv3.getCvssV3().getBaseScore().floatValue());
+                callUpdate.setString(30, cvssv3.getCvssV3().getBaseSeverity().value());
 
                 props = cvssv3.getCvssV3().getAdditionalProperties();
-                setStringValue(callUpdate, 31+parmOffset, props, "version");
+                setStringValue(callUpdate, 31, props, "version");
             } else {
-                callUpdate.setNull(19+parmOffset, java.sql.Types.NULL);
-                callUpdate.setNull(20+parmOffset, java.sql.Types.NULL);
-                callUpdate.setNull(21+parmOffset, java.sql.Types.NULL);
-                callUpdate.setNull(22+parmOffset, java.sql.Types.NULL);
-                callUpdate.setNull(23+parmOffset, java.sql.Types.NULL);
-                callUpdate.setNull(24+parmOffset, java.sql.Types.NULL);
-                callUpdate.setNull(25+parmOffset, java.sql.Types.NULL);
-                callUpdate.setNull(26+parmOffset, java.sql.Types.NULL);
-                callUpdate.setNull(27+parmOffset, java.sql.Types.NULL);
-                callUpdate.setNull(28+parmOffset, java.sql.Types.NULL);
-                callUpdate.setNull(29+parmOffset, java.sql.Types.NULL);
-                callUpdate.setNull(30+parmOffset, java.sql.Types.NULL);
-                callUpdate.setNull(31+parmOffset, java.sql.Types.NULL);
+                callUpdate.setNull(19, java.sql.Types.NULL);
+                callUpdate.setNull(20, java.sql.Types.NULL);
+                callUpdate.setNull(21, java.sql.Types.NULL);
+                callUpdate.setNull(22, java.sql.Types.NULL);
+                callUpdate.setNull(23, java.sql.Types.NULL);
+                callUpdate.setNull(24, java.sql.Types.NULL);
+                callUpdate.setNull(25, java.sql.Types.NULL);
+                callUpdate.setNull(26, java.sql.Types.NULL);
+                callUpdate.setNull(27, java.sql.Types.NULL);
+                callUpdate.setNull(28, java.sql.Types.NULL);
+                callUpdate.setNull(29, java.sql.Types.NULL);
+                callUpdate.setNull(30, java.sql.Types.NULL);
+                callUpdate.setNull(31, java.sql.Types.NULL);
             }
             if (isOracle) {
                 try {
                     CallableStatement cs = (CallableStatement) callUpdate;
-                    cs.registerOutParameter(1, JDBCType.INTEGER);
+                    cs.registerOutParameter(32, JDBCType.INTEGER);
                     cs.executeUpdate();
-                    vulnerabilityId = cs.getInt(1);
+                    vulnerabilityId = cs.getInt(32);
                 } catch (SQLException ex) {
                     final String msg = String.format("Unable to retrieve id for new vulnerability for '%s'", cve.getCve().getCVEDataMeta().getId());
                     throw new DatabaseException(msg, ex);

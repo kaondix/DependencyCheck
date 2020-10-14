@@ -1,6 +1,11 @@
--- DROP USER dcuser;
--- CREATE USER dcuser IDENTIFIED BY "DC-Pass1337!";
--- ALTER SESSION SET CURRENT_SCHEMA=dcuser;
+DROP USER dcuser CASCADE;
+CREATE USER dcuser IDENTIFIED BY "DC-Pass1337!";
+GRANT UNLIMITED TABLESPACE TO dcuser;
+GRANT CREATE SESSION to dcuser;
+
+ALTER SESSION SET CURRENT_SCHEMA=dcuser;
+
+
 
 BEGIN
   EXECUTE IMMEDIATE 'DROP SEQUENCE vulnerability_seq';
@@ -140,21 +145,21 @@ CREATE SEQUENCE vulnerability_seq;
 
 CREATE OR REPLACE TRIGGER VULNERABILITY_TRG
 BEFORE INSERT
-ON VULNERABILITY
+ON vulnerability
 REFERENCING NEW AS New OLD AS Old
 FOR EACH ROW
 BEGIN
-  :new.ID := VULNERABILITY_SEQ.nextval;
+  :new.ID := vulnerability_seq.nextval;
 END VULNERABILITY_TRG;
 /
 
 CREATE OR REPLACE TRIGGER CPEENTRY_TRG
 BEFORE INSERT
-ON CPEENTRY
+ON cpeEntry
 REFERENCING NEW AS New OLD AS Old
 FOR EACH ROW
 BEGIN
-  :new.ID := CPEENTRY_SEQ.nextval;
+  :new.ID := cpeEntry_seq.nextval;
 END CPEENTRY_TRG;
 /
 
@@ -325,6 +330,7 @@ BEGIN
       AND target_sw = p_target_sw
       AND target_hw = p_target_hw
       AND other = p_other;
+    SELECT COALESCE(cpeId,0) INTO cpeId FROM DUAL;
 
     IF cpeId > 0 THEN
         IF currentEcosystem IS NULL AND p_ecosystem IS NOT NULL THEN
