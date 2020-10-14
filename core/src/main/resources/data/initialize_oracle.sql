@@ -313,8 +313,8 @@ CREATE OR REPLACE PROCEDURE insert_software(p_vulnerabilityId IN software.cveid%
                                  p_versionStartExcluding IN software.versionStartExcluding%type,
                                  p_versionStartIncluding IN software.versionStartIncluding%type,
                                  p_vulnerable IN software.vulnerable%type) AS
-    cpeId INT;
-    currentEcosystem VARCHAR(255);
+    cpeId cpeEntry.id%type;
+    currentEcosystem cpeEntry.ecosystem%type;
 BEGIN
     BEGIN
         SELECT id, ecosystem
