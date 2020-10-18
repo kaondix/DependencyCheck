@@ -186,14 +186,6 @@ END;
 
 GRANT EXECUTE ON merge_ecosystem TO dcuser;
 
-CREATE OR REPLACE PROCEDURE cleanup_orphans AS
-BEGIN
-    DELETE FROM cpeEntry WHERE id not in (SELECT CPEEntryId FROM software);
-END;
-/
-
-GRANT EXECUTE ON cleanup_orphans TO dcuser;
-
 CREATE OR REPLACE PROCEDURE update_vulnerability(p_cveId IN vulnerability.cve%type,
                                       p_description IN vulnerability.description%type,
                                       p_v2Severity IN vulnerability.v2Severity%type,
@@ -228,8 +220,8 @@ CREATE OR REPLACE PROCEDURE update_vulnerability(p_cveId IN vulnerability.cve%ty
                                       vulnerabilityId OUT vulnerability.id%type)
                                        AS
 BEGIN
-    SELECT MAX(id) INTO vulnerabilityId FROM (SELECT id FROM vulnerability WHERE cve = p_cveId UNION ALL SELECT 0 AS id from DUAL);
-    IF vulnerabilityId > 0 THEN
+    BEGIN
+        SELECT id into vulnerabilityId FROM vulnerability WHERE cve = p_cveId;
         DELETE FROM reference WHERE cveid = vulnerabilityId;
         DELETE FROM software WHERE cveid = vulnerabilityId;
         DELETE FROM cweEntry WHERE cveid = vulnerabilityId;
@@ -265,31 +257,34 @@ BEGIN
             v3BaseSeverity=p_v3BaseSeverity,
             v3Version=p_v3Version
         WHERE id = vulnerabilityId;
-    ELSE
-        INSERT INTO vulnerability (cve, description,
-                                   v2Severity, v2ExploitabilityScore,
-                                   v2ImpactScore, v2AcInsufInfo, v2ObtainAllPrivilege,
-                                   v2ObtainUserPrivilege, v2ObtainOtherPrivilege, v2UserInteractionRequired,
-                                   v2Score, v2AccessVector, v2AccessComplexity,
-                                   v2Authentication, v2ConfidentialityImpact, v2IntegrityImpact,
-                                   v2AvailabilityImpact, v2Version, v3ExploitabilityScore,
-                                   v3ImpactScore, v3AttackVector, v3AttackComplexity,
-                                   v3PrivilegesRequired, v3UserInteraction, v3Scope,
-                                   v3ConfidentialityImpact, v3IntegrityImpact, v3AvailabilityImpact,
-                                   v3BaseScore, v3BaseSeverity, v3Version)
-        VALUES (p_cveId, p_description,
-                p_v2Severity, p_v2ExploitabilityScore,
-                p_v2ImpactScore, p_v2AcInsufInfo, p_v2ObtainAllPrivilege,
-                p_v2ObtainUserPrivilege, p_v2ObtainOtherPrivilege, p_v2UserInteractionRequired,
-                p_v2Score, p_v2AccessVector, p_v2AccessComplexity,
-                p_v2Authentication, p_v2ConfidentialityImpact, p_v2IntegrityImpact,
-                p_v2AvailabilityImpact, p_v2Version, p_v3ExploitabilityScore,
-                p_v3ImpactScore, p_v3AttackVector, p_v3AttackComplexity,
-                p_v3PrivilegesRequired, p_v3UserInteraction, p_v3Scope,
-                p_v3ConfidentialityImpact, p_v3IntegrityImpact, p_v3AvailabilityImpact,
-                p_v3BaseScore, p_v3BaseSeverity, p_v3Version)
-        RETURNING id INTO vulnerabilityId;
-    END IF;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            INSERT INTO vulnerability (cve, description,
+                                       v2Severity, v2ExploitabilityScore,
+                                       v2ImpactScore, v2AcInsufInfo, v2ObtainAllPrivilege,
+                                       v2ObtainUserPrivilege, v2ObtainOtherPrivilege, v2UserInteractionRequired,
+                                       v2Score, v2AccessVector, v2AccessComplexity,
+                                       v2Authentication, v2ConfidentialityImpact, v2IntegrityImpact,
+                                       v2AvailabilityImpact, v2Version, v3ExploitabilityScore,
+                                       v3ImpactScore, v3AttackVector, v3AttackComplexity,
+                                       v3PrivilegesRequired, v3UserInteraction, v3Scope,
+                                       v3ConfidentialityImpact, v3IntegrityImpact, v3AvailabilityImpact,
+                                       v3BaseScore, v3BaseSeverity, v3Version)
+            VALUES (p_cveId, p_description,
+                    p_v2Severity, p_v2ExploitabilityScore,
+                    p_v2ImpactScore, p_v2AcInsufInfo, p_v2ObtainAllPrivilege,
+                    p_v2ObtainUserPrivilege, p_v2ObtainOtherPrivilege, p_v2UserInteractionRequired,
+                    p_v2Score, p_v2AccessVector, p_v2AccessComplexity,
+                    p_v2Authentication, p_v2ConfidentialityImpact, p_v2IntegrityImpact,
+                    p_v2AvailabilityImpact, p_v2Version, p_v3ExploitabilityScore,
+                    p_v3ImpactScore, p_v3AttackVector, p_v3AttackComplexity,
+                    p_v3PrivilegesRequired, p_v3UserInteraction, p_v3Scope,
+                    p_v3ConfidentialityImpact, p_v3IntegrityImpact, p_v3AvailabilityImpact,
+                    p_v3BaseScore, p_v3BaseSeverity, p_v3Version)
+            RETURNING id INTO vulnerabilityId;
+        WHEN OTHERS THEN
+            RAISE;
+    END;
 END;
 /
 
@@ -396,27 +391,5 @@ CREATE OR REPLACE VIEW v_update_ecosystems AS
     FROM cpeEntry e INNER JOIN cpeEcosystemCache c
     ON c.vendor=e.vendor
         AND c.product=e.product;
-
-
-CREATE OR REPLACE PROCEDURE update_ecosystems AS
-BEGIN
-    UPDATE v_update_ecosystems
-    SET entryEco=cachedEco
-    WHERE entryEco IS NULL AND cachedEco <>'MULTIPLE';
-END;
-/
-
-GRANT EXECUTE ON update_ecosystems TO dcuser;
-
-CREATE OR REPLACE PROCEDURE update_ecosystems2 AS
-BEGIN
-    UPDATE v_update_ecosystems
-    SET entryEco = NULL
-    WHERE cachedEco = 'MULTIPLE'
-    AND entryEco IS NOT NULL;
-END;
-/
-
-GRANT EXECUTE ON update_ecosystems2 TO dcuser;
 
 INSERT INTO properties(id,value) VALUES ('version','5.0');
