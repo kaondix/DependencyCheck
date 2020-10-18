@@ -123,6 +123,7 @@ public final class CveDB implements AutoCloseable {
      */
     private final CveItemOperator cveItemConverter = new CveItemOperator();
     private boolean isOracle=false;
+    private boolean lowDefaultFetch=false;
 
     /**
      * The enumeration value names must match the keys of the statements in the
@@ -364,6 +365,11 @@ public final class CveDB implements AutoCloseable {
                 preparedStatement = connection.prepareCall(statementString);
             } else {
                 preparedStatement = connection.prepareStatement(statementString);
+            }
+            if (isOracle) {
+                // Oracle has a default fetch-size of 10; MariaDB, MySQL, SQLServer and PostgreSQL by default cache the full
+                // resultset at the client https://venkatsadasivam.com/2009/02/01/jdbc-performance-tuning-with-optimal-fetch-size/
+                preparedStatement.setFetchSize(10_000);
             }
 //            }
         } catch (SQLException ex) {
