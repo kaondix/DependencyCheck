@@ -17,7 +17,7 @@
                 <include>*.sh</include>
             </includes>
             <fileMode>0755</fileMode>
-        </fileSet>
+        </fileSet>     
         <fileSet>
             <outputDirectory>dependency-check/bin</outputDirectory>
             <directory>${project.build.directory}/release/bin</directory>
