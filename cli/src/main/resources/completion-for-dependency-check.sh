@@ -111,7 +111,7 @@ _odc_completions()
 
 
     case "${prev}" in
-        -o|--out|-d|--data|--bundleAudit|--bundleAuditWorkingDirectory|--dbDriverPath|--dotnet|--go|-P|--propertyfile|--suppression|--hint|-l|--log)
+        -s|--scan|-o|--out|-d|--data|--bundleAudit|--bundleAuditWorkingDirectory|--dbDriverPath|--dotnet|--go|-P|--propertyfile|--suppression|--hint|-l|--log)
             COMPREPLY=( $(compgen -f -o default -- ${cur}) )
             return 0
             ;;
