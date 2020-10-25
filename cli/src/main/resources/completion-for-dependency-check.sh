@@ -125,7 +125,6 @@ _odc_completions()
             ;;
     esac
     if [[ "$cur" == -* ]] ; then
-        # COMPREPLY=( $(compgen -W "$options" -- "$cur") )
         COMPREPLY=( $(compgen -W "$options" -- "$cur") )
         return 0
     fi
