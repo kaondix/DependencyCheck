@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.owasp.dependencycheck.data.nvd.ecosystem.Ecosystem;
 
 /**
@@ -312,28 +313,33 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
     @Override
     protected void analyzeDependency(Dependency dependency, Engine engine) throws AnalysisException {
         //engine.removeDependency(dependency);
-        final File parentFile = dependency.getActualFile().getParentFile();
-        Process process = launchGoListAll(parentFile);
 
-        process = evaluateProcess(process, parentFile);
-
-        GoModJsonParser.process(process.getInputStream()).forEach(goDep
-                -> engine.addDependency(goDep.toDependency(dependency))
-        );
-    }
-
-    private Process evaluateProcess(Process process, File directory) throws AnalysisException {
         final int exitValue;
+
+        final File parentFile = dependency.getActualFile().getParentFile();
+
+        Process process = launchGoListAll(parentFile);
         try {
-            exitValue = process.waitFor();
+
+            process = evaluateProcessErrorStream(process, parentFile);
+
+            GoModJsonParser.process(process.getInputStream()).forEach(goDep
+                    -> engine.addDependency(goDep.toDependency(dependency))
+            );
+            process.waitFor();
+            exitValue = process.exitValue();
+            if (exitValue < 0 || exitValue > 1) {
+                final String msg = String.format("Unexpected exit code from go process; exit code: %s", exitValue);
+                throw new AnalysisException(msg);
+            }
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
             throw new AnalysisException("go process interrupted", ie);
         }
-        if (exitValue < 0 || exitValue > 1) {
-            final String msg = String.format("Unexpected exit code from go process; exit code: %s", exitValue);
-            throw new AnalysisException(msg);
-        }
+
+    }
+
+    private Process evaluateProcessErrorStream(Process process, File directory) throws AnalysisException, InterruptedException {
         try {
             final StringBuilder error = new StringBuilder();
             try (BufferedReader errReader = new BufferedReader(new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8))) {
@@ -345,7 +351,7 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
                 LOGGER.warn("Warnings from go {}", error.toString());
                 if (error.indexOf("can't compute 'all' using the vendor directory") >= 0) {
                     LOGGER.warn("Switching to `go list -json -m readonly`");
-                    return evaluateProcess(launchGoListReadonly(directory), directory);
+                    return evaluateProcessErrorStream(launchGoListReadonly(directory), directory);
                 }
             }
         } catch (IOException ioe) {
