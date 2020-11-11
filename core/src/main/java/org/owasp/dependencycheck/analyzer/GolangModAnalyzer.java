@@ -324,7 +324,7 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
         Process process = launchGoListAll(parentFile);
         try {
             process = evaluateProcessErrorStream(process, parentFile);
-
+            process.waitFor();
             GoModJsonParser.process(process.getInputStream()).forEach(goDep
                     -> engine.addDependency(goDep.toDependency(dependency))
             );
