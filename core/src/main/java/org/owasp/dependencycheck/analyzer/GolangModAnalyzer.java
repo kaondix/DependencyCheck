@@ -320,12 +320,12 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
 
         Process process = launchGoListAll(parentFile);
         try {
-            process.waitFor(1000, TimeUnit.MILLISECONDS);
             process = evaluateProcessErrorStream(process, parentFile);
-
+            
             GoModJsonParser.process(process.getInputStream()).forEach(goDep
                     -> engine.addDependency(goDep.toDependency(dependency))
             );
+            process.getInputStream().close();
             process.waitFor();
             exitValue = process.exitValue();
             if (exitValue < 0 || exitValue > 1) {
@@ -335,12 +335,15 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
             throw new AnalysisException("go process interrupted", ie);
+        } catch (IOException ex) {
+            throw new AnalysisException("Error closing the go process", ex);
         }
 
     }
 
     private Process evaluateProcessErrorStream(Process process, File directory) throws AnalysisException, InterruptedException {
         try {
+            process.getOutputStream().close();
             final StringBuilder error = new StringBuilder();
             if (process.getErrorStream().available() > 0) {
                 try (BufferedReader errReader = new BufferedReader(new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8))) {
@@ -349,13 +352,14 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
                     }
                 }
             }
+            process.getErrorStream().close();
             if (error.length() > 0) {
                 LOGGER.warn("Warnings from go {}", error.toString());
                 if (error.indexOf("can't compute 'all' using the vendor directory") >= 0) {
                     LOGGER.warn("Switching to `go list -json -m readonly`");
                     return evaluateProcessErrorStream(launchGoListReadonly(directory), directory);
                 }
-            }
+            } 
         } catch (IOException ioe) {
             LOGGER.warn("go mod failure", ioe);
         }
