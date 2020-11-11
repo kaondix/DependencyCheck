@@ -33,6 +33,8 @@ import javax.json.stream.JsonParsingException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import javax.json.JsonReaderFactory;
+import javax.json.stream.JsonParserFactory;
 import org.owasp.dependencycheck.utils.JsonArrayFixingInputStream;
 
 /**
@@ -68,7 +70,8 @@ public final class GoModJsonParser {
 //            array = "[" + array.substring(0, array.length() - 1) + "]";
 //
 //            JsonReader reader = Json.createReader(new StringReader(array));
-            try (JsonReader reader = Json.createReader(jsonStream)) {
+            JsonReaderFactory factory = Json.createReaderFactory(null);
+            try (JsonReader reader = factory.createReader(jsonStream, java.nio.charset.StandardCharsets.UTF_8)) {
                 final JsonArray modules = reader.readArray();
                 for (JsonObject module : modules.getValuesAs(JsonObject.class)) {
                     final String path = module.getString("Path");
