@@ -190,13 +190,10 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
 
         final List<String> args = new ArrayList<>();
         args.add(getGo());
-//        args.add("list");
-//        args.add("-json");
-//        args.add("-m");
-//        args.add("all");
-        args.add("mod");
-        args.add("edit");
+        args.add("list");
         args.add("-json");
+        args.add("-m");
+        args.add("all");
 
         final ProcessBuilder builder = new ProcessBuilder(args);
         builder.directory(folder);
@@ -360,7 +357,7 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
             }
             process.getErrorStream().close();
             if (error.length() > 0) {
-                LOGGER.warn("Warnings from go {}", error.toString());
+                LOGGER.error("Warnings from go {}", error.toString());
                 if (error.indexOf("can't compute 'all' using the vendor directory") >= 0) {
                     LOGGER.warn("Switching to `go list -json -m readonly`");
                     return evaluateProcessErrorStream(launchGoListReadonly(directory), directory);
