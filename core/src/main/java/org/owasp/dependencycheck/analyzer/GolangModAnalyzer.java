@@ -73,6 +73,7 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
      */
     public static final String GO_MOD = "go.mod";
 
+    private static String goPath = "go";
     /**
      * The file filter for Gopkg.lock
      */
@@ -126,23 +127,25 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
      * @return the path to `go`
      */
     private String getGo() {
-        final String goPath = getSettings().getString(Settings.KEYS.ANALYZER_GOLANG_PATH);
-
-        if (goPath == null) {
-            LOGGER.warn(
-                    "Path to `go` executable not set. Trying default location. If you do want to set it, please set the `{}` property",
-                    Settings.KEYS.ANALYZER_GOLANG_PATH
-            );
-            return "go";
-        } else {
-            final File goFile = new File(goPath);
-            if (goFile.isFile()) {
-                return goFile.getAbsolutePath();
+        synchronized (this) {
+            if (goPath == null) {
+                final String path = getSettings().getString(Settings.KEYS.ANALYZER_GOLANG_PATH);
+                if (path == null) {
+                    goPath = "go";
+                } else {
+                    final File goFile = new File(path);
+                    if (goFile.isFile()) {
+                        goPath = goFile.getAbsolutePath();
+                    } else {
+                        LOGGER.warn("Provided path to `go` executable is invalid. Trying default location. If you do want to set it, please set the `{}` property",
+                            Settings.KEYS.ANALYZER_GOLANG_PATH
+                    );
+                        goPath = "go";
+                    }
+                }
             }
         }
-
-        LOGGER.warn("Path to `go` exec executable does not exist: {}. Trying default location", goPath);
-        return "go";
+        return goPath;
     }
 
     /**
@@ -187,10 +190,13 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
 
         final List<String> args = new ArrayList<>();
         args.add(getGo());
-        args.add("list");
+//        args.add("list");
+//        args.add("-json");
+//        args.add("-m");
+//        args.add("all");
+        args.add("mod");
+        args.add("edit");
         args.add("-json");
-        args.add("-m");
-        args.add("all");
 
         final ProcessBuilder builder = new ProcessBuilder(args);
         builder.directory(folder);
@@ -321,7 +327,7 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
         Process process = launchGoListAll(parentFile);
         try {
             process = evaluateProcessErrorStream(process, parentFile);
-            
+
             GoModJsonParser.process(process.getInputStream()).forEach(goDep
                     -> engine.addDependency(goDep.toDependency(dependency))
             );
@@ -359,7 +365,7 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
                     LOGGER.warn("Switching to `go list -json -m readonly`");
                     return evaluateProcessErrorStream(launchGoListReadonly(directory), directory);
                 }
-            } 
+            }
         } catch (IOException ioe) {
             LOGGER.warn("go mod failure", ioe);
         }
