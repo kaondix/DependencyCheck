@@ -346,7 +346,7 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
 
     private Process evaluateProcessErrorStream(Process process, File directory) throws AnalysisException, InterruptedException {
         try {
-            process.getOutputStream().close();
+            //process.getOutputStream().close();
             final StringBuilder error = new StringBuilder();
             if (process.getErrorStream().available() > 0) {
                 try (BufferedReader errReader = new BufferedReader(new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8))) {
