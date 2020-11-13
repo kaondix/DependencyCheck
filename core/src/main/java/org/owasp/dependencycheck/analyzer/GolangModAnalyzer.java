@@ -22,6 +22,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import org.owasp.dependencycheck.Engine;
@@ -38,6 +39,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.apache.commons.io.IOUtils;
 import org.owasp.dependencycheck.data.nvd.ecosystem.Ecosystem;
 
 /**
@@ -138,8 +140,8 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
                         goPath = goFile.getAbsolutePath();
                     } else {
                         LOGGER.warn("Provided path to `go` executable is invalid. Trying default location. If you do want to set it, please set the `{}` property",
-                            Settings.KEYS.ANALYZER_GOLANG_PATH
-                    );
+                                Settings.KEYS.ANALYZER_GOLANG_PATH
+                        );
                         goPath = "go";
                     }
                 }
@@ -324,11 +326,11 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
         Process process = launchGoListAll(parentFile);
         try {
             process = evaluateProcessErrorStream(process, parentFile);
-            process.waitFor();
-            GoModJsonParser.process(process.getInputStream()).forEach(goDep
-                    -> engine.addDependency(goDep.toDependency(dependency))
-            );
-            process.getInputStream().close();
+            try (InputStream inputStream = process.getInputStream()) {
+                GoModJsonParser.process(inputStream).forEach(goDep
+                        -> engine.addDependency(goDep.toDependency(dependency))
+                );
+            }
             process.waitFor();
             exitValue = process.exitValue();
             if (exitValue < 0 || exitValue > 1) {
@@ -346,19 +348,17 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
 
     private Process evaluateProcessErrorStream(Process process, File directory) throws AnalysisException, InterruptedException {
         try {
-            //process.getOutputStream().close();
-            final StringBuilder error = new StringBuilder();
-            if (process.getErrorStream().available() > 0) {
-                try (BufferedReader errReader = new BufferedReader(new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8))) {
-                    while (errReader.ready()) {
-                        error.append(errReader.readLine());
-                    }
+            process.getOutputStream().close();
+            String error = null;
+            try (InputStream errorStream = process.getErrorStream()) {
+                if (errorStream.available() > 0) {
+                    error = IOUtils.toString(errorStream, StandardCharsets.UTF_8.name());
                 }
             }
             process.getErrorStream().close();
-            if (error.length() > 0) {
-                LOGGER.error("Warnings from go {}", error.toString());
-                if (error.indexOf("can't compute 'all' using the vendor directory") >= 0) {
+            if (error != null) {
+                LOGGER.warn("Warnings from go {}", error);
+                if (error.contains("can't compute 'all' using the vendor directory")) {
                     LOGGER.warn("Switching to `go list -json -m readonly`");
                     return evaluateProcessErrorStream(launchGoListReadonly(directory), directory);
                 }
