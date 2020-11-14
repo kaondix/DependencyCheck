@@ -31,10 +31,12 @@ import javax.json.JsonReader;
 import javax.json.stream.JsonParsingException;
 
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import javax.json.JsonReaderFactory;
 import javax.json.stream.JsonParserFactory;
+import org.apache.commons.io.IOUtils;
 import org.owasp.dependencycheck.utils.JsonArrayFixingInputStream;
 
 /**
@@ -64,6 +66,13 @@ public final class GoModJsonParser {
     public static List<GoModDependency> process(InputStream inputStream) throws AnalysisException {
         LOGGER.info("Beginning go.mod processing");
         //LOGGER.debug("Beginning go.mod processing");
+        try {
+            String text = IOUtils.toString(inputStream, StandardCharsets.UTF_8.name());
+            LOGGER.info("stream text: " + text);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+
         List<GoModDependency> goModDependencies = new ArrayList<>();
         try (JsonArrayFixingInputStream jsonStream = new JsonArrayFixingInputStream(inputStream)) {
             LOGGER.info("input streeam available: " + jsonStream.available());
