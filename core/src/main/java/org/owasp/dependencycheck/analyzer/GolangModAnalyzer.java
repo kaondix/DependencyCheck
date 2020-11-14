@@ -365,7 +365,7 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
                 }
             }
         } catch (IOException ioe) {
-            LOGGER.warn("go mod failure", ioe);
+            LOGGER.info("go mod failure", ioe);
         }
         return process;
     }
