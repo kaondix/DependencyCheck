@@ -62,25 +62,22 @@ public final class GoModJsonParser {
      * results of `go mod`
      */
     public static List<GoModDependency> process(InputStream inputStream) throws AnalysisException {
-        LOGGER.debug("Beginning go.mod processing");
+        LOGGER.info("Beginning go.mod processing");
+        //LOGGER.debug("Beginning go.mod processing");
         List<GoModDependency> goModDependencies = new ArrayList<>();
         try (JsonArrayFixingInputStream jsonStream = new JsonArrayFixingInputStream(inputStream)) {
-//            String array = IOUtils.toString(inputStream, UTF_8);
-//            array = array.trim().replace("}", "},");
-//            array = "[" + array.substring(0, array.length() - 1) + "]";
-//
-//            JsonReader reader = Json.createReader(new StringReader(array));
+            LOGGER.info("input streeam available: " + jsonStream.available());
             JsonReaderFactory factory = Json.createReaderFactory(null);
             try (JsonReader reader = factory.createReader(jsonStream, java.nio.charset.StandardCharsets.UTF_8)) {
                 final JsonArray modules = reader.readArray();
-                for (JsonObject module : modules.getValuesAs(JsonObject.class)) {
+                modules.getValuesAs(JsonObject.class).forEach((module) -> {
                     final String path = module.getString("Path");
                     String version = module.getString("Version", null);
                     if (version != null && version.startsWith("v")) {
                         version = version.substring(1);
                     }
                     goModDependencies.add(new GoModDependency(path, version));
-                }
+                });
             }
         } catch (JsonParsingException jsonpe) {
             throw new AnalysisException("Error parsing stream", jsonpe);
