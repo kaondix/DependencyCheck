@@ -348,15 +348,15 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
 
     private Process evaluateProcessErrorStream(Process process, File directory) throws AnalysisException, InterruptedException {
         try {
-            LOGGER.info("closing output stream");
-            process.getOutputStream().close();
             String error = null;
             try (InputStream errorStream = process.getErrorStream()) {
                 if (errorStream.available() > 0) {
                     error = IOUtils.toString(errorStream, StandardCharsets.UTF_8.name());
                 }
             }
+            LOGGER.info("closing error stream");
             process.getErrorStream().close();
+            LOGGER.info("error stream closed:" + error);
             if (error != null) {
                 LOGGER.warn("Warnings from go {}", error);
                 if (error.contains("can't compute 'all' using the vendor directory")) {
