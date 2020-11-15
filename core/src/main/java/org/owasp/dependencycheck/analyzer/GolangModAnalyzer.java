@@ -38,7 +38,6 @@ import org.slf4j.LoggerFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import org.apache.commons.io.IOUtils;
 import org.owasp.dependencycheck.data.nvd.ecosystem.Ecosystem;
 
@@ -170,7 +169,7 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
         final ProcessBuilder builder = new ProcessBuilder(args);
         builder.directory(folder);
         try {
-            LOGGER.info("Launching: {} from {}", args, folder);
+            LOGGER.debug("Launching: {} from {}", args, folder);
             return builder.start();
         } catch (IOException ioe) {
             throw new AnalysisException("go initialization failure; this error can be ignored if you are not analyzing Go. "
@@ -200,7 +199,7 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
         final ProcessBuilder builder = new ProcessBuilder(args);
         builder.directory(folder);
         try {
-            LOGGER.info("Launching: {} from {}", args, folder);
+            LOGGER.debug("Launching: {} from {}", args, folder);
             return builder.start();
         } catch (IOException ioe) {
             throw new AnalysisException("go initialization failure; this error can be ignored if you are not analyzing Go. "
@@ -230,7 +229,7 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
         final ProcessBuilder builder = new ProcessBuilder(args);
         builder.directory(folder);
         try {
-            LOGGER.info("Launching: {} from {}", args, folder);
+            LOGGER.debug("Launching: {} from {}", args, folder);
             return builder.start();
         } catch (IOException ioe) {
             throw new AnalysisException("go initialization failure; this error can be ignored if you are not analyzing Go. "
@@ -239,7 +238,8 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
     }
 
     /**
-     * No-op initializer implementation.
+     * Initialize the go mod analyzer; ensures that go is installed and can be
+     * called.
      *
      * @param engine a reference to the dependency-check engine
      * @throws InitializationException never thrown
@@ -275,7 +275,7 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
         switch (exitValue) {
             case expectedNoModuleFoundExitValue:
                 setEnabled(true);
-                LOGGER.info("{} is enabled.", ANALYZER_NAME);
+                LOGGER.debug("{} is enabled.", ANALYZER_NAME);
                 return;
             case goExecutableNotFoundExitValue:
                 throw new InitializationException(String.format("Go executable not found. Disabling %s: %s", ANALYZER_NAME, exitValue));
@@ -348,10 +348,20 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
 
     }
 
+    /**
+     * Reads the error stream and restarts the process with a different command
+     * under certain error conditions.
+     *
+     * @param process the go process
+     * @param directory the directory where the process is running
+     * @return a reference to the process to evaluate; which may not be the
+     * process passed as an argument
+     * @throws InterruptedException thrown if the process is interrupted
+     */
     private Process evaluateProcessErrorStream(Process process, File directory) throws AnalysisException, InterruptedException {
         try {
             String error = null;
-            InputStream errorStream = process.getErrorStream();
+            final InputStream errorStream = process.getErrorStream();
             if (errorStream.available() > 0) {
                 error = IOUtils.toString(errorStream, StandardCharsets.UTF_8.name());
             }
@@ -365,6 +375,7 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
             }
         } catch (IOException ioe) {
             LOGGER.warn("go mod failure", ioe);
+            throw new AnalysisException("Error running go: " + ioe.getMessage(), ioe);
         }
         return process;
     }
