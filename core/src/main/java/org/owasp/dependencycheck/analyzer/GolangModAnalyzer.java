@@ -331,6 +331,8 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
                         -> engine.addDependency(goDep.toDependency(dependency))
                 );
             }
+            process.getInputStream().close();
+            process.getErrorStream().close();
             process.waitFor();
             exitValue = process.exitValue();
             if (exitValue < 0 || exitValue > 1) {
@@ -354,9 +356,6 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
                     error = IOUtils.toString(errorStream, StandardCharsets.UTF_8.name());
                 }
             }
-            LOGGER.info("closing error stream");
-            process.getErrorStream().close();
-            LOGGER.info("error stream closed:" + error);
             if (error != null) {
                 LOGGER.warn("Warnings from go {}", error);
                 if (error.contains("can't compute 'all' using the vendor directory")) {
@@ -365,7 +364,7 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
                 }
             }
         } catch (IOException ioe) {
-            LOGGER.info("go mod failure", ioe);
+            LOGGER.warn("go mod failure", ioe);
         }
         return process;
     }
