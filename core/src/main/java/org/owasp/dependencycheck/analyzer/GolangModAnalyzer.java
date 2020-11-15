@@ -331,9 +331,9 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
                         -> engine.addDependency(goDep.toDependency(dependency))
                 );
             }
+            process.waitFor();
             process.getInputStream().close();
             process.getErrorStream().close();
-            process.waitFor();
             exitValue = process.exitValue();
             if (exitValue < 0 || exitValue > 1) {
                 final String msg = String.format("Unexpected exit code from go process; exit code: %s", exitValue);
@@ -351,15 +351,15 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
     private Process evaluateProcessErrorStream(Process process, File directory) throws AnalysisException, InterruptedException {
         try {
             String error = null;
-            try (InputStream errorStream = process.getErrorStream()) {
-                if (errorStream.available() > 0) {
-                    error = IOUtils.toString(errorStream, StandardCharsets.UTF_8.name());
-                }
+            InputStream errorStream = process.getErrorStream();
+            if (errorStream.available() > 0) {
+                error = IOUtils.toString(errorStream, StandardCharsets.UTF_8.name());
             }
             if (error != null) {
                 LOGGER.warn("Warnings from go {}", error);
                 if (error.contains("can't compute 'all' using the vendor directory")) {
                     LOGGER.warn("Switching to `go list -json -m readonly`");
+                    process.destroy();
                     return evaluateProcessErrorStream(launchGoListReadonly(directory), directory);
                 }
             }
