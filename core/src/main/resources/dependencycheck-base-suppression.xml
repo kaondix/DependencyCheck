@@ -3963,7 +3963,7 @@
         <packageUrl regex="true">^pkg:maven/com\.jcraft/jsch\.agentproxy.*$</packageUrl>
         <cpe>cpe:/a:jcraft:jsch</cpe>
     </suppress>
-    <suppress>
+    <suppress base="true">
         <notes><![CDATA[
           false positive per #2977 on org.infinispan.protostream:protostream
           ]]></notes>
