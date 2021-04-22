@@ -1215,7 +1215,13 @@ public final class CveDB implements AutoCloseable {
 
         try {
             cpeEntries.forEach(entry -> {
-                builder.cpe(parseCpe(entry, cve.getCve().getCVEDataMeta().getId()))
+                // TODO may remove early out after https://github.com/stevespringett/CPE-Parser/issues/76 was fixed
+                final Cpe cpe = parseCpe(entry, cve.getCve().getCVEDataMeta().getId());
+                if (cpe == null)
+                {
+                    return;
+                }
+                builder.cpe(cpe)
                         .versionEndExcluding(entry.getVersionEndExcluding())
                         .versionStartExcluding(entry.getVersionStartExcluding())
                         .versionEndIncluding(entry.getVersionEndIncluding())
@@ -1258,7 +1264,12 @@ public final class CveDB implements AutoCloseable {
                     throw new DatabaseException("Unable to parse CPE: " + cpe.getCpe23Uri(), ex);
                 }
             } else {
-                throw new DatabaseException("Unable to parse CPE: " + cpe.getCpe23Uri(), ex);
+                String msg = String.format("Unable to parse CPE: %s", cpe.getCpe23Uri());
+                LOGGER.debug(msg, ex);
+                LOGGER.warn(ex.getMessage());
+                // TODO enable after https://github.com/stevespringett/CPE-Parser/issues/76 was fixed
+                //throw new DatabaseException("Unable to parse CPE: " + cpe.getCpe23Uri(), ex);
+                return null;
             }
         }
         return parsedCpe;
