@@ -65,15 +65,13 @@ public class UrlEcosystemMapper {
      * @return the ecosystem
      */
     public String getEcosystem(DefCveItem cve) {
-        if(cve.getCve().getReferences() == null){
-            return null;
-        }
+        if (cve.getCve().getReferences() != null) {
+            for (Reference r : cve.getCve().getReferences().getReferenceData()) {
 
-        for (Reference r : cve.getCve().getReferences().getReferenceData()) {
-
-            final Hit<String> ecosystem = search.findFirst(r.getUrl());
-            if (ecosystem != null) {
-                return ecosystem.value;
+                final Hit<String> ecosystem = search.findFirst(r.getUrl());
+                if (ecosystem != null) {
+                    return ecosystem.value;
+                }
             }
         }
         return null;
