@@ -1170,6 +1170,11 @@ public final class CveDB implements AutoCloseable {
             if (insertReference == null) {
                 throw new SQLException("Database query does not exist in the resource bundle: " + INSERT_REFERENCE);
             }
+
+            if(cve.getCve().getReferences()==null){
+                return;
+            }
+
             for (Reference r : cve.getCve().getReferences().getReferenceData()) {
                 insertReference.setInt(1, vulnerabilityId);
                 insertReference.setString(2, r.getName());
@@ -1200,6 +1205,7 @@ public final class CveDB implements AutoCloseable {
         final List<DefCpeMatch> cpeEntries = cve.getConfigurations().getNodes().stream()
                 .collect(NodeFlatteningCollector.getInstance())
                 .collect(CpeMatchStreamCollector.getInstance())
+                .filter(predicate -> predicate.getCpe23Uri() != null)
                 .filter(predicate -> predicate.getCpe23Uri().startsWith(cpeStartsWithFilter))
                 //this single CPE entry causes nearly 100% FP - so filtering it at the source.
                 .filter(entry -> !("CVE-2009-0754".equals(cve.getCve().getCVEDataMeta().getId())

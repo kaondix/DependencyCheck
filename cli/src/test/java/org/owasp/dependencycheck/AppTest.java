@@ -174,6 +174,22 @@ public class AppTest extends BaseTest {
         assertThat("Expected the suppression files to be set in the Settings with a separator", getSettings().getString(KEYS.SUPPRESSION_FILE), is("[\"first-file.xml\",\"another-file.xml\"]"));
     }
 
+
+    @Test
+    public void testUpdateOnly() throws Exception {
+        String[] args = { "--updateonly","-d","."};
+
+        // WHEN parsing the CLI arguments
+        final CliParser cli = new CliParser(getSettings());
+        cli.parse(args);
+        final App classUnderTest = new App(getSettings());
+        classUnderTest.populateSettings(cli);
+        classUnderTest.run(args);
+
+        // THEN the suppression file is set in the settings for use in the application core
+        assertThat("Expected a n exit code of '0'", classUnderTest.run(args), is(0));
+    }
+
     private boolean testBooleanProperties(String[] args, Map<String, Boolean> expected) throws URISyntaxException, FileNotFoundException, ParseException, InvalidSettingException {
         this.reloadSettings();
         final CliParser cli = new CliParser(getSettings());
