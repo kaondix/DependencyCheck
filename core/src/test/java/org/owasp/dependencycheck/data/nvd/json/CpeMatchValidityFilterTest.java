@@ -17,20 +17,13 @@
  */
 package org.owasp.dependencycheck.data.nvd.json;
 
-import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 
 /**
- *
+ * Test for {@linkplain CpeMatchValidityFilter}.
  * @author Stephan Fuhrmann
  */
 public class CpeMatchValidityFilterTest {
@@ -42,19 +35,19 @@ public class CpeMatchValidityFilterTest {
 
     @Test
     public void testApplyWithNullReference() {
-        assertFalse(CpeMatchValidityFilter.getInstance().apply(null));
+        assertFalse(CpeMatchValidityFilter.getInstance().test(null));
     }
 
     @Test
     public void testApplyWithEmptyInstance() {
         DefCpeMatch defCpeMatch = new DefCpeMatch();
-        assertFalse(CpeMatchValidityFilter.getInstance().apply(defCpeMatch));
+        assertFalse(CpeMatchValidityFilter.getInstance().test(defCpeMatch));
     }
 
     @Test
     public void testApplyWithValidInstance() {
         DefCpeMatch defCpeMatch = new DefCpeMatch();
         defCpeMatch.setCpe23Uri("cpe:2.3:a:owasp:dependency-check:5.0.0:*:*:*:*:*:*:*");
-        assertFalse(CpeMatchValidityFilter.getInstance().apply(defCpeMatch));
+        assertFalse(CpeMatchValidityFilter.getInstance().test(defCpeMatch));
     }
 }

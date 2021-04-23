@@ -87,7 +87,7 @@ public class CveEcosystemMapper {
         final List<DefCpeMatch> cpeEntries = cve.getConfigurations().getNodes().stream()
                 .collect(NodeFlatteningCollector.getInstance())
                 .collect(CpeMatchStreamCollector.getInstance())
-                .filter(CpeMatchValidityFilter.getInstance()::apply)
+                .filter(CpeMatchValidityFilter.getInstance()::test)
                 .collect(Collectors.toList());
         if (!cpeEntries.isEmpty() && cpeEntries.size() > 1) {
             final DefCpeMatch firstMatch = cpeEntries.get(0);

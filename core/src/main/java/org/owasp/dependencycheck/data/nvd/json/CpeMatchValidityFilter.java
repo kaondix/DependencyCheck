@@ -3,7 +3,7 @@ package org.owasp.dependencycheck.data.nvd.json;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.function.Function;
+import java.util.function.Predicate;
 
 
 /**
@@ -11,7 +11,7 @@ import java.util.function.Function;
  *
  * @author Stephan Fuhrmann
  */
-public class CpeMatchValidityFilter implements Function<DefCpeMatch, Boolean> {
+public class CpeMatchValidityFilter implements Predicate<DefCpeMatch> {
 
     /**
      * The logger.
@@ -32,7 +32,7 @@ public class CpeMatchValidityFilter implements Function<DefCpeMatch, Boolean> {
     }
 
     @Override
-    public Boolean apply(DefCpeMatch defCpeMatch) {
+    public boolean test(DefCpeMatch defCpeMatch) {
         boolean result = true;
         if (defCpeMatch != null) {
             if (defCpeMatch.getCpe23Uri() == null) {

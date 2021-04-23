@@ -221,7 +221,7 @@ public class CveItemOperator {
         return cve.getConfigurations().getNodes().stream()
                 .collect(NodeFlatteningCollector.getInstance())
                 .collect(CpeMatchStreamCollector.getInstance())
-                .filter(CpeMatchValidityFilter.getInstance()::apply)
+                .filter(CpeMatchValidityFilter.getInstance()::test)
                 .anyMatch(cpe -> cpe.getCpe23Uri().startsWith(cpeStartsWithFilter));
     }
 }
