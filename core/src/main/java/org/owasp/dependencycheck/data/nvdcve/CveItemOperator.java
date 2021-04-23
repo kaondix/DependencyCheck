@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import org.owasp.dependencycheck.data.nvd.ecosystem.Ecosystem;
 import org.owasp.dependencycheck.data.nvd.json.CpeMatchStreamCollector;
 
+import org.owasp.dependencycheck.data.nvd.json.CpeMatchValidityFilter;
 import org.owasp.dependencycheck.data.nvd.json.DefCveItem;
 import org.owasp.dependencycheck.data.nvd.json.NodeFlatteningCollector;
 import org.owasp.dependencycheck.dependency.VulnerableSoftware;
@@ -220,7 +221,7 @@ public class CveItemOperator {
         return cve.getConfigurations().getNodes().stream()
                 .collect(NodeFlatteningCollector.getInstance())
                 .collect(CpeMatchStreamCollector.getInstance())
-                .filter(cpe -> cpe.getCpe23Uri() != null)
+                .filter(CpeMatchValidityFilter.getInstance()::apply)
                 .anyMatch(cpe -> cpe.getCpe23Uri().startsWith(cpeStartsWithFilter));
     }
 }

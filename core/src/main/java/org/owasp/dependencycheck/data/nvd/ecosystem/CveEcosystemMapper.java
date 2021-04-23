@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.concurrent.NotThreadSafe;
 import org.owasp.dependencycheck.data.nvd.json.CpeMatchStreamCollector;
+import org.owasp.dependencycheck.data.nvd.json.CpeMatchValidityFilter;
 import org.owasp.dependencycheck.data.nvd.json.DefCpeMatch;
 
 import org.owasp.dependencycheck.data.nvd.json.DefCveItem;
@@ -86,7 +87,7 @@ public class CveEcosystemMapper {
         final List<DefCpeMatch> cpeEntries = cve.getConfigurations().getNodes().stream()
                 .collect(NodeFlatteningCollector.getInstance())
                 .collect(CpeMatchStreamCollector.getInstance())
-                .filter(defCpeMatch -> defCpeMatch.getCpe23Uri() != null)
+                .filter(CpeMatchValidityFilter.getInstance()::apply)
                 .collect(Collectors.toList());
         if (!cpeEntries.isEmpty() && cpeEntries.size() > 1) {
             final DefCpeMatch firstMatch = cpeEntries.get(0);
