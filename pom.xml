@@ -745,7 +745,7 @@ Copyright (c) 2012 - Jeremy Long
                             <violations>
                                 <violation>
                                     <parser>FINDBUGS</parser>
-                                    <reporter>Findbugs</reporter>
+                                    <reporter>Spotbugs</reporter>
                                     <folder>.</folder>
                                     <pattern>.*/spotbugsXml.xml$</pattern>
                                 </violation>
