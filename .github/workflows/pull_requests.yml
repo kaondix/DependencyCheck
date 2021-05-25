@@ -29,6 +29,8 @@ jobs:
         run: |
             mvn -s settings.xml clean package verify site -DreleaseTesting --no-transfer-progress --batch-mode
             mvn violation-comments-to-github-maven-plugin:violation-comments -DGITHUB_PULLREQUESTID=${{ github.event.pull_request.number }} -DGITHUB_OAUTH2TOKEN=${{ secrets.GITHUB_TOKEN }}
+            echo "1 ${{ github.event.pull_request.number }}"
+            echo "2 ${{ github.event.number }}"
       - name: Archive IT test logs
         id: archive-logs
         uses: actions/upload-artifact@v2
