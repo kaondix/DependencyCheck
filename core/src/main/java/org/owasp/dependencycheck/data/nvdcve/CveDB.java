@@ -39,7 +39,6 @@ import java.util.stream.Collectors;
 
 import static org.apache.commons.collections.map.AbstractReferenceMap.HARD;
 import static org.apache.commons.collections.map.AbstractReferenceMap.SOFT;
-import org.owasp.dependencycheck.analyzer.exception.SearchException;
 import org.owasp.dependencycheck.analyzer.exception.LambdaExceptionWrapper;
 import org.owasp.dependencycheck.analyzer.exception.UnexpectedAnalysisException;
 import org.owasp.dependencycheck.data.nvd.json.BaseMetricV2;
