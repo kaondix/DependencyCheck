@@ -704,6 +704,13 @@
     </suppress>
     <suppress base="true">
         <notes><![CDATA[
+            Suppress false positives per #3400
+            ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.springframework\.cloud/spring\-cloud\-security@.*$</packageUrl>
+        <cpe>cpe:/a:pivotal_software:spring_security</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
             Suppresses false positives per #1566.
             ]]></notes>
         <gav regex="true">^org\.springframework\.security\.oauth\.boot:spring-security-oauth2-autoconfigure:.*$</gav>
@@ -1019,6 +1026,13 @@
         <packageUrl regex="true">^pkg:maven/com\.nimbusds/oauth2\-oidc\-sdk@.*$</packageUrl>
         <cpe>cpe:/a:openid:openid</cpe>
         <cpe>cpe:/a:openid:openid_connect</cpe>
+    </suppress>
+    <suppress base="true">
+       <notes><![CDATA[
+       Suppresses false positives per issue #3345
+       ]]></notes>
+       <packageUrl regex="true">^pkg:maven/com\.azure/azure\-core\-http\-netty@.*$</packageUrl>
+       <cpe>cpe:/a:netty:netty</cpe>
     </suppress>
     <suppress base="true">
         <notes><![CDATA[

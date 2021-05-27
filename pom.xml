@@ -334,11 +334,6 @@ Copyright (c) 2012 - Jeremy Long
                         </dependency>
                     </dependencies>
                 </plugin>
-                <plugin>
-                    <groupId>se.bjurr.violations</groupId>
-                    <artifactId>violation-comments-to-github-maven-plugin</artifactId>
-                    <version>1.65</version>
-                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
@@ -725,7 +720,6 @@ Copyright (c) 2012 - Jeremy Long
             <plugin>
                 <groupId>se.bjurr.violations</groupId>
                 <artifactId>violation-comments-to-github-maven-plugin</artifactId>
-
                 <configuration>
                     <repositoryOwner>jeremylong</repositoryOwner>
                     <repositoryName>DependencyCheck</repositoryName>
