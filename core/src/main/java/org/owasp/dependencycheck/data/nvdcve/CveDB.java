@@ -1048,10 +1048,10 @@ public final class CveDB implements AutoCloseable {
                         cveItemConverter.extractEcosystem(baseEcosystem, parsedCpe));
 
                 addNullableStringParameter(insertSoftware, 13, ecosystem);
-                addNullableStringParameter(insertSoftware, 14, parsedCpe.getVersionEndExcluding());
-                addNullableStringParameter(insertSoftware, 15, parsedCpe.getVersionEndIncluding());
-                addNullableStringParameter(insertSoftware, 16, parsedCpe.getVersionStartExcluding());
-                addNullableStringParameter(insertSoftware, 17, parsedCpe.getVersionStartIncluding());
+                addNullableStringParameter(insertSoftware, 14, parsedCpe.getVersionEndExcluding() != null && parsedCpe.getVersionEndExcluding().length() > 50 ? parsedCpe.getVersionEndExcluding().substring(0, 50) : parsedCpe.getVersionEndExcluding());
+                addNullableStringParameter(insertSoftware, 15, parsedCpe.getVersionEndIncluding() != null && parsedCpe.getVersionEndIncluding().length() > 50 ? parsedCpe.getVersionEndIncluding().substring(0, 50) : parsedCpe.getVersionEndIncluding());
+                addNullableStringParameter(insertSoftware, 16, parsedCpe.getVersionStartExcluding() != null && parsedCpe.getVersionStartExcluding().length() > 50 ? parsedCpe.getVersionStartExcluding().substring(0, 50) : parsedCpe.getVersionStartExcluding());
+                addNullableStringParameter(insertSoftware, 17, parsedCpe.getVersionStartIncluding() != null && parsedCpe.getVersionStartIncluding().length() > 50 ? parsedCpe.getVersionStartIncluding().substring(0, 50) : parsedCpe.getVersionStartIncluding());
                 insertSoftware.setBoolean(18, parsedCpe.isVulnerable());
 
                 if (isBatchInsertEnabled()) {
