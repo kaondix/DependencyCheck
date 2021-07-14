@@ -49,6 +49,35 @@
     </hint>
     <hint>
         <given>
+            <evidence type="product" source="jar" name="package name" value="springframework" confidence="LOW"/>
+        </given>
+        <add>
+            <evidence type="product" source="hint analyzer" name="product" value="springsource_spring_framework" confidence="HIGHEST"/>
+            <evidence type="vendor" source="hint analyzer" name="vendor" value="vmware" confidence="HIGHEST"/>
+            <evidence type="vendor" source="hint analyzer" name="vendor" value="pivotal software" confidence="HIGHEST"/>
+        </add>
+    </hint>
+    <hint>
+        <given>
+            <evidence type="product" source="Manifest" name="Implementation-Title" regex="true" value="spring-.*" confidence="HIGH"/>
+        </given>
+        <add>
+            <evidence type="vendor" source="hint analyzer" name="vendor" value="pivotal software" confidence="HIGHEST"/>
+        </add>
+    </hint>
+    <hint>
+        <given>
+            <evidence type="product" source="Manifest" name="Bundle-Name" value="Spring Security Core" confidence="MEDIUM"/>
+            <evidence type="product" source="pom" name="artifactid" value="spring-security-core" confidence="HIGHEST"/>
+        </given>
+        <add>
+            <evidence type="product" source="hint analyzer" name="product" value="spring_security" confidence="HIGHEST"/>
+            <evidence type="vendor" source="hint analyzer" name="vendor" value="vmware" confidence="HIGHEST"/>
+            <evidence type="vendor" source="hint analyzer" name="vendor" value="pivotal software" confidence="HIGHEST"/>
+        </add>
+    </hint>
+    <hint>
+        <given>
             <evidence regex="true" type="vendor" source="pom" name="groupid" value="org\.hibernate.*" confidence="HIGHEST"/>
         </given>
         <add>
@@ -93,35 +122,6 @@
         </given>
         <add>
             <evidence type="vendor" source="hint analyzer" name="vendor" value="redhat" confidence="HIGHEST"/>
-        </add>
-    </hint>
-    <hint>
-        <given>
-            <evidence type="product" source="jar" name="package name" value="springframework" confidence="LOW"/>
-        </given>
-        <add>
-            <evidence type="product" source="hint analyzer" name="product" value="springsource_spring_framework" confidence="HIGHEST"/>
-            <evidence type="vendor" source="hint analyzer" name="vendor" value="vmware" confidence="HIGHEST"/>
-            <evidence type="vendor" source="hint analyzer" name="vendor" value="pivotal software" confidence="HIGHEST"/>
-        </add>
-    </hint>
-    <hint>
-        <given>
-            <evidence type="product" source="Manifest" name="Implementation-Title" regex="true" value="spring-.*" confidence="HIGH"/>
-        </given>
-        <add>
-            <evidence type="vendor" source="hint analyzer" name="vendor" value="pivotal software" confidence="HIGHEST"/>
-        </add>
-    </hint>
-    <hint>
-        <given>
-            <evidence type="product" source="Manifest" name="Bundle-Name" value="Spring Security Core" confidence="MEDIUM"/>
-            <evidence type="product" source="pom" name="artifactid" value="spring-security-core" confidence="HIGHEST"/>
-        </given>
-        <add>
-            <evidence type="product" source="hint analyzer" name="product" value="spring_security" confidence="HIGHEST"/>
-            <evidence type="vendor" source="hint analyzer" name="vendor" value="vmware" confidence="HIGHEST"/>
-            <evidence type="vendor" source="hint analyzer" name="vendor" value="pivotal software" confidence="HIGHEST"/>
         </add>
     </hint>
     <hint>
