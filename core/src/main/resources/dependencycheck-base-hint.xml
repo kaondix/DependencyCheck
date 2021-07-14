@@ -72,6 +72,7 @@
         </given>
         <add>
             <evidence type="product" source="hint analyzer" name="product" value="spring_security" confidence="HIGHEST"/>
+            <evidence type="vendor" source="hint analyzer" name="vendor" value="SpringSource" confidence="HIGHEST"/>
             <evidence type="vendor" source="hint analyzer" name="vendor" value="vmware" confidence="HIGHEST"/>
             <evidence type="vendor" source="hint analyzer" name="vendor" value="pivotal software" confidence="HIGHEST"/>
         </add>
