@@ -406,6 +406,7 @@
         <cpe>cpe:/a:vmware:springsource_spring_framework</cpe>
         <cpe>cpe:/a:pivotal:spring_framework</cpe>
         <cpe>cpe:/a:pivotal_software:spring_framework</cpe>
+        <cpe>cpe:/a:vmware:spring_framework</cpe>
     </suppress>
     <suppress base="true">
         <notes><![CDATA[

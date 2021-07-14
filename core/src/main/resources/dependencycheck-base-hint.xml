@@ -116,12 +116,12 @@
     <hint>
         <given>
             <evidence type="product" source="Manifest" name="Bundle-Name" value="Spring Security Core" confidence="MEDIUM"/>
-            <evidence type="product" source="pom" name="artifactid" value="spring-security-core" confidence="HIGH"/>	
+            <evidence type="product" source="pom" name="artifactid" value="spring-security-core" confidence="HIGHEST"/>
         </given>
         <add>
-            <evidence type="product" source="hint analyzer" name="product" value="springsource_spring_framework" confidence="HIGHEST"/>
-            <evidence type="vendor" source="hint analyzer" name="vendor" value="SpringSource" confidence="HIGHEST"/>
+            <evidence type="product" source="hint analyzer" name="product" value="spring_security" confidence="HIGHEST"/>
             <evidence type="vendor" source="hint analyzer" name="vendor" value="vmware" confidence="HIGHEST"/>
+            <evidence type="vendor" source="hint analyzer" name="vendor" value="pivotal software" confidence="HIGHEST"/>
         </add>
     </hint>
     <hint>
