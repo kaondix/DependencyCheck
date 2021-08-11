@@ -101,7 +101,7 @@ public abstract class AbstractDependencyComparingAnalyzer extends AbstractAnalyz
                     }
                 }
             }
-            engine.removeDepensdency(dependenciesToRemove);
+            engine.removeDependencies(dependenciesToRemove);
         }
     }
 
