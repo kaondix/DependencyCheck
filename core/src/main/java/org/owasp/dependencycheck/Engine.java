@@ -273,6 +273,16 @@ public class Engine implements FileFilter, AutoCloseable {
     }
 
     /**
+     * Removes all dependencies in the collection.
+     *
+     * @param dependencies the collection of dependencies to remove.
+     */
+    public synchronized void removeDependencies(@NotNull final Collection<Dependency> dependencies) {
+        dependencies.removeAll(dependencies);
+        dependenciesExternalView = null;
+    }
+
+    /**
      * Returns a copy of the dependencies as an array.
      *
      * @return the dependencies identified
