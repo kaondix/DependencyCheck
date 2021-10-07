@@ -339,9 +339,12 @@ public class OssIndexAnalyzer extends AbstractAnalyzer {
         result.addReference(REFERENCE_TYPE, source.getTitle(), source.getReference().toString());
 
         // generate references to other references reported by OSS Index
-        source.getExternalReferences().forEach(externalReference -> {
-            result.addReference("OSSIndex", externalReference.toString(), externalReference.toString());
-        });
+        if (source.getExternalReferences() != null) {
+            // issue 3707 demonstrated that this can ocassionally be null while not marked @Nullable in the API library
+            source.getExternalReferences().forEach(externalReference -> {
+                result.addReference("OSSIndex", externalReference.toString(), externalReference.toString());
+            });
+        }
 
         // attach vulnerable software details as best we can
         final PackageUrl purl = report.getCoordinates();
