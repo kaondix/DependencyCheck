@@ -29,7 +29,7 @@ public class PnpmAuditAnalyzerTest extends BaseTest
         NpmAuditParser npmAuditParser = new NpmAuditParser();
         JSONObject vulnsAuditJson = new JSONObject(IOUtils.toString(getResourceAsStream(this, "pnpmaudit/pnpm-audit.json"), "UTF-8"));
         List<Advisory> advisories = npmAuditParser.parse(vulnsAuditJson);
-        assertThat(advisories.size(), is(1));
+        assertThat(advisories.size(), is(2));
     }
 
     @Test
