@@ -1,0 +1,334 @@
+{
+    "reportSchema": "1.1",
+    "scanInfo": {
+        "engineVersion": "$version",
+        "dataSource": [
+        #foreach($prop in $properties.getMetaData().entrySet())
+        #if($foreach.count > 1),#end{
+                "name": "$enc.json($prop.key)",
+                "timestamp": "$enc.json($prop.value)"
+            }
+        #end
+        ]
+
+    #if($exceptions)
+        #macro( writeJsonException $type $ex $depth)
+            "$type":{"message":"$enc.json($ex.toString())"
+            #if($ex.getStackTrace())
+                ,"stackTrace":[
+                #foreach($t in $ex.getStackTrace())
+                    #if($foreach.count > 1),#end"$enc.json($t.toString())"
+                #end
+                ]
+            #end
+            #if($ex.getCause() && $depth<20)
+                #set($cause="cause")
+                #set($currentDepth=$depth+1)
+                ,#writeJsonException($cause $ex.getCause() $currentDepth)
+            #end
+            }
+        #end
+            ,"analysisExceptions":[
+                #foreach($ex in $exceptions)
+                    #set($type="exception")
+                    #set($d=0)
+                    #if($foreach.count > 1),#end{#writeJsonException($type $ex $d)}
+                #end
+            ]
+    #end
+
+    },
+    "projectInfo": {
+        "name": "$enc.json($applicationName)",
+        #if($groupID)"groupID":"$enc.json($groupID)",#end
+        #if($artifactID)"artifactID":"$enc.json($artifactID)",#end
+        #if($applicationVersion)"version":"$enc.json($applicationVersion)",#end
+        "reportDate": "$enc.json($scanDateXML)",
+        "credits": {
+            "NVD": "This report contains data retrieved from the National Vulnerability Database: http://nvd.nist.gov",
+            "NPM": "This report may contain data retrieved from the NPM Public Advisories: https://www.npmjs.com/advisories",
+            "RETIREJS": "This report may contain data retrieved from the RetireJS community: https://retirejs.github.io/retire.js/",
+            "OSSINDEX": "This report may contain data retrieved from the Sonatype OSS Index: https://ossindex.sonatype.org"
+        }
+    },
+    "dependencies": [
+        #foreach($dependency in $dependencies)#if($foreach.count > 1),#end{
+            "isVirtual": #if($dependency.isVirtual())true#{else}false#end,
+            "fileName": "$enc.json($dependency.DisplayFileName)",
+            "filePath": "$enc.json($dependency.FilePath)"
+            #if(!$dependency.isVirtual()),"md5": "$enc.json($dependency.Md5sum)",
+            "sha1": "$enc.json($dependency.Sha1sum)",
+            "sha256": "$enc.json($dependency.Sha256sum)"#end
+            #if($dependency.description),"description": "$enc.json($dependency.description)"#end
+            #if($dependency.license),"license": "$enc.json($dependency.license)"#end
+            #if ($dependency.projectReferences.size()>0)
+            ,"projectReferences": [
+            #foreach($ref in $dependency.projectReferences)
+                #if($foreach.count > 1),#end
+                "$enc.json($ref)"
+            #end
+            ]
+            #end
+            #if ($dependency.getRelatedDependencies().size()>0)
+            ,"relatedDependencies": [
+                #foreach($related in $dependency.getRelatedDependencies()) #if($foreach.count > 1),#end {
+                    "isVirtual": #if($related.isVirtual())true#{else}false#end,
+                    "fileName": "$enc.json($related.DisplayFileName)",
+                    "filePath": "$enc.json($related.FilePath)"
+                    #if(!$related.isVirtual()),"sha256": "$enc.json($related.Sha256sum)",
+                    "sha1": "$enc.json($related.Sha1sum)",
+                    "md5": "$enc.json($related.Md5sum)"#end#if($related.getSoftwareIdentifiers().size()>0),
+                    "packageIds": [
+                        #foreach($id in $related.getSoftwareIdentifiers())
+                            #if($foreach.count > 1),#end
+                            {
+                                "id": "$id.value"
+                                #if ($id.url),"url": "$enc.json($id.url)"#end
+                                #if ($id.notes),"notes": "$enc.json($id.notes)"#end
+                                #if ($id.description),"description":"$enc.json($id.description)"#end
+                            }
+                        #end
+                    ]#end
+                }
+                #end
+            ]
+            #end
+            ,"evidenceCollected": {
+                "vendorEvidence": [
+                    #foreach($evidence in $dependency.getEvidence($VENDOR))
+                        #if($foreach.count > 1),#end{
+                            "type": "vendor",
+                            "confidence": "$enc.json($evidence.getConfidence().toString())",
+                            "source": "$enc.json($evidence.getSource())",
+                            "name": "$enc.json($evidence.getName())",
+                            "value": "$enc.json($evidence.getValue().trim())"
+                        }
+                    #end
+                ],
+                "productEvidence": [
+                    #foreach($evidence in $dependency.getEvidence($PRODUCT))
+                        #if($foreach.count > 1),#end{
+                            "type": "product",
+                            "confidence": "$enc.json($evidence.getConfidence().toString())",
+                            "source": "$enc.json($evidence.getSource())",
+                            "name": "$enc.json($evidence.getName())",
+                            "value": "$enc.json($evidence.getValue().trim())"
+                    }
+                    #end
+                ],
+                "versionEvidence": [
+                    #foreach($evidence in $dependency.getEvidence($VERSION))
+                    #if($foreach.count > 1),#end
+                    {
+                        "type": "version",
+                        "confidence": "$enc.json($evidence.getConfidence().toString())",
+                        "source": "$enc.json($evidence.getSource())",
+                        "name": "$enc.json($evidence.getName())",
+                        "value": "$enc.json($evidence.getValue().trim())"
+                    }
+                    #end
+                ]
+            }
+            #if($dependency.getSoftwareIdentifiers() && $dependency.getSoftwareIdentifiers().size()>0)
+                ,"packages": [
+                #foreach($id in $dependency.getSoftwareIdentifiers())
+                    #if($foreach.count > 1),#end
+                    {
+                        "id": "$enc.json($id.value)"
+                        #if($id.confidence),"confidence": "$enc.json($id.confidence)"#end
+                        #if($id.url),"url": "$enc.json($id.url)"#end
+                        #if($id.description),"description": "$enc.json($id.description)"#end
+                        #if($id.notes),"notes": "$enc.json($id.notes)"#end
+                    }
+                #end
+            ]#end
+            #if($dependency.getVulnerableSoftwareIdentifiers() && $dependency.getVulnerableSoftwareIdentifiers().size()>0)
+                ,"vulnerabilityIds": [
+                #foreach($id in $dependency.getVulnerableSoftwareIdentifiers())
+                    #if($foreach.count > 1),#end
+                {
+                    "id": "$enc.json($id.value)"
+                    #if($id.confidence),"confidence": "$enc.json($id.confidence)"#end
+                    #if($id.url),"url": "$enc.json($id.url)"#end
+                    #if($id.description),"description": "$enc.json($id.description)"#end
+                    #if($id.notes),"notes": "$enc.json($id.notes)"#end
+                }
+                #end
+            ]#end
+            #if($dependency.getSuppressedIdentifiers() && $dependency.getSuppressedIdentifiers().size()>0)
+                ,"suppressedVulnerabilityIds": [
+                #foreach($id in $dependency.getSuppressedIdentifiers())
+                    #if($foreach.count > 1),#end
+                    {
+                        "id": "$enc.json($id.value)"
+                        #if($id.confidence),"confidence": "$enc.json($id.confidence)"#end
+                        #if($id.url),"url": "$enc.json($id.url)"#end
+                        #if($id.description),"description": "$enc.json($id.description)"#end
+                        #if($id.notes),"notes": "$enc.json($id.notes)"#end
+                    }
+                #end
+            ]#end
+
+            #if($dependency.getVulnerabilities().size()>0)
+            ,"vulnerabilities": [
+            #foreach($vuln in $dependency.getVulnerabilities(true))#if($foreach.count > 1),#end {
+                "source": "$enc.json($vuln.getSource().name())",
+                "name": "$enc.json($vuln.name)",
+                #if($vuln.UnscoredSeverity)"unscored": "true", "severity" : "#if($vuln.unscoredSeverity.equals("0.0"))Unknown#else$enc.json($vuln.unscoredSeverity)#end",
+#elseif($vuln.cvssV3 && $vuln.cvssV3.baseSeverity)
+                    "severity" : "$enc.json($vuln.cvssV3.baseSeverity)",
+#elseif($vuln.cvssV2 && $vuln.cvssV2.severity)
+                    "severity" : "$enc.json($vuln.cvssV2.severity)",
+#end
+#if($vuln.cvssV2)
+                    "cvssv2": {
+                        "score": $vuln.cvssV2.score
+                        ,"accessVector": "$enc.json($vuln.cvssV2.accessVector)"
+                        ,"accessComplexity": "$enc.json($vuln.cvssV2.accessComplexity)"
+                        ,"authenticationr": "$enc.json($vuln.cvssV2.authentication)"
+                        ,"confidentialImpact": "$enc.json($vuln.cvssV2.confidentialityImpact)"
+                        ,"integrityImpact": "$enc.json($vuln.cvssV2.integrityImpact)"
+                        ,"availabilityImpact": "$enc.json($vuln.cvssV2.availabilityImpact)"
+                        ,"severity": "$enc.json($vuln.cvssV2.severity)"
+#if($vuln.cvssV2.version),"version": "$enc.json($vuln.cvssV2.version)"#end
+#if($vuln.cvssV2.exploitabilityScore),"exploitabilityScore": "$enc.json($vuln.cvssV2.exploitabilityScore)"#end
+#if($vuln.cvssV2.impactScore),"impactScore": "$enc.json($vuln.cvssV2.impactScore)"#end
+#if($vuln.cvssV2.acInsufInfo),"acInsufInfo": "$enc.json($vuln.cvssV2.acInsufInfo)"#end
+#if($vuln.cvssV2.obtainAllPrivilege),"obtainAllPrivilege": "$enc.json($vuln.cvssV2.obtainAllPrivilege)"#end
+#if($vuln.cvssV2.obtainUserPrivilege),"obtainUserPrivilege": "$enc.json($vuln.cvssV2.obtainUserPrivilege)"#end
+#if($vuln.cvssV2.obtainOtherPrivilege),"obtainOtherPrivilege": "$enc.json($vuln.cvssV2.obtainOtherPrivilege)"#end
+#if($vuln.cvssV2.userInteractionRequired),"userInteractionRequired": "$enc.json($vuln.cvssV2.userInteractionRequired)"#end
+                    },
+#end
+#if($vuln.cvssV3)
+                    "cvssv3": {
+                        "baseScore": $vuln.cvssV3.baseScore
+                        ,"attackVector": "$enc.json($vuln.cvssV3.attackVector)"
+                        ,"attackComplexity": "$enc.json($vuln.cvssV3.attackComplexity)"
+                        ,"privilegesRequired": "$enc.json($vuln.cvssV3.privilegesRequired)"
+                        ,"userInteraction": "$enc.json($vuln.cvssV3.userInteraction)"
+                        ,"scope": "$enc.json($vuln.cvssV3.scope)"
+                        ,"confidentialityImpact": "$enc.json($vuln.cvssV3.confidentialityImpact)"
+                        ,"integrityImpact": "$enc.json($vuln.cvssV3.integrityImpact)"
+                        ,"availabilityImpact": "$enc.json($vuln.cvssV3.availabilityImpact)"
+                        ,"baseSeverity": "$enc.json($vuln.cvssV3.baseSeverity)"
+#if($vuln.cvssV3.exploitabilityScore),"exploitabilityScore": "$enc.json($vuln.cvssV3.exploitabilityScore)"#end
+#if($vuln.cvssV3.impactScore),"impactScore": "$enc.json($vuln.cvssV3.impactScore)"#end
+#if($vuln.cvssV3.version),"version": "$enc.json($vuln.cvssV3.version)"#end
+                    },
+#end
+#if (!$vuln.cwe.cwes.isEmpty())
+                    "cwes": [
+#set($addComma=0)
+#foreach($cweEntry in $vuln.cwes.entries)
+                        #if($cweEntry) #if($addComma==1),#else#set($addComma=1)#end
+                        "$enc.json($cweEntry)"#end
+#end
+                    ],
+#end
+                "description": "#if($vuln.description)$enc.json($vuln.description)#end",
+                "notes": "#if ($vuln.notes)$enc.json($vuln.notes)#end",
+                "references": [
+                    #foreach($ref in $vuln.getReferences())
+                        #if($foreach.count > 1),#end {
+                        "source": "$enc.json($ref.source)",
+                        #if ($ref.url)"url": "$enc.json($ref.url)",#end
+                        "name": "$enc.json($ref.name)"
+                    }#end
+                ],
+                "vulnerableSoftware": [
+                    #foreach($vs in $vuln.getVulnerableSoftware(true))
+                        #if($foreach.count > 1),#end {
+                        "software": { 
+                            "id":"$enc.json($vs.toCpe23FS())"
+                            #if($vs == $vuln.matchedVulnerableSoftware),"vulnerabilityIdMatched":"true"#end
+                            #if($vs.versionStartIncluding),"versionStartIncluding":"$enc.json($vs.versionStartIncluding)"#end
+                            #if($vs.versionStartExcluding),"versionStartExcluding":"$enc.json($vs.versionStartExcluding)"#end
+                            #if($vs.versionEndIncluding),"versionEndIncluding":"$enc.json($vs.versionEndIncluding)"#end
+                            #if($vs.versionEndExcluding),"versionEndExcluding":"$enc.json($vs.versionEndExcluding)"#end
+                            #if(!$vs.vulnerable),"vulnerable":"$vs.vulnerable"#end
+                        }
+                    }#end
+                ]
+                }#end
+            ]#end
+            #if($dependency.getSuppressedVulnerabilities().size()>0 || $dependency.getSuppressedVulnerabilities().size()>0)
+            ,"suppressedVulnerabilities": [
+                #foreach($vuln in $dependency.getSuppressedVulnerabilities(true))#if($foreach.count > 1),#end {
+                "source": "$enc.json($vuln.getSource().name())",
+                "name": "$enc.json($vuln.name)",
+#if($vuln.cvssV2)
+                    "cvssv2": {
+                        "score": $vuln.cvssV2.score
+                        ,"accessVector": "$enc.json($vuln.cvssV2.accessVector)"
+                        ,"accessComplexity": "$enc.json($vuln.cvssV2.accessComplexity)"
+                        ,"authenticationr": "$enc.json($vuln.cvssV2.authentication)"
+                        ,"confidentialImpact": "$enc.json($vuln.cvssV2.confidentialityImpact)"
+                        ,"integrityImpact": "$enc.json($vuln.cvssV2.integrityImpact)"
+                        ,"availabilityImpact": "$enc.json($vuln.cvssV2.availabilityImpact)"
+                        ,"severity": "$enc.json($vuln.cvssV2.severity)"
+#if($vuln.cvssV2.version),"version": "$enc.json($vuln.cvssV2.version)"#end
+#if($vuln.cvssV2.exploitabilityScore),"exploitabilityScore": "$enc.json($vuln.cvssV2.exploitabilityScore)"#end
+#if($vuln.cvssV2.impactScore),"impactScore": "$enc.json($vuln.cvssV2.impactScore)"#end
+#if($vuln.cvssV2.acInsufInfo),"acInsufInfo": "$enc.json($vuln.cvssV2.acInsufInfo)"#end
+#if($vuln.cvssV2.obtainAllPrivilege),"obtainAllPrivilege": "$enc.json($vuln.cvssV2.obtainAllPrivilege)"#end
+#if($vuln.cvssV2.obtainUserPrivilege),"obtainUserPrivilege": "$enc.json($vuln.cvssV2.obtainUserPrivilege)"#end
+#if($vuln.cvssV2.obtainOtherPrivilege),"obtainOtherPrivilege": "$enc.json($vuln.cvssV2.obtainOtherPrivilege)"#end
+#if($vuln.cvssV2.userInteractionRequired),"userInteractionRequired": "$enc.json($vuln.cvssV2.userInteractionRequired)"#end
+                    },
+#end
+#if($vuln.cvssV3)
+                    "cvssv3": {
+                        "baseScore": $vuln.cvssV3.baseScore
+                        ,"attackVector": "$enc.json($vuln.cvssV3.attackVector)"
+                        ,"attackComplexity": "$enc.json($vuln.cvssV3.attackComplexity)"
+                        ,"privilegesRequired": "$enc.json($vuln.cvssV3.privilegesRequired)"
+                        ,"userInteraction": "$enc.json($vuln.cvssV3.userInteraction)"
+                        ,"scope": "$enc.json($vuln.cvssV3.scope)"
+                        ,"confidentialityImpact": "$enc.json($vuln.cvssV3.confidentialityImpact)"
+                        ,"integrityImpact": "$enc.json($vuln.cvssV3.integrityImpact)"
+                        ,"availabilityImpact": "$enc.json($vuln.cvssV3.availabilityImpact)"
+                        ,"baseSeverity": "$enc.json($vuln.cvssV3.baseSeverity)"
+#if($vuln.cvssV3.exploitabilityScore),"exploitabilityScore": "$enc.json($vuln.cvssV3.exploitabilityScore)"#end
+#if($vuln.cvssV3.impactScore),"impactScore": "$enc.json($vuln.cvssV3.impactScore)"#end
+#if($vuln.cvssV3.version),"version": "$enc.json($vuln.cvssV3.version)"#end
+                    },
+#end
+#if (!$vuln.cwes.isEmpty())
+                    "cwes": [
+#set($addComma=0)
+#foreach($cweEntry in $vuln.cwes.entries)
+                        #if($cweEntry) #if($addComma==1),#else#set($addComma=1)#end
+                        "$enc.json($cweEntry)"#end
+#end
+                    ],
+#end
+                "description": "$enc.json($vuln.description)",
+                "notes": "#if ($vuln.notes)$enc.json($vuln.notes)#end",
+                "references": [
+                    #foreach($ref in $vuln.getReferences())
+                        #if($foreach.count > 1),#end {
+                    "source": "$enc.json($ref.source)",
+                    #if ($ref.url)"url": "$enc.json($ref.url)",#end
+                    "name": "$enc.json($ref.name)"
+                    }#end
+                ],
+                "vulnerableSoftware": [
+                    #foreach($vs in $vuln.getVulnerableSoftware(true))
+                        #if($foreach.count > 1),#end {
+                        "software": { 
+                            "id":"$enc.json($vs.toCpe23FS())"
+                            #if($vs == $vuln.matchedVulnerableSoftware),"vulnerabilityIdMatched":"true"#end
+                            #if($vs.versionStartIncluding),"versionStartIncluding":"$enc.json($vs.versionStartIncluding)"#end
+                            #if($vs.versionStartExcluding),"versionStartExcluding":"$enc.json($vs.versionStartExcluding)"#end
+                            #if($vs.versionEndIncluding),"versionEndIncluding":"$enc.json($vs.versionEndIncluding)"#end
+                            #if($vs.versionEndExcluding),"versionEndExcluding":"$enc.json($vs.versionEndExcluding)"#end
+                            #if(!$vs.vulnerable),"vulnerable":"$vs.vulnerable"#end
+                        }
+                    }#end
+                ]
+                }#end
+            ]#end
+        }#end
+    ]
+}

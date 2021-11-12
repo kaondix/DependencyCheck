@@ -1,0 +1,54 @@
+About
+====================
+OWASP dependency-check-cli is an command line tool that uses dependency-check-core to detect
+publicly disclosed vulnerabilities associated with the scanned project dependencies. The tool
+will generate a report listing the dependency, any identified Common Platform Enumeration (CPE)
+identifiers, and the associated Common Vulnerability and Exposure (CVE) entries.
+
+Installation & Usage
+====================
+Import the GPG key used to sign all Dependency Check releases: `gpg --keyserver hkp://keys.gnupg.net --recv-keys 259A55407DD6C00299E6607EFFDE55BE73A2D1ED`.
+Download the dependency-check command line tool the [GitHub Release](https://github.com/jeremylong/DependencyCheck/releases/download/v${project.version}/dependency-check-${project.version}-release.zip) and the associated GPG signature file from the [GitHub Release](https://github.com/jeremylong/DependencyCheck/releases/download/v${project.version}/dependency-check-${project.version}-release.zip.asc).
+Verify the cryptographic integrity of your download: `gpg --verify dependency-check-${project.version}-release.zip.asc`.
+Extract the zip file to a location on your computer and put the 'bin' directory into the
+path environment variable.
+
+#set( $H = '#' )
+
+$H$H$H Homebrew
+    $ brew install dependency-check
+
+This puts an executable `dependency-check` script in the `/bin` directory of
+your homebrew installation.
+
+To scan a folder on the system you can run:
+
+$H$H$H Windows
+    dependency-check.bat --project "My App Name" --scan "c:\java\application\lib"
+
+$H$H$H *nix
+    dependency-check.sh --project "My App Name" --scan "/java/application/lib"
+
+To view the command line arguments, see the <a href="arguments.html">arguments page</a>, or you can run:
+
+$H$H$H Windows
+    dependency-check.bat --help
+
+$H$H$H *nix
+    dependency-check.sh --help
+
+Extensions and Centralized Databases
+====================================
+If you have built a custom [dependency-check-plugin](../dependency-check-plugin/index.html)
+or you are using an [centralized database](../data/database.html) you will likely need
+to add the custom plugin or database driver to the classpath of dependency-check. This can
+be done by creating a plugins directory at the root of dependency-check and placing
+the JAR files the directory.
+
+```
+- dependency-check
+  - bin
+  - repos
+  - data
+  - plugins
+```

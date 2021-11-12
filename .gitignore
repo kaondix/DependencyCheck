@@ -1,0 +1,49 @@
+*/target/**
+# IntelliJ test run side-effects
+dependency-check-core/data/
+dependency-check-ant/data/
+# Intellij project files
+*.iml
+*.ipr
+*.iws
+.idea/
+# Eclipse project files
+.classpath
+.project
+.settings
+maven-eclipse.xml
+.externalToolBuilders
+.pmd
+# Netbeans configuration
+nb-configuration.xml
+**/nbproject/
+/target/
+#maven-shade-plugin generated pom
+dependency-reduced-pom.xml
+#ruby Gemfile, etc. This is a java project, Gemfile is here to check site problem with Jekyll
+Gemfile
+Gemfile.lock
+_site/**
+#unknown as to why these are showing up... but need to be ignored.
+.LCKpom.xml~
+#coverity
+/cov-int/
+/dependency-check-core/nbproject/
+cov-scan.bat
+velocity.log
+/core/data/
+
+# Apple macOS operating system Desktop Services Store files
+.DS_Store
+/.vscode
+/maven/.factorypath
+
+# nodejs installed resources that are not needed
+core/src/test/resources/nodejs/**/Makefile
+core/src/test/resources/nodejs/**/*.js
+core/src/test/resources/nodejs/**/*.md
+core/src/test/resources/nodejs/**/*.markdown
+core/src/test/resources/nodejs/**/.gitattributes
+core/src/test/resources/nodejs/**/*.cmd
+core/src/test/resources/nodejs/**/*.jshintrc
+core/src/test/resources/nodejs/**/.travis.yml
