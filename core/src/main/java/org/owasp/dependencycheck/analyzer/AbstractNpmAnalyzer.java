@@ -27,6 +27,7 @@ import com.vdurmont.semver4j.SemverException;
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.data.nodeaudit.Advisory;
 import org.owasp.dependencycheck.data.nodeaudit.NodeAuditSearch;
+import org.owasp.dependencycheck.data.nvd.ecosystem.Ecosystem;
 import org.owasp.dependencycheck.dependency.Confidence;
 import org.owasp.dependencycheck.dependency.Dependency;
 import org.owasp.dependencycheck.dependency.Reference;
@@ -291,7 +292,7 @@ public abstract class AbstractNpmAnalyzer extends AbstractFileTypeAnalyzer {
      */
     protected Dependency findDependency(Engine engine, String name, String version) {
         for (Dependency d : engine.getDependencies()) {
-            if (NPM_DEPENDENCY_ECOSYSTEM.equals(d.getEcosystem()) && name.equals(d.getName()) && version != null && d.getVersion() != null) {
+            if ((NPM_DEPENDENCY_ECOSYSTEM.equals(d.getEcosystem()) || Ecosystem.NODEJS.equals(d.getEcosystem())) && name.equals(d.getName()) && version != null && d.getVersion() != null) {
                 final String dependencyVersion = d.getVersion();
                 if (DependencyBundlingAnalyzer.npmVersionsMatch(version, dependencyVersion)) {
                     return d;
