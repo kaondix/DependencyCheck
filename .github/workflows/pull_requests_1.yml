@@ -158,13 +158,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Maven Site
         run: |
-            mvn -s settings.xml site --no-transfer-progress --batch-mode
             echo "listing"
             ls
             echo "listing target"
             ls target
             echo "listing core/target"
             ls core/target
+            mvn -s settings.xml site --no-transfer-progress --batch-mode
       - name: Publish Comments
         run: |
             mvn se.bjurr.violations:violation-comments-to-github-maven-plugin:violation-comments --no-transfer-progress --batch-mode -DpullRequestId=${{ github.event.pull_request.number }} -DoAuth2Token=${{ secrets.GITHUB_TOKEN }}
