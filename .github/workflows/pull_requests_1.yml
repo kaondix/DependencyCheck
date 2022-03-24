@@ -103,8 +103,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Maven Site
         run: |
-            echo "listing .m2"
-            ls ~/.m2/repository/org/owasp/utils
             mvn -s settings.xml compile site --no-transfer-progress --batch-mode
       - name: Publish Comments
         run: |
