@@ -1,7 +1,5 @@
 name: Pull Requests
 
-permissions: read
-
 on: 
   pull_request:
     paths-ignore:
@@ -11,6 +9,7 @@ on:
 jobs:
   build:
     name: Build dependency-check
+    permissions: read
     runs-on: ubuntu-latest 
     steps:
       - uses: actions/checkout@v3
@@ -44,6 +43,7 @@ jobs:
             cli/target/*.zip
   test:
     name: Test dependency-check
+    permissions: read
     needs: build
     runs-on: ubuntu-latest 
     steps:
@@ -86,6 +86,7 @@ jobs:
             mvn -s settings.xml verify --no-transfer-progress --batch-mode
   maven:
     name: Test dependency-check-maven
+    permissions: read
     needs: build
     runs-on: ubuntu-latest 
     steps:
@@ -127,8 +128,9 @@ jobs:
           path: maven/target/it/**/build.log
   audit:
     runs-on: ubuntu-latest
+    permissions: write
     needs: build
-    name: Check
+    name: Audit
     steps:
       - uses: actions/checkout@v3
       - name: Download snapshot build
