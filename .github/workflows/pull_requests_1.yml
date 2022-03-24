@@ -19,7 +19,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.m2/repository/
-          key: mvn-repo
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
       - name: Set up JDK 1.8
         id: jdk-8
         uses: actions/setup-java@v2
@@ -37,7 +39,6 @@ jobs:
           name: archive-snapshot
           retention-days: 1
           path: |
-            **/target/*.asc
             **/target/*.jar
             **/target/*.pom
             ant/target/*.zip
@@ -55,7 +56,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.m2/repository/
-          key: mvn-repo
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
       - name: Download snapshot build
         uses: actions/download-artifact@v2
         with:
@@ -99,7 +102,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.m2/repository/
-          key: mvn-repo
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
       - name: Download snapshot build
         uses: actions/download-artifact@v2
         with:
@@ -143,7 +148,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.m2/repository/
-          key: mvn-repo
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
       - name: Download snapshot build
         uses: actions/download-artifact@v2
         with:
@@ -163,6 +170,8 @@ jobs:
             ls
             echo "listing core/target"
             ls core/target
+            echo "listing .m2"
+            ls ~/.m2/repository/org/owasp/utils
             mvn -s settings.xml site --no-transfer-progress --batch-mode
       - name: Publish Comments
         run: |
