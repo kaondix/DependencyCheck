@@ -37,7 +37,7 @@ jobs:
       - name: Test with Maven
         id: build
         run: |
-            mvn -s settings.xml -pl utils,core,cli,ant,archtype -am compile verify --no-transfer-progress --batch-mode
+            mvn -s settings.xml -pl utils,core,cli,ant,archetype -am compile verify --no-transfer-progress --batch-mode
   maven:
     name: Test dependency-check-maven
     permissions: 
@@ -68,7 +68,7 @@ jobs:
       - name: Regression Test with Maven
         id: build
         run: |
-            mvn -s ../settings.xml -pl maven -am compile verify -PtestMavenPlugin -DreleaseTesting --no-transfer-progress --batch-mode
+            mvn -s settings.xml -pl maven -am compile verify -PtestMavenPlugin -DreleaseTesting --no-transfer-progress --batch-mode
       - name: Archive IT test logs
         id: archive-logs
         if: always()
@@ -93,11 +93,6 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
-      - name: Download snapshot build
-        uses: actions/download-artifact@v2
-        with:
-          name: archive-snapshot
-          path: .
       - name: Semgrep
         id: semgrep
         uses: returntocorp/semgrep-action@v1
@@ -108,10 +103,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Maven Site
         run: |
-            echo "listing"
-            ls
-            echo "listing core/target"
-            ls core/target
             echo "listing .m2"
             ls ~/.m2/repository/org/owasp/utils
             mvn -s settings.xml compile site --no-transfer-progress --batch-mode
