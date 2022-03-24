@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    name: Test dependency-check
+    name: Build and Test
     permissions: 
       contents: read
     runs-on: ubuntu-latest 
@@ -39,7 +39,7 @@ jobs:
         run: |
             mvn -s settings.xml -pl utils,core,cli,ant,archetype -am compile verify --no-transfer-progress --batch-mode
   maven:
-    name: Test dependency-check-maven
+    name: Regression Test Maven Plugin
     permissions: 
       contents: read
     runs-on: ubuntu-latest 
@@ -65,10 +65,10 @@ jobs:
       - uses: pnpm/action-setup@v2.2.1
         with:
           version: 6.0.2
-      - name: Regression Test with Maven
+      - name: Regression Test Maven Plugin
         id: build
         run: |
-            mvn -s settings.xml -pl maven -am compile verify -PtestMavenPlugin -DreleaseTesting --no-transfer-progress --batch-mode
+            mvn -s settings.xml -pl utils,core,maven -am compile verify -PtestMavenPlugin -DreleaseTesting --no-transfer-progress --batch-mode
       - name: Archive IT test logs
         id: archive-logs
         if: always()
@@ -103,7 +103,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Maven Site
         run: |
-            mvn -s settings.xml compile site --no-transfer-progress --batch-mode
+            mvn -s settings.xml package site --no-transfer-progress --batch-mode
       - name: Publish Comments
         run: |
             mvn se.bjurr.violations:violation-comments-to-github-maven-plugin:violation-comments --no-transfer-progress --batch-mode -DpullRequestId=${{ github.event.pull_request.number }} -DoAuth2Token=${{ secrets.GITHUB_TOKEN }}
