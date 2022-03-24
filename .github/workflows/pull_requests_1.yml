@@ -76,16 +76,16 @@ jobs:
         id: build
         run: |
             cd utils
-            mvn -s settings.xml verify --no-transfer-progress --batch-mode
+            mvn -s ../settings.xml verify --no-transfer-progress --batch-mode
             cd ..
             cd core
-            mvn -s settings.xml verify --no-transfer-progress --batch-mode
+            mvn -s ../settings.xml verify --no-transfer-progress --batch-mode
             cd ..
             cd ant
-            mvn -s settings.xml verify --no-transfer-progress --batch-mode
+            mvn -s ../settings.xml verify --no-transfer-progress --batch-mode
             cd ..
             cd cli
-            mvn -s settings.xml verify --no-transfer-progress --batch-mode
+            mvn -s ../settings.xml verify --no-transfer-progress --batch-mode
   maven:
     name: Test dependency-check-maven
     permissions: 
@@ -120,7 +120,7 @@ jobs:
         id: build
         run: |
             cd maven
-            mvn -s settings.xml verify -DreleaseTesting --no-transfer-progress --batch-mode
+            mvn -s ../settings.xml verify -DreleaseTesting --no-transfer-progress --batch-mode
       - name: Archive IT test logs
         id: archive-logs
         if: always()
