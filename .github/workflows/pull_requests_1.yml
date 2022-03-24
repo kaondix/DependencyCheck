@@ -138,6 +138,12 @@ jobs:
     name: Audit
     steps:
       - uses: actions/checkout@v3
+      - name: Check Maven Cache
+        id: maven-cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository/
+          key: mvn-repo
       - name: Download snapshot build
         uses: actions/download-artifact@v2
         with:
@@ -150,7 +156,7 @@ jobs:
           generateSarif: "1"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build with Maven
+      - name: Maven Site
         id: build
         run: |
             mvn -s settings.xml site --no-transfer-progress --batch-mode
@@ -160,4 +166,7 @@ jobs:
             ls target
             echo "listing core/target"
             ls core/target
+      - name: Publish Comments
+        id: build
+        run: |
             mvn se.bjurr.violations:violation-comments-to-github-maven-plugin:violation-comments --no-transfer-progress --batch-mode -DpullRequestId=${{ github.event.pull_request.number }} -DoAuth2Token=${{ secrets.GITHUB_TOKEN }}
