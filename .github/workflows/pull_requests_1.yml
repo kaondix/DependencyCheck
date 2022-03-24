@@ -1,0 +1,156 @@
+name: Pull Requests
+
+permissions: read
+
+on: 
+  pull_request:
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.txt'
+
+jobs:
+  build:
+    name: Build dependency-check
+    runs-on: ubuntu-latest 
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check Maven Cache
+        id: maven-cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository/
+          key: mvn-repo
+      - name: Set up JDK 1.8
+        id: jdk-8
+        uses: actions/setup-java@v2
+        with:
+          java-version: 8
+          distribution: 'zulu'
+      - name: Build with Maven
+        id: build
+        run: |
+            mvn -s settings.xml install -DskipTests=true --no-transfer-progress --batch-mode
+      - name: Archive Snapshot
+        id: archive-snapshot
+        uses: actions/upload-artifact@v2
+        with:
+          name: archive-snapshot
+          retention-days: 1
+          path: |
+            **/target/*.asc
+            **/target/*.jar
+            **/target/*.pom
+            ant/target/*.zip
+            cli/target/*.zip
+  test:
+    name: Test dependency-check
+    needs: build
+    runs-on: ubuntu-latest 
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check Maven Cache
+        id: maven-cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository/
+          key: mvn-repo
+      - name: Download snapshot build
+        uses: actions/download-artifact@v2
+        with:
+          name: archive-snapshot
+      - uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: '6.0.x'
+      - name: Set up JDK 1.8
+        id: jdk-8
+        uses: actions/setup-java@v2
+        with:
+          java-version: 8
+          distribution: 'zulu'
+      - uses: pnpm/action-setup@v2.2.1
+        with:
+          version: 6.0.2
+      - name: Test with Maven
+        id: build
+        run: |
+            cd utils
+            mvn -s settings.xml verify --no-transfer-progress --batch-mode
+            cd ..
+            cd core
+            mvn -s settings.xml verify --no-transfer-progress --batch-mode
+            cd ..
+            cd ant
+            mvn -s settings.xml verify --no-transfer-progress --batch-mode
+            cd ..
+            cd cli
+            mvn -s settings.xml verify --no-transfer-progress --batch-mode
+  maven:
+    name: Test dependency-check-maven
+    needs: build
+    runs-on: ubuntu-latest 
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check Maven Cache
+        id: maven-cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository/
+          key: mvn-repo
+      - name: Download snapshot build
+        uses: actions/download-artifact@v2
+        with:
+          name: archive-snapshot
+      - uses: actions/setup-dotnet@v2
+        with:
+          dotnet-version: '6.0.x'
+      - name: Set up JDK 1.8
+        id: jdk-8
+        uses: actions/setup-java@v2
+        with:
+          java-version: 8
+          distribution: 'zulu'
+      - uses: pnpm/action-setup@v2.2.1
+        with:
+          version: 6.0.2
+      - name: Regression Test with Maven
+        id: build
+        run: |
+            cd maven
+            mvn -s settings.xml verify -DreleaseTesting --no-transfer-progress --batch-mode
+      - name: Archive IT test logs
+        id: archive-logs
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: it-test-logs
+          retention-days: 7
+          path: maven/target/it/**/build.log
+  audit:
+    runs-on: ubuntu-latest
+    needs: build
+    name: Check
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download snapshot build
+        uses: actions/download-artifact@v2
+        with:
+          name: archive-snapshot
+      - name: Semgrep
+        id: semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: p/r2c
+          generateSarif: "1"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build with Maven
+        id: build
+        run: |
+            mvn -s settings.xml site --no-transfer-progress --batch-mode
+            echo "listing"
+            ls
+            echo "listing target"
+            ls target
+            echo "listing core/target"
+            ls core/target
+            mvn se.bjurr.violations:violation-comments-to-github-maven-plugin:violation-comments --no-transfer-progress --batch-mode -DpullRequestId=${{ github.event.pull_request.number }} -DoAuth2Token=${{ secrets.GITHUB_TOKEN }}
