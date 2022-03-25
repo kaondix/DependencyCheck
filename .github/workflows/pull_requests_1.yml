@@ -102,8 +102,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Maven Site
+        if: always()
         run: |
             mvn -s settings.xml package site --no-transfer-progress --batch-mode
       - name: Publish Comments
+        if: always()
         run: |
             mvn se.bjurr.violations:violation-comments-to-github-maven-plugin:violation-comments --no-transfer-progress --batch-mode -DpullRequestId=${{ github.event.pull_request.number }} -DoAuth2Token=${{ secrets.GITHUB_TOKEN }}
