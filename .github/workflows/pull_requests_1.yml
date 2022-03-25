@@ -100,7 +100,7 @@ jobs:
       - name: Maven Site
         if: always()
         run: |
-            mvn -s settings.xml package site --no-transfer-progress --batch-mode
+            mvn -s settings.xml package site -DskipTests=true --no-transfer-progress --batch-mode
       - name: Publish Comments
         if: always()
         run: |
