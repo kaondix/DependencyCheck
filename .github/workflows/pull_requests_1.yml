@@ -68,7 +68,7 @@ jobs:
       - name: Regression Test Maven Plugin
         id: build
         run: |
-            mvn -s settings.xml -pl utils,core,maven -am compile verify -PtestMavenPlugin -DreleaseTesting --no-transfer-progress --batch-mode
+            mvn -s settings.xml -pl utils,core,maven -am compile verify -DtestMavenPlugin -DreleaseTesting --no-transfer-progress --batch-mode
       - name: Archive IT test logs
         id: archive-logs
         if: always()

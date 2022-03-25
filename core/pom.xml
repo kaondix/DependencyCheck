@@ -704,7 +704,7 @@ Copyright (c) 2012 Jeremy Long. All Rights Reserved.
             </dependencies>
         </profile-->
         <profile>
-            <id>TestMavenPlugin</id>
+            <id>TestMavenPlugin-core</id>
             <activation>
                 <property>
                     <name>testMavenPlugin</name>

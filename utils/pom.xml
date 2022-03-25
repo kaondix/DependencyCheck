@@ -85,7 +85,7 @@ Copyright (c) 2014 - Jeremy Long. All Rights Reserved.
     </dependencies>
     <profiles>
         <profile>
-            <id>TestMavenPlugin</id>
+            <id>TestMavenPlugin-utils</id>
             <activation>
                 <property>
                     <name>testMavenPlugin</name>
