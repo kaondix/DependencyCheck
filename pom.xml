@@ -819,6 +819,7 @@ Copyright (c) 2012 - Jeremy Long
                     </dependency>
                 </dependencies>
                 <configuration>
+                    <inherited>false</inherited>
                     <repositoryOwner>jeremylong</repositoryOwner>
                     <repositoryName>DependencyCheck</repositoryName>
                     <gitHubUrl>https://api.github.com/</gitHubUrl>
