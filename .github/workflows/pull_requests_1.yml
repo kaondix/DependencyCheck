@@ -95,12 +95,8 @@ jobs:
             ${{ runner.os }}-maven-
       - name: Semgrep
         id: semgrep
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: p/r2c
-          generateSarif: "1"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+            docker run --rm -v "${PWD}:/src" returntocorp/semgrep --config "p/ci" --sarif > semgrep.sarif
       - name: Maven Site
         if: always()
         run: |
