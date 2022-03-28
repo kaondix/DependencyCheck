@@ -1098,6 +1098,7 @@ Copyright (c) 2012 - Jeremy Long
                 <groupId>com.fasterxml.jackson</groupId>
                 <artifactId>jackson-bom</artifactId>
                 <version>2.13.2.20220324</version>
+                <type>pom</type>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
