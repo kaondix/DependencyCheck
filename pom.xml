@@ -1095,8 +1095,8 @@ Copyright (c) 2012 - Jeremy Long
                 <version>3.4.1</version>
             </dependency>
             <dependency><!-- Temporary upgrade to fix jackson mess up. Be certain to delete once version is fixed -->
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
                 <version>2.13.2.20220324</version>
             </dependency>
             <dependency>
