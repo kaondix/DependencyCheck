@@ -485,13 +485,6 @@
     </suppress>
     <suppress base="true">
         <notes><![CDATA[
-        FP per #2499 and #2600
-        ]]></notes>
-        <packageUrl regex="true">^pkg:maven/org\.jetbrains\.kotlinx/kotlinx\-coroutines\-.*$</packageUrl>
-        <cpe>cpe:/a:jetbrains:kotlin</cpe>
-    </suppress>
-    <suppress base="true">
-        <notes><![CDATA[
         This suppresses false positives for Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll.
         ]]></notes>
         <filePath regex="true">.*Microsoft\.VisualStudio\.QualityTools\.UnitTestFramework*\.dll</filePath>
@@ -648,7 +641,9 @@
             52. tag project is a GO implemention #3047 & #3043
             53. kubernetes:kubernetes is a GO implementation #1035 & #1056 & #1880 & #3529 & #3530 &
             54. aaugustin websockets is a python library #3460
-            54. cron_project:cron is a linux C application #3548
+            55. cron_project:cron is a linux C application #3548
+            56. html2pdf_project:html2pdf is a PHP framework #4021, #4251
+            57. shadow_project:shadow is a suite of C-applications on Linux #4237
         ]]></notes>
         <filePath regex="true">.*(\.(dll|jar|ear|war|pom|nupkg|nuspec|aar)|pom\.xml|package.json|packages.config)$</filePath>
         <cpe>cpe:/a:sandbox:sandbox</cpe>
@@ -706,6 +701,8 @@
         <cpe>cpe:/a:kubernetes:kubernetes</cpe>
         <cpe>cpe:/a:websockets_project:websockets</cpe>
         <cpe>cpe:/a:cron_project:cron</cpe>
+        <cpe>cpe:/a:html2pdf_project:html2pdf</cpe>
+        <cpe>cpe:/a:shadow_project:shadow</cpe>
     </suppress>
     <suppress base="true">
         <notes><![CDATA[
@@ -729,6 +726,7 @@
             17. ws_project is a node websocket client (#1535)
             18. i18n_project is a node.js i18n module (#3350) (#3352) (#3353)
             19. redis:redis is a C project #3744, #3814, #3840, #3841
+            20. perl:perl is a C project #4254
         ]]></notes>
         <filePath regex="true">.*(\.(jar|ear|war|pom)|pom\.xml)$</filePath>
         <cpe>cpe:/a:dash:dash</cpe>
@@ -750,6 +748,7 @@
         <cpe>cpe:/a:ws_project:ws</cpe>
         <cpe>cpe:/a:i18n_project:i18n</cpe>
         <cpe>cpe:/a:redis:redis</cpe>
+        <cpe>cpe:/a:perl:perl</cpe>
     </suppress>
     <suppress base="true">
         <notes><![CDATA[
@@ -1563,9 +1562,9 @@
     </suppress>
     <suppress base="true">
         <notes><![CDATA[
-        kotlinx-html-jvm is a kotlin DSL for generating HTML and should not be identified as core kotlin (#2346)
+        Joint FP CPE suppression for #2346, #2499, #2600, #3274, #4212 also covering future Kotlin extension libraries
         ]]></notes>
-        <packageUrl regex="true">^pkg:maven/org\.jetbrains\.kotlinx/kotlinx\-html\-jvm@.*$</packageUrl>
+        <packageUrl regex="true">^pkg:maven/org\.jetbrains\.kotlinx/.*$</packageUrl>
         <cpe>cpe:/a:jetbrains:kotlin</cpe>
     </suppress>
     <suppress base="true">
@@ -2936,9 +2935,9 @@
     </suppress>
     <suppress base="true">
         <notes><![CDATA[
-        False positive per issue #1068
+        False positive per issue #1068, #4279
         ]]></notes>
-        <gav regex="true">^(?!(io\.netty|org\.jboss\.netty)).*:.*netty.*$</gav>
+        <packageUrl regex="true">^pkg:maven/(?!(io\.netty|org\.jboss\.netty)).*/.*netty.*$</packageUrl>
         <cpe regex="true">^cpe:/a:netty(_project)?:netty.*$</cpe>
     </suppress>
     <suppress base="true">
@@ -4488,13 +4487,6 @@
     </suppress>
     <suppress base="true">
         <notes><![CDATA[
-        false positive per #3274 on org.jetbrains.kotlinx:atomicfu
-        ]]></notes>
-        <packageUrl regex="true">^pkg:maven/org\.jetbrains\.kotlinx/atomicfu@.*$</packageUrl>
-        <cpe>cpe:/a:jetbrains:kotlin</cpe>
-    </suppress>
-    <suppress base="true">
-        <notes><![CDATA[
         false positive per #3298 on org.wildfly.core:wildfly-protocol-15.0.0.Final
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/org\.wildfly\.core/wildfly\-protocol@.*$</packageUrl>
@@ -4884,9 +4876,9 @@
     </suppress>
     <suppress base="true">
        <notes><![CDATA[
-       FP per issue #4140
+       FP per issue #4140, 4256
        ]]></notes>
-       <packageUrl regex="true">^pkg:maven/org\.aspectj/aspectjrt@.*$</packageUrl>
+       <packageUrl regex="true">^pkg:maven/org\.aspectj/aspectj.*@.*$</packageUrl>
        <cpe>cpe:/a:vmware:tools</cpe>
     </suppress>
     <suppress base="true">
@@ -4960,6 +4952,49 @@
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/org\.apache\.james/apache\-mime4j\-.*$</packageUrl>
         <cpe>cpe:/a:apache:james:</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+          log4cats-core_2.13-2.2.0.jar FPs #4295
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.typelevel/log4cats\-core_2\.13@.*$</packageUrl>
+        <cpe>cpe:/a:davenport:davenport</cpe>
+        <cpe>cpe:/a:protonmail:protonmail</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+          FP CPE match per #4289
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.bouncycastle/bc\-fips@.*$</packageUrl>
+        <cpe>cpe:/a:bouncycastle:legion-of-the-bouncy-castle:</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+        FP per issue #4239 - jackson-jaxrs (jackson-jaxrs-json-provider) is not jackson-databind
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.codehaus\.jackson/jackson-jaxrs@.*$</packageUrl>
+        <cpe>cpe:/a:fasterxml:jackson-databind</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #4228
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/io\.minio/minio@.*$</packageUrl>
+        <cpe>cpe:/a:minio:minio</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #4227 simple-xml-safe is a security-patched fork of the unmaintained simple-xml
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.carrotsearch\.thirdparty/simple-xml-safe@.*$</packageUrl>
+        <cpe>cpe:/a:simplexml_project:simplexml</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+        FP per issue #4208 suppress CVE for explicit version as CPE 'update' field is not supported and CVE is only for the 5.1 beta-1
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.hazelcast/hazelcast@(?!5\.1-BETA-1).*$</packageUrl>
+        <cve>CVE-2022-0265</cve>
     </suppress>
     <suppress base="true">
         <notes><![CDATA[
