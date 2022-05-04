@@ -36,7 +36,7 @@
     #end
 #end
 #set($suiteId=-1)
-<testsuites failures="$vulnCount" name="dependency-check" tests="$testCount">
+<testsuites errors="0" failures="$vulnCount" name="dependency-check" tests="$testCount">
     #foreach($dependency in $dependencies)
         #set($suiteId=$suiteId+1)
         #if($dependency.getVulnerabilities().size()==0 && $dependency.getSuppressedVulnerabilities().size()==0)
@@ -54,7 +54,7 @@
                 #end
             #end
         #end
-    <testsuite failures="$failed" id="$suiteId" name="$enc.xml($dependency.FilePath)" package="$enc.xml($dependency.DisplayFileName)" skipped="$skipped" tests="$testCount" timestamp="$scanDateJunit">
+    <testsuite errors="0" failures="$failed" id="$suiteId" name="$enc.xml($dependency.FilePath)" package="$enc.xml($dependency.DisplayFileName)" skipped="$skipped" tests="$testCount" timestamp="$scanDateJunit">
         #if($dependency.getVulnerabilities().size()==0 && $dependency.getSuppressedVulnerabilities().size()==0)
             <testcase classname="dependency-check" name="$enc.xml($dependency.DisplayFileName)"/>
         #end
@@ -69,7 +69,8 @@
             #if(! $vulnerableName)
                 #set($vulnerableName="")
             #end
-            <testcase classname="$enc.xml($vuln.name)" name="$enc.xml($vulnerableName)">
+            #set($classname=$groupID + ":" + $artifactID)
+            <testcase classname="$enc.xml($classname)" name="$enc.xml($vulnerableName)">
             #if($vuln.cvssV3 && $vuln.cvssV3.baseScore >= $junitFailOnCvss)
                 <failure message="cvssV3: $enc.xml($vuln.cvssV3.baseSeverity), score: $enc.xml($vuln.cvssV3.baseScore) ($enc.xml($vuln.cvssV3.toString()))"/>
             #elseif($vuln.cvssV2 && $vuln.cvssV2.score >= $junitFailOnCvss)
