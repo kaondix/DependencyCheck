@@ -807,17 +807,6 @@ Copyright (c) 2012 - Jeremy Long
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>nexus-staging-maven-plugin</artifactId>
-                <extensions>true</extensions>
-                <configuration>
-                    <serverId>ossrh</serverId>
-                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                    <stagingProgressTimeoutMinutes>120</stagingProgressTimeoutMinutes>
-                </configuration>
-            </plugin>
-            <plugin>
                 <groupId>se.bjurr.violations</groupId>
                 <artifactId>violation-comments-to-github-maven-plugin</artifactId>
                 <dependencies>
