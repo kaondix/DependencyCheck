@@ -20,7 +20,7 @@ Copyright (c) 2012 - Jeremy Long
 
     <groupId>org.owasp</groupId>
     <artifactId>dependency-check-parent</artifactId>
-    <version>7.1.1-SNAPSHOT</version>
+    <version>7.1.0-TL</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -177,14 +177,26 @@ Copyright (c) 2012 - Jeremy Long
         <sonar.language>java</sonar.language>
     </properties>
     <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-        <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
+		<snapshotRepository>
+			<id>tl-snapshots</id>
+			<url>https://dev.top-logic.com/nexus/repository/toplogic-snapshots/</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</snapshotRepository>
+		<repository>
+			<id>tl-releases</id>
+			<url>https://dev.top-logic.com/nexus/repository/toplogic/</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
         <site>
             <id>gh-pages</id>
             <name>gh-pages</name>
