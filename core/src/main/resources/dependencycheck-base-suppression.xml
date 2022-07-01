@@ -5394,4 +5394,11 @@
         <cpe>cpe:/a:vmware:spring_data_rest</cpe>
         <cpe>cpe:/a:pivotal_software:spring_data_rest</cpe>
     </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #4637
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.logging\.log4j/log4j\-.*@.*$</packageUrl>
+        <cve>CVE-2022-33915</cve>
+    </suppress>
 </suppressions>
