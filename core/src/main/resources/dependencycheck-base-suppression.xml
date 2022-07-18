@@ -5394,4 +5394,11 @@
         <cpe>cpe:/a:vmware:spring_data_rest</cpe>
         <cpe>cpe:/a:pivotal_software:spring_data_rest</cpe>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+    Suppress CVE-2022-31569 completely since RipudamanKaushikDal/projects are examples and does not contain consumable releases.
+    ]]></notes>
+        <packageUrl regex="true">^pkg:.*$</packageUrl>
+        <cve>CVE-2022-31569</cve>
+    </suppress>
 </suppressions>
