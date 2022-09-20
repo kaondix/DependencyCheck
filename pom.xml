@@ -121,7 +121,7 @@ Copyright (c) 2012 - Jeremy Long
         <apache.ant.version>1.10.12</apache.ant.version>
         
         <!-- upgrading slf4j and logback can cause issues ;) https://github.com/jeremylong/DependencyCheck/issues/4846 -->
-        <slf4j.version>1.7.36</slf4j.version>
+        <slf4j.version>2.0.1</slf4j.version>
         <logback.version>1.2.11</logback.version>
         
         <!-- Note that Maven will use classes from the distro, ignoring declared dependencies for Maven core... -->
