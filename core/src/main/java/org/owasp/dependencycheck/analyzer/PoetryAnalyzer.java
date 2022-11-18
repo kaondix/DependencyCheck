@@ -45,9 +45,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Go lang dependency analyzer.
+ * Poetry dependency analyzer.
  *
- * @author Nima Yahyazadeh
+ * @author Ferdinand Niedermann
  * @author Jeremy Long
  */
 @ThreadSafe

@@ -316,7 +316,7 @@ public class Check extends Update {
      */
     private Boolean pipfileAnalyzerEnabled;
     /**
-     * Whether the pipfile analyzer should be enabled.
+     * Whether the Poetry analyzer should be enabled.
      */
     private Boolean poetryAnalyzerEnabled;
     /**
