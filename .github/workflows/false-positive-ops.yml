@@ -29,7 +29,7 @@ jobs:
         with:
           path: odc
       - name: Parse False Positive Issue
-        uses: stefanbuck/github-issue-parser@v2
+        uses: stefanbuck/github-issue-parser@v3
         id: issue-parser
         with:
           template-path: odc/.github/ISSUE_TEMPLATE/false-positive-report.yml
