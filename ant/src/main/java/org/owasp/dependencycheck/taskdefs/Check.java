@@ -234,7 +234,7 @@ public class Check extends Update {
      */
     private String reportFormat = "HTML";
     /**
-     * The report format to be generated (HTML, XML, JUNIT, CSV, JSON, SARIF, JENKINs,
+     * The report format to be generated (HTML, XML, JUNIT, CSV, JSON, SARIF, JENKINS,
      * ALL). Default is HTML.
      */
     private final List<String> reportFormats = new ArrayList<>();
