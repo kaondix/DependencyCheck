@@ -5638,4 +5638,11 @@
         <packageUrl regex="true">^pkg:maven/com\.github\.pagehelper/pagehelper-spring-boot-starter@.*$</packageUrl>
         <cpe>cpe:/a:pagehelper_project:pagehelper</cpe>
     </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+        FP per issue#4999
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/io\.opentracing\.contrib/opentracing\-elasticsearch.*@.*$</packageUrl>
+        <cpe>cpe:/a:elasticsearch:elasticsearch</cpe>
+    </suppress>
 </suppressions>
