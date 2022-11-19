@@ -5645,4 +5645,11 @@
         <packageUrl regex="true">^pkg:maven/io\.opentracing\.contrib/opentracing\-elasticsearch.*@.*$</packageUrl>
         <cpe>cpe:/a:elasticsearch:elasticsearch</cpe>
     </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+        FP per issue #4984
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.otaliastudios/zoomlayout@.*$</packageUrl>
+        <cpe>cpe:/a:zoom:zoom</cpe>
+    </suppress>
 </suppressions>
