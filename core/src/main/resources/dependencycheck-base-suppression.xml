@@ -5688,4 +5688,12 @@
         <packageUrl regex="true">^pkg:maven/org\.apache\.hbase/hbase\-server@.*$</packageUrl>
         <cpe>cpe:/a:apache:http_server</cpe>
     </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+        FP per issue #2575, #4820
+        ]]></notes>
+        <packageUrl regex="true">^pkg:cocoapods/GoogleUtilities%2FAppDelegateSwizzler@.*$</packageUrl>
+        <cpe>cpe:/a:app_project:app</cpe>
+        <cpe>cpe:/a:delegate:delegate</cpe>
+    </suppress>
 </suppressions>
