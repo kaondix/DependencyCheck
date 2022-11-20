@@ -5654,8 +5654,8 @@
     </suppress>
     <suppress base="true">
         <notes><![CDATA[
-   FP per issue #4953 regex to match both hive-spark-client and the historical spark-client artifactIds
-   ]]></notes>
+        FP per issue #4953 regex to match both hive-spark-client and the historical spark-client artifactIds
+        ]]></notes>
         <packageUrl regex="true">^pkg:maven/org\.apache\.hive/.*spark\-client@.*$</packageUrl>
         <cpe>cpe:/a:apache:spark</cpe>
     </suppress>
