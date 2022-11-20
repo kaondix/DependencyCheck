@@ -5708,4 +5708,18 @@
         <cpe>cpe:/a:vmware:server</cpe>
         <cpe>cpe:/a:vmware:vmware_server</cpe>
     </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+        FP per issue #4667
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/tailrecursion/cljs\-priority\-map@.*$</packageUrl>
+        <cpe>cpe:/a:priority-software:priority</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+        FP per issue #4667
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.clojure/data\.priority\-map@.*$</packageUrl>
+        <cpe>cpe:/a:priority-software:priority</cpe>
+    </suppress>
 </suppressions>
