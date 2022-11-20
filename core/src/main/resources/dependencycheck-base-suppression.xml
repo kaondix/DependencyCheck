@@ -5659,4 +5659,11 @@
         <packageUrl regex="true">^pkg:maven/org\.apache\.hive/.*spark\-client@.*$</packageUrl>
         <cpe>cpe:/a:apache:spark</cpe>
     </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+        FP per issue #4951
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.twill/twill\-yarn@.*$</packageUrl>
+        <cpe>cpe:/a:apache:hadoop</cpe>
+    </suppress>
 </suppressions>
