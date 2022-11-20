@@ -5696,4 +5696,16 @@
         <cpe>cpe:/a:app_project:app</cpe>
         <cpe>cpe:/a:delegate:delegate</cpe>
     </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+        FP per issue #4737, adding two more false CPE matches that were not yet reported
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.springframework\.security/spring\-security\-oauth2\-authorization\-server@.*$</packageUrl>
+        <cpe>cpe:/a:pivotal:spring_security_oauth</cpe>
+        <cpe>cpe:/a:pivotal_software:spring_security</cpe>
+        <cpe>cpe:/a:pivotal_software:spring_security_oauth</cpe>
+        <cpe>cpe:/a:vmware:spring_security</cpe>
+        <cpe>cpe:/a:vmware:server</cpe>
+        <cpe>cpe:/a:vmware:vmware_server</cpe>
+    </suppress>
 </suppressions>
