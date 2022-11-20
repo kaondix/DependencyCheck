@@ -252,8 +252,8 @@ public class Engine implements FileFilter, AutoCloseable {
 
     /**
      * Adds a dependency. In some cases, when adding a virtual dependency, the
-     * method will identify if the virtual dependency was previously added and
-     * if so the existing dependency will be returned.
+     * method will identify if the virtual dependency was previously added and update
+     * the existing dependency rather then adding a duplicate.
      *
      * @param dependency the dependency to add
      * @return the dependency added; in the case of virtual dependencies this
