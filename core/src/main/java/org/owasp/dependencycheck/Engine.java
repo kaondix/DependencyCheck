@@ -259,7 +259,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * @return the dependency added; in the case of virtual dependencies this
      * may not be the same as the dependency passed in as an argument
      */
-    public synchronized Dependency addDependency(Dependency dependency) {
+    public synchronized void addDependency(Dependency dependency) {
         if (dependency.isVirtual()) {
             for (Dependency existing : dependencies) {
                 if (existing.isVirtual()
@@ -269,13 +269,12 @@ public class Engine implements FileFilter, AutoCloseable {
                         && existing.getDisplayFileName().equals(dependency.getDisplayFileName())
                         && identifiersMatch(existing.getSoftwareIdentifiers(), dependency.getSoftwareIdentifiers())) {
                     DependencyBundlingAnalyzer.mergeDependencies(existing, dependency, null);
-                    return existing;
+                    return;
                 }
             }
         }
         dependencies.add(dependency);
         dependenciesExternalView = null;
-        return dependency;
     }
 
     /**
