@@ -5666,7 +5666,7 @@
         <packageUrl regex="true">^pkg:maven/org\.apache\.twill/twill\-yarn@.*$</packageUrl>
         <cpe>cpe:/a:apache:hadoop</cpe>
     </suppress>
-    <suppress>
+    <suppress base="true">
         <notes><![CDATA[
         FP per issue #4950
         ]]></notes>
