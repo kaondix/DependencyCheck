@@ -5666,4 +5666,11 @@
         <packageUrl regex="true">^pkg:maven/org\.apache\.twill/twill\-yarn@.*$</packageUrl>
         <cpe>cpe:/a:apache:hadoop</cpe>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+        FP per issue #4950
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.ranger/ranger\-hive\-plugin@.*$</packageUrl>
+        <cpe>cpe:/a:apache:hive</cpe>
+    </suppress>
 </suppressions>
