@@ -5674,4 +5674,11 @@
         <packageUrl regex="true">^pkg:maven/org\.apache\.ranger/ranger\-hive\-plugin@.*$</packageUrl>
         <cpe>cpe:/a:apache:hive</cpe>
     </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+        FP CPE match per issue #4945
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.hive/hive\-hbase\-handler@.*$</packageUrl>
+        <cpe>cpe:/a:apache:hbase</cpe>
+    </suppress>
 </suppressions>
