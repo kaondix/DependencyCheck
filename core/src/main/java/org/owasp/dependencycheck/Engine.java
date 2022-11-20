@@ -256,8 +256,6 @@ public class Engine implements FileFilter, AutoCloseable {
      * the existing dependency rather then adding a duplicate.
      *
      * @param dependency the dependency to add
-     * @return the dependency added; in the case of virtual dependencies this
-     * may not be the same as the dependency passed in as an argument
      */
     public synchronized void addDependency(Dependency dependency) {
         if (dependency.isVirtual()) {
