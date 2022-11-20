@@ -5044,6 +5044,7 @@
         <packageUrl regex="true">^pkg:maven/org\.springframework\.security/spring-security-jwt.*$</packageUrl>
         <cpe>cpe:/a:vmware:springsource_spring_security</cpe>
         <cpe>cpe:/a:vmware:spring_security</cpe>
+        <cpe>cpe:/a:pivotal_software:spring_security</cpe>
         <cpe>cpe:/a:security-framework_project:security-framework</cpe>
     </suppress>
     <suppress base="true">
