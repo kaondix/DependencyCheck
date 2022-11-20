@@ -5722,4 +5722,172 @@
         <packageUrl regex="true">^pkg:maven/org\.clojure/data\.priority\-map@.*$</packageUrl>
         <cpe>cpe:/a:priority-software:priority</cpe>
     </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+           FP per issue https://github.com/jeremylong/DependencyCheck/issues/5060
+       ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.msgpack/.*@.*$</packageUrl>
+        <cpe>cpe:/a:messagepack_project:messagepack</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #5038
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.locationtech\.spatial4j/spatial4j@.*$</packageUrl>
+        <cpe>cpe:/a:pro_search:pro_search</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #5037
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.ko-sys\.av/airac@.*$</packageUrl>
+        <cpe>cpe:/a:keybase:keybase</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #5027
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/software\.aws\.rds/aws-mysql-jdbc@.*$</packageUrl>
+        <cpe>cpe:/a:mysql:mysql</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #5024
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/net\.openhft/chronicle-wire@.*$</packageUrl>
+        <cpe>cpe:/a:wire:wire</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #5022
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.zendesk/mysql-binlog-connector-java@.*$</packageUrl>
+        <cpe>cpe:/a:mysql:mysql</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #5021
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/io\.debezium/debezium-connector-mysql@.*$</packageUrl>
+        <cpe>cpe:/a:mysql:mysql</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #4944
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.hbase/hbase-zookeeper@.*$</packageUrl>
+        <cpe>cpe:/a:apache:zookeeper</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #4949
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.curioswitch\.curiostack/protobuf-jackson@.*$</packageUrl>
+        <cpe>cpe:/a:grpc:grpc</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #5014
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.ejbca\.cvc/cert-cvc@.*$</packageUrl>
+        <cpe>cpe:/a:primekey:ejbca</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #4952
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.twill/twill-zookeeper@.*$</packageUrl>
+        <cpe>cpe:/a:apache:zookeeper</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #4948
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/io\.opentracing\.contrib/opentracing-grpc@.*$</packageUrl>
+        <cpe>cpe:/a:grpc:grpc</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #4947
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.pf4j/pf4j@.*$</packageUrl>
+        <cpe>cpe:/a:sonatype:nexus</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #4946
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.iceberg/iceberg-hive-metastore@.*$</packageUrl>
+        <cpe>cpe:/a:apache:hive</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #4942
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.hbase/hbase-hadoop-compat@.*$</packageUrl>
+        <cpe>cpe:/a:apache:hadoop</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #4941
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.flink/flink-rpc-akka-loader@.*$</packageUrl>
+        <cpe>cpe:/a:akka:akka</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #4940
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.flink/flink-hadoop-fs@.*$</packageUrl>
+        <cpe>cpe:/a:apache:hadoop</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #4931
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.azure\.resourcemanager/azure-resourcemanager-appplatform@.*$</packageUrl>
+        <cpe>cpe:/a:microsoft:platform_sdk</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #4720
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.clojure/data\.priority-map@.*$</packageUrl>
+        <cpe>cpe:/a:priority-software:priority</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #4693
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/io\.zipkin\.reporter2/zipkin-reporter@.*$</packageUrl>
+        <cpe>cpe:/a:pki-core_project:pki-core</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #4692
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/io\.zipkin\.zipkin2/zipkin@.*$</packageUrl>
+        <cpe>cpe:/a:pki-core_project:pki-core</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #4669
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.junit\.jupiter/junit-jupiter-engine@.*$</packageUrl>
+        <cpe>cpe:/a:fan_platform_project:fan_platform</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #5017
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.google\.api\.grpc/grpc-google-iam-v1@.*$</packageUrl>
+        <cpe>cpe:/a:grpc:grpc</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #4681
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.amazonaws/aws-java-sdk-prometheus@.*$</packageUrl>
+        <cpe>cpe:/a:prometheus:prometheus</cpe>
+    </suppress>
 </suppressions>
