@@ -17,17 +17,13 @@
  */
 package org.owasp.dependencycheck.utils;
 
-import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.charset.UnsupportedCharsetException;
 import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -62,7 +58,7 @@ public final class Checksum {
     /**
      * SHA1 constant.
      */
-    private static final String SHA1 = "SHA1";
+    private static final String SHA1 = "SHA-1";
     /**
      * SHA256 constant.
      */
@@ -94,9 +90,9 @@ public final class Checksum {
         FileChecksums fileChecksums = CHECKSUM_CACHE.get(file);
         if (fileChecksums == null) {
             try (InputStream stream = Files.newInputStream(file.toPath())) {
-                final MessageDigest md5Digest = DigestUtils.getMd5Digest();
-                final MessageDigest sha1Digest = DigestUtils.getSha1Digest();
-                final MessageDigest sha256Digest = DigestUtils.getSha256Digest();
+                final MessageDigest md5Digest = getMessageDigest(MD5);
+                final MessageDigest sha1Digest = getMessageDigest(SHA1);
+                final MessageDigest sha256Digest = getMessageDigest(SHA256);
                 final byte[] buffer = new byte[BUFFER_SIZE];
                 int read = stream.read(buffer, 0, BUFFER_SIZE);
                 while (read > -1) {
@@ -107,9 +103,9 @@ public final class Checksum {
                     read = stream.read(buffer, 0, BUFFER_SIZE);
                 }
                 fileChecksums = new FileChecksums(
-                    Hex.encodeHexString(md5Digest.digest()),
-                    Hex.encodeHexString(sha1Digest.digest()),
-                    Hex.encodeHexString(sha256Digest.digest())
+                    getHex(md5Digest.digest()),
+                    getHex(sha1Digest.digest()),
+                    getHex(sha256Digest.digest())
                 );
                 CHECKSUM_CACHE.put(file, fileChecksums);
             }
@@ -174,16 +170,7 @@ public final class Checksum {
      * @return the hex representation of the MD5 hash
      */
     public static String getChecksum(String algorithm, byte[] bytes) {
-        switch (algorithm.toUpperCase()) {
-            case MD5:
-                return DigestUtils.md5Hex(bytes);
-            case SHA1:
-                return DigestUtils.sha1Hex(bytes);
-            case SHA256:
-                return DigestUtils.sha256Hex(bytes);
-            default:
-                return null;
-        }
+        return getHex(getMessageDigest(algorithm).digest(bytes));
     }
 
     /**
@@ -193,7 +180,7 @@ public final class Checksum {
      * @return the hex representation of the MD5
      */
     public static String getMD5Checksum(String text) {
-        return DigestUtils.md5Hex(text);
+        return getChecksum(MD5, stringToBytes(text));
     }
 
     /**
@@ -203,7 +190,7 @@ public final class Checksum {
      * @return the hex representation of the SHA1
      */
     public static String getSHA1Checksum(String text) {
-        return DigestUtils.sha1Hex(text);
+        return getChecksum(SHA1, stringToBytes(text));
     }
 
     /**
@@ -213,7 +200,7 @@ public final class Checksum {
      * @return the hex representation of the SHA1
      */
     public static String getSHA256Checksum(String text) {
-        return DigestUtils.sha256Hex(text);
+        return getChecksum(SHA256, stringToBytes(text));
     }
 
     /**
@@ -223,13 +210,7 @@ public final class Checksum {
      * @return the bytes
      */
     private static byte[] stringToBytes(String text) {
-        byte[] data;
-        try {
-            data = text.getBytes(Charset.forName(StandardCharsets.UTF_8.name()));
-        } catch (UnsupportedCharsetException ex) {
-            data = text.getBytes(Charset.defaultCharset());
-        }
-        return data;
+        return text.getBytes(StandardCharsets.UTF_8);
     }
 
     /**
