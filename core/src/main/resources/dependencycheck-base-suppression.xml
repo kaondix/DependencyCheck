@@ -5989,4 +5989,12 @@
         <packageUrl regex="true">^pkg:maven/com\.amazonaws/aws-java-sdk-prometheus@.*$</packageUrl>
         <cpe>cpe:/a:prometheus:prometheus</cpe>
     </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+        FP per issue #5089
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/io\.quarkus/quarkus\-keycloak\-authorization@.*$</packageUrl>
+        <cpe>cpe:/a:keycloak:keycloak</cpe>
+        <cpe>cpe:/a:redhat:keycloak</cpe>
+    </suppress>
 </suppressions>
