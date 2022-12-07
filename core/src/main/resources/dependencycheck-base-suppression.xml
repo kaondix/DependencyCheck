@@ -5997,4 +5997,11 @@
         <cpe>cpe:/a:keycloak:keycloak</cpe>
         <cpe>cpe:/a:redhat:keycloak</cpe>
     </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #4653
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.eclipse\.angus/.*@.*$</packageUrl>
+        <cpe>cpe:/a:eclipse:eclipse_ide</cpe>
+    </suppress>
 </suppressions>
