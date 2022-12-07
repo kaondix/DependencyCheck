@@ -12,9 +12,9 @@ Note, not all of the features in the HTML report produced by dependency-check, w
 Mailing List
 ------------
 
-Subscribe: [dependency-check+subscribe@googlegroups.com] [subscribe]
+Subscribe: [dependency-check+subscribe@googlegroups.com][subscribe]
 
-Post: [dependency-check@googlegroups.com] [post]
+Post: [dependency-check@googlegroups.com][post]
 
 Copyright & License
 -------------------
@@ -23,9 +23,9 @@ Dependency-Check is Copyright (c) 2012-2014 Jeremy Long. All Rights Reserved.
 
 Dependency-Check Jenkins Plugin is Copyright (c) 2013-2014 Steve Springett. All Rights Reserved.
 
-Permission to modify and redistribute is granted under the terms of the Apache 2.0 license. See the [LICENSE.txt] [license] file for the full license.
+Permission to modify and redistribute is granted under the terms of the Apache 2.0 license. See the [LICENSE.txt][license] file for the full license.
 
-Dependency-Check makes use of several other open source libraries. Please see the [NOTICE.txt] [notices] file for more information.
+Dependency-Check makes use of several other open source libraries. Please see the [NOTICE.txt][notices] file for more information.
 
 
   [wiki]: https://wiki.jenkins-ci.org/display/JENKINS/OWASP+Dependency-Check+Plugin
