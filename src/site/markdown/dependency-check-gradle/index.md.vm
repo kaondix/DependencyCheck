@@ -61,5 +61,5 @@ Dependency-Check makes use of several other open source libraries. Please see th
 
   [subscribe]: mailto:dependency-check+subscribe@googlegroups.com
   [post]: mailto:dependency-check@googlegroups.com
-  [license]: https://github.com/jeremylong/DependencyCheck/blob/master/dependency-check-gradle/LICENSE.txt
-  [notices]: https://github.com/jeremylong/DependencyCheck/blob/master/dependency-check-gradle/NOTICE.txt
+  [license]: https://github.com/dependency-check/dependency-check-gradle/blob/main/LICENSE.txt
+  [notices]: https://github.com/dependency-check/dependency-check-gradle/blob/main/NOTICE.txt
