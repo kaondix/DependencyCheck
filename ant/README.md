@@ -8,12 +8,6 @@ Top 10 as [A06:2021 – Vulnerable and Outdated Components](https://owasp.org/To
 
 Documentation and links to production binary releases can be found on the [github pages](http://jeremylong.github.io/DependencyCheck/dependency-check-ant/index.html).
 
-Mailing List
-------------
-
-Subscribe: [dependency-check+subscribe@googlegroups.com](mailto:dependency-check+subscribe@googlegroups.com)
-
-Post: [dependency-check@googlegroups.com](mailto:dependency-check@googlegroups.com)
 
 Copyright & License
 -------------------

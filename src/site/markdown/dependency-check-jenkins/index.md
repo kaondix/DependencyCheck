@@ -10,13 +10,6 @@ More information can be found on the [wiki], source code is available at [github
 
 Note, not all of the features in the HTML report produced by dependency-check, when viewed from within Jenkins, may not work correctly as [Jenkins set a restrictive CSP header](https://wiki.jenkins-ci.org/display/JENKINS/Configuring+Content+Security+Policy). This does not affect the functionality of the tool or other reporting capabilities within the Jenkins plugin. Two options to re-enable the missing features in the HTML report would be to either download the report and view it locally or modify the CSP header to allow in-line script.
 
-Mailing List
-------------
-
-Subscribe: [dependency-check+subscribe@googlegroups.com][subscribe]
-
-Post: [dependency-check@googlegroups.com][post]
-
 Copyright & License
 -------------------
 
@@ -31,8 +24,6 @@ Dependency-Check makes use of several other open source libraries. Please see th
 
   [wiki]: https://wiki.jenkins-ci.org/display/JENKINS/OWASP+Dependency-Check+Plugin
   [analysis-core]: http://wiki.jenkins-ci.org/x/CwDgAQ
-  [subscribe]: mailto:dependency-check+subscribe@googlegroups.com
-  [post]: mailto:dependency-check@googlegroups.com
   [license]: https://github.com/jenkinsci/dependency-check-plugin/blob/master/LICENSE.txt
   [notices]: https://github.com/jenkinsci/dependency-check-plugin/blob/master/NOTICES.txt
   [plugin-site]: https://plugins.jenkins.io/dependency-check-jenkins-plugin/

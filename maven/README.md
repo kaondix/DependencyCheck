@@ -5,13 +5,6 @@ Dependency-Check is a utility that attempts to detect publicly disclosed vulnera
 
 Documentation and links to production binary releases can be found on the [github pages](http://jeremylong.github.io/DependencyCheck/dependency-check-maven/index.html).
 
-Mailing List
--
-
-Subscribe: [dependency-check+subscribe@googlegroups.com][subscribe]
-
-Post: [dependency-check@googlegroups.com][post]
-
 Copyright & License
 -------------------
 
@@ -21,6 +14,4 @@ Permission to modify and redistribute is granted under the terms of the Apache 2
 
 Dependency-Check makes use of several other open source libraries. Please see the [NOTICE.txt][notices] file for more information.
 
-  [subscribe]: mailto:dependency-check+subscribe@googlegroups.com
-  [post]: mailto:dependency-check@googlegroups.com
   [notices]: https://github.com/jeremylong/DependencyCheck/blob/main/maven/NOTICE.txt
