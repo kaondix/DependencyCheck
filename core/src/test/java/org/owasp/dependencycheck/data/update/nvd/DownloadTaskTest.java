@@ -36,6 +36,7 @@ public class DownloadTaskTest extends BaseTest {
      */
     @Test
     public void testCall() throws Exception {
+        if ("".equals(System.getProperty(Settings.KEYS.CVE_MODIFIED_JSON))) System.clearProperty(Settings.KEYS.CVE_MODIFIED_JSON); // Somehow this is geting set to an empty string before this test on Mac OS
         NvdCveInfo cve = new NvdCveInfo("modified",getSettings().getString(Settings.KEYS.CVE_MODIFIED_JSON),1337L);
         ExecutorService processExecutor = null;
         CveDB cveDB = null;
