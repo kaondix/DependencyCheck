@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Copyright (c) 2020 The OWASP Foundation. All Rights Reserved.
+ * Copyright (c) 2023 The OWASP Foundation. All Rights Reserved.
  */
 package org.owasp.dependencycheck.analyzer;
 
@@ -21,6 +21,7 @@ import org.apache.commons.io.FileUtils;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import com.github.packageurl.PackageURLBuilder;
+import java.io.BufferedInputStream;
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.dependency.Confidence;
@@ -35,39 +36,45 @@ import org.owasp.dependencycheck.utils.Checksum;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Iterator;
+import java.util.Set;
 import javax.annotation.concurrent.ThreadSafe;
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonException;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Used to analyze dependencies defined in Pipfile.
+ * Used to analyze dependencies defined in Pipfile.lock.
  *
- * @author fcano
+ * @author jeremy.long
  */
 @Experimental
 @ThreadSafe
-public class PipfileAnalyzer extends AbstractFileTypeAnalyzer {
+public class PipfilelockAnalyzer extends AbstractFileTypeAnalyzer {
 
     /**
      * The logger.
      */
-    private static final Logger LOGGER = LoggerFactory.getLogger(PipfileAnalyzer.class);
-    /**
-     * "Pipfile" file.
-     */
-    private static final String PIPFILE = "Pipfile";
+    private static final Logger LOGGER = LoggerFactory.getLogger(PipfilelockAnalyzer.class);
     /**
      * "Pipfile.lock" file.
      */
     private static final String LOCKFILE = "Pipfile.lock";
+
     /**
-     * The name of the analyzer.
+     * The identifiedPackage of the analyzer.
      */
-    private static final String ANALYZER_NAME = "Pipfile Analyzer";
+    private static final String ANALYZER_NAME = "Pipfile.lock Analyzer";
 
     /**
      * The phase that this analyzer is intended to run in.
@@ -75,14 +82,9 @@ public class PipfileAnalyzer extends AbstractFileTypeAnalyzer {
     private static final AnalysisPhase ANALYSIS_PHASE = AnalysisPhase.INFORMATION_COLLECTION;
 
     /**
-     * o * Matches AC_INIT variables in the output configure script.
-     */
-    private static final Pattern PACKAGE_VERSION = Pattern.compile("^([^#].*?) = \"(?:[=>]=([\\.\\*0-9]+?))?\"$", Pattern.MULTILINE);
-
-    /**
      * The file filter used to determine which files this analyzer supports.
      */
-    private static final FileFilter FILTER = FileFilterBuilder.newInstance().addFilenames(PIPFILE).build();
+    private static final FileFilter FILTER = FileFilterBuilder.newInstance().addFilenames(LOCKFILE).build();
 
     /**
      * Returns the FileFilter
@@ -95,9 +97,9 @@ public class PipfileAnalyzer extends AbstractFileTypeAnalyzer {
     }
 
     /**
-     * Returns the name of the analyzer.
+     * Returns the identifiedPackage of the analyzer.
      *
-     * @return the name of the analyzer.
+     * @return the identifiedPackage of the analyzer.
      */
     @Override
     public String getName() {
@@ -127,14 +129,9 @@ public class PipfileAnalyzer extends AbstractFileTypeAnalyzer {
 
     @Override
     protected void analyzeDependency(Dependency dependency, Engine engine) throws AnalysisException {
+        LOGGER.debug("Checking file {}", dependency.getActualFilePath());
+
         engine.removeDependency(dependency);
-        File lock = new File(dependency.getActualFile().getParentFile(), LOCKFILE);
-        if (lock.isFile()) {
-            LOGGER.debug("Skipping {} because a lock file was identified", dependency.getActualFilePath());
-            return;
-        } else {
-            LOGGER.debug("Checking file {}", dependency.getActualFilePath());
-        }
 
         final File dependencyFile = dependency.getActualFile();
         if (!dependencyFile.isFile() || dependencyFile.length() == 0) {
@@ -142,40 +139,53 @@ public class PipfileAnalyzer extends AbstractFileTypeAnalyzer {
         }
 
         final File actualFile = dependency.getActualFile();
+        try (FileInputStream fin = new FileInputStream(actualFile);
+                InputStream in = new BufferedInputStream(fin);
+                JsonReader jsonReader = Json.createReader(in)) {
 
-        final String contents = getFileContents(actualFile);
-        if (!contents.isEmpty()) {
-            final Matcher matcher = PACKAGE_VERSION.matcher(contents);
-            while (matcher.find()) {
-                final String identifiedPackage = matcher.group(1);
-                final String identifiedVersion = matcher.group(2);
-                LOGGER.debug(String.format("package, version: %s %s", identifiedPackage, identifiedVersion));
-                final Dependency d = new Dependency(dependency.getActualFile(), true);
-                d.setName(identifiedPackage);
-                d.setVersion(identifiedVersion);
-                try {
-                    final PackageURL purl = PackageURLBuilder.aPackageURL()
-                            .withType("pypi")
-                            .withName(identifiedPackage)
-                            .withVersion(identifiedVersion)
-                            .build();
-                    d.addSoftwareIdentifier(new PurlIdentifier(purl, Confidence.HIGHEST));
-                } catch (MalformedPackageURLException ex) {
-                    LOGGER.debug("Unable to build package url for pypi", ex);
-                    d.addSoftwareIdentifier(new GenericIdentifier("pypi:" + identifiedPackage + "@" + identifiedVersion, Confidence.HIGH));
+            final JsonObject jsonLock = jsonReader.readObject();
+            final JsonObject develop = jsonLock.getJsonObject("develop");
+            final Set<String> keys = develop.keySet();
+            for (String identifiedPackage : keys) {
+                final JsonObject dep = develop.getJsonObject(identifiedPackage);
+                final String selectedVersion = dep.getString("version", "").trim();
+                if (selectedVersion.startsWith("==") && selectedVersion.length() > 2) {
+                    final String identifiedVersion = selectedVersion.substring(2).trim();
+                    LOGGER.debug("package, version: {} {}", identifiedPackage, identifiedVersion);
+
+                    final Dependency d = new Dependency(dependency.getActualFile(), true);
+                    d.setName(identifiedPackage);
+                    d.setVersion(identifiedVersion);
+                    try {
+                        final PackageURL purl = PackageURLBuilder.aPackageURL()
+                                .withType("pypi")
+                                .withName(identifiedPackage)
+                                .withVersion(identifiedVersion)
+                                .build();
+                        d.addSoftwareIdentifier(new PurlIdentifier(purl, Confidence.HIGHEST));
+                    } catch (MalformedPackageURLException ex) {
+                        LOGGER.debug("Unable to build package url for pypi", ex);
+                        d.addSoftwareIdentifier(new GenericIdentifier("pypi:" + identifiedPackage + "@" + identifiedVersion, Confidence.HIGH));
+                    }
+                    d.setPackagePath(String.format("%s:%s", identifiedPackage, identifiedVersion));
+                    d.setEcosystem(PythonDistributionAnalyzer.DEPENDENCY_ECOSYSTEM);
+                    final String filePath = String.format("%s:%s/%s", dependency.getFilePath(), identifiedPackage, identifiedVersion);
+                    d.setFilePath(filePath);
+                    d.setSha1sum(Checksum.getSHA1Checksum(filePath));
+                    d.setSha256sum(Checksum.getSHA256Checksum(filePath));
+                    d.setMd5sum(Checksum.getMD5Checksum(filePath));
+                    d.addEvidence(EvidenceType.VENDOR, LOCKFILE, "vendor", identifiedPackage, Confidence.HIGHEST);
+                    d.addEvidence(EvidenceType.PRODUCT, LOCKFILE, "product", identifiedPackage, Confidence.HIGHEST);
+                    d.addEvidence(EvidenceType.VERSION, LOCKFILE, "version", identifiedVersion, Confidence.HIGHEST);
+                    engine.addDependency(d);
+                } else {
+                    LOGGER.debug("Skipping `{}`: Unknown version `{}` in `{}`", identifiedPackage, selectedVersion, dependency.getActualFilePath());
                 }
-                d.setPackagePath(String.format("%s:%s", identifiedPackage, identifiedVersion));
-                d.setEcosystem(PythonDistributionAnalyzer.DEPENDENCY_ECOSYSTEM);
-                final String filePath = String.format("%s:%s/%s", dependency.getFilePath(), identifiedPackage, identifiedVersion);
-                d.setFilePath(filePath);
-                d.setSha1sum(Checksum.getSHA1Checksum(filePath));
-                d.setSha256sum(Checksum.getSHA256Checksum(filePath));
-                d.setMd5sum(Checksum.getMD5Checksum(filePath));
-                d.addEvidence(EvidenceType.VENDOR, PIPFILE, "vendor", identifiedPackage, Confidence.HIGHEST);
-                d.addEvidence(EvidenceType.PRODUCT, PIPFILE, "product", identifiedPackage, Confidence.HIGHEST);
-                d.addEvidence(EvidenceType.VERSION, PIPFILE, "version", identifiedVersion, Confidence.HIGHEST);
-                engine.addDependency(d);
             }
+        } catch (FileNotFoundException ex) {
+            throw new RuntimeException(ex);
+        } catch (IOException | JsonException ex) {
+            throw new RuntimeException(ex);
         }
     }
 
