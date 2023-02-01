@@ -128,7 +128,7 @@ public class PipfileAnalyzer extends AbstractFileTypeAnalyzer {
     @Override
     protected void analyzeDependency(Dependency dependency, Engine engine) throws AnalysisException {
         engine.removeDependency(dependency);
-        File lock = new File(dependency.getActualFile().getParentFile(), LOCKFILE);
+        final File lock = new File(dependency.getActualFile().getParentFile(), LOCKFILE);
         if (lock.isFile()) {
             LOGGER.debug("Skipping {} because a lock file was identified", dependency.getActualFilePath());
             return;
