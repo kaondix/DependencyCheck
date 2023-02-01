@@ -200,7 +200,8 @@ public class PoetryAnalyzer extends AbstractFileTypeAnalyzer {
         File requirements = new File(parent, "requirements.txt");
         boolean found = lock.isFile() || requirements.isFile();
         if (!found) {
-            throw new AnalysisException("Python `pyproject.toml` found and there is not a `poetry.lock` or `requirements.txt` - analysis will be incomplete");
+            throw new AnalysisException("Python `pyproject.toml` found and there "
+                    + "is not a `poetry.lock` or `requirements.txt` - analysis will be incomplete");
         }
     }
 }
