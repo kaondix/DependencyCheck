@@ -148,7 +148,7 @@ public class PoetryAnalyzer extends AbstractFileTypeAnalyzer {
         engine.removeDependency(dependency);
 
         if (PYPROJECT_TOML.equals(dependency.getActualFile().getName())) {
-            File parentPath = dependency.getActualFile().getParentFile();
+            final File parentPath = dependency.getActualFile().getParentFile();
             ensureLock(parentPath);
             //exit as we can't analyze pyproject.toml - insufficient version information
             return;
@@ -196,9 +196,9 @@ public class PoetryAnalyzer extends AbstractFileTypeAnalyzer {
     }
 
     private void ensureLock(File parent) throws AnalysisException {
-        File lock = new File(parent, POETRY_LOCK);
-        File requirements = new File(parent, "requirements.txt");
-        boolean found = lock.isFile() || requirements.isFile();
+        final File lock = new File(parent, POETRY_LOCK);
+        final File requirements = new File(parent, "requirements.txt");
+        final boolean found = lock.isFile() || requirements.isFile();
         if (!found) {
             throw new AnalysisException("Python `pyproject.toml` found and there "
                     + "is not a `poetry.lock` or `requirements.txt` - analysis will be incomplete");
