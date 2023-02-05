@@ -1295,7 +1295,7 @@ public class JarAnalyzer extends AbstractFileTypeAnalyzer {
      * @return the correct value which may be null
      */
     private static String intepolationFailCheck(String value) {
-        if (value != null && value.startsWith("${") && value.endsWith("}")) {
+        if (value != null && value.contains("${")) {
             return null;
         }
         return value;
