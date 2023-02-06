@@ -2907,7 +2907,7 @@
         <notes><![CDATA[
         FP per #5414
         ]]></notes>
-        <packageUrl regex="true">^(?!pkg:maven/com\.vaadin/vaadin(-core)?@).*$</packageUrl>
+        <packageUrl regex="true">^pkg:maven/com\.vaadin/sso-kit-starter@.*$</packageUrl>
         <cpe>cpe:/a:vaadin:flow</cpe>
     </suppress>
     <suppress base="true">
