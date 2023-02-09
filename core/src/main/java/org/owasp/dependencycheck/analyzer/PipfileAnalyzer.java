@@ -44,7 +44,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Used to analyze dependencies defined in Pipfile.
+ * Used to analyze dependencies defined in Pipfile. This analyzer works in
+ * tandem with the `PipfilelockAnalyzer` - and both analyzers use the same key
+ * to enable/disable the analyzers. The PipfilelockAnalyzer will be used over
+ * the Pipfile if the lock file exists.
+ *
  *
  * @author fcano
  */
