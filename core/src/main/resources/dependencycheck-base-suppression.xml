@@ -6209,4 +6209,11 @@
         <packageUrl regex="true">^pkg:maven/com\.graphql\-java\-kickstart/.*$</packageUrl>
         <cpe>cpe:/a:graphql-java_project:graphql-java</cpe>
     </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+        FP per issue #5334
+        ]]></notes>
+        <packageUrl regex="true">^pkg:pypi/.*docker.*$</packageUrl>
+        <cpe>cpe:/a:docker:docker</cpe>
+    </suppress>
 </suppressions>
