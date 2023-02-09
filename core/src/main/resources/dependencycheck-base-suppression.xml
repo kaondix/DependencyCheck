@@ -6202,4 +6202,11 @@
         <cpe>cpe:/a:redhat:wildfly:</cpe>
         <cpe>cpe:/a:wildfly:wildfly:</cpe>
     </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+        FP per issue #5367
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.graphql\-java\-kickstart/.*$</packageUrl>
+        <cpe>cpe:/a:graphql-java_project:graphql-java</cpe>
+    </suppress>
 </suppressions>
