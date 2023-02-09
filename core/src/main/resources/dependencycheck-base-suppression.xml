@@ -6193,4 +6193,13 @@
         <cpe>cpe:/a:grpc:grpc</cpe>
         <cpe>cpe:/a:prometheus:prometheus</cpe>
     </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+        FP per issue #5370
+        colon before version is needed to avoid also matching cpe:/a:redhat:wildfly_openssl
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.wildfly\.openssl/.*$</packageUrl>
+        <cpe>cpe:/a:redhat:wildfly:</cpe>
+        <cpe>cpe:/a:wildfly:wildfly:</cpe>
+    </suppress>
 </suppressions>
