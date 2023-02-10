@@ -6216,4 +6216,12 @@
         <packageUrl regex="true">^pkg:pypi/.*docker.*$</packageUrl>
         <cpe>cpe:/a:docker:docker</cpe>
     </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+        FP per #5290 #5287
+        Broadly suppress eclipse_ide for anything outside of the org.eclipse.platform groupIds
+        ]]></notes>
+        <packageUrl regex="true">^(?!pkg:maven/org.eclipse.platform).+$</packageUrl>
+        <cpe>cpe:/a:eclipse:eclipse_ide</cpe>
+    </suppress>
 </suppressions>
