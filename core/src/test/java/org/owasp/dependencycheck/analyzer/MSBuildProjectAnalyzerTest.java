@@ -25,6 +25,7 @@ import org.owasp.dependencycheck.dependency.Dependency;
 import org.owasp.dependencycheck.dependency.EvidenceType;
 
 import java.io.File;
+import java.util.stream.Collectors;
 
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
@@ -112,7 +113,7 @@ public class MSBuildProjectAnalyzerTest extends BaseTest {
                     foundCount++;
                     assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().contains("NodaTime"));
                     assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("NodaTime"));
-                    assertTrue(result.getEvidence(EvidenceType.VERSION).toString().contains("3.0.0"));
+                    assertTrue("Expected 3.0.0; contained: " + result.getEvidence(EvidenceType.VERSION).stream().map(e->e.toString()).collect(Collectors.joining(",", "{", "}")), result.getEvidence(EvidenceType.VERSION).toString().contains("3.0.0"));
                 }
             }
 
