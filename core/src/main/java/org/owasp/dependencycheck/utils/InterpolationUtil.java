@@ -92,7 +92,8 @@ public final class InterpolationUtil {
      * @param text the string that contains references to properties.
      * @param properties a collection of properties that may be referenced
      * within the text.
-     * @param style the syntax style for the interpolation (MSBuild; "$(var)", Default "${var}")"
+     * @param style the syntax style for the interpolation (MSBuild; "$(var)",
+     * Default "${var}")"
      * @return the interpolated text.
      */
     public static String interpolate(String text, Properties properties, SyntaxStyle style) {
@@ -113,11 +114,11 @@ public final class InterpolationUtil {
      */
     public enum SyntaxStyle {
         /**
-         * Default variable interpolation: '${var}'
+         * Default variable interpolation. Example: '${var}'
          */
         DEFAULT,
         /**
-         * MS Build variable interpolation: '$(var)'
+         * MS Build variable interpolation. Example: '$(var)'
          */
         MSBUILD
     }
