@@ -84,36 +84,44 @@ public class MSBuildProjectAnalyzerTest extends BaseTest {
                 assertEquals(DEPENDENCY_ECOSYSTEM, result.getEcosystem());
                 assertTrue(result.isVirtual());
 
-                if ("Humanizer".equals(result.getName())) {
-                    foundCount++;
-                    assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().contains("Humanizer"));
-                    assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("Humanizer"));
-                    assertTrue(result.getEvidence(EvidenceType.VERSION).toString().contains("2.2.0"));
-                } else if ("JetBrains.Annotations".equals(result.getName())) {
-                    foundCount++;
-                    assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().contains("JetBrains"));
-                    assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("JetBrains.Annotations"));
-                    assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("Annotations"));
-                    assertTrue(result.getEvidence(EvidenceType.VERSION).toString().contains("11.1.0"));
-                } else if ("Microsoft.AspNetCore.All".equals(result.getName())) {
-                    foundCount++;
-                    assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().contains("Microsoft"));
-                    assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("Microsoft.AspNetCore.All"));
-                    assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("AspNetCore"));
-                    assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("AspNetCore.All"));
-                    assertTrue(result.getEvidence(EvidenceType.VERSION).toString().contains("2.0.5"));
-                } else if ("Microsoft.Extensions.Logging".equals(result.getName())) {
-                    foundCount++;
-                    assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().contains("Microsoft"));
-                    assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("Microsoft.Extensions.Logging"));
-                    assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("Extensions"));
-                    assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("Extensions.Logging"));
-                    assertTrue(result.getEvidence(EvidenceType.VERSION).toString().contains("6.0.0"));
-                } else if ("NodaTime".equals(result.getName())) {
-                    foundCount++;
-                    assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().contains("NodaTime"));
-                    assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("NodaTime"));
-                    assertTrue("Expected 3.0.0; contained: " + result.getEvidence(EvidenceType.VERSION).stream().map(e->e.toString()).collect(Collectors.joining(",", "{", "}")), result.getEvidence(EvidenceType.VERSION).toString().contains("3.0.0"));
+                if (null != result.getName()) switch (result.getName()) {
+                    case "Humanizer":
+                        foundCount++;
+                        assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().contains("Humanizer"));
+                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("Humanizer"));
+                        assertTrue(result.getEvidence(EvidenceType.VERSION).toString().contains("2.2.0"));
+                        break;
+                    case "JetBrains.Annotations":
+                        foundCount++;
+                        assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().contains("JetBrains"));
+                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("JetBrains.Annotations"));
+                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("Annotations"));
+                        assertTrue(result.getEvidence(EvidenceType.VERSION).toString().contains("11.1.0"));
+                        break;
+                    case "Microsoft.AspNetCore.All":
+                        foundCount++;
+                        assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().contains("Microsoft"));
+                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("Microsoft.AspNetCore.All"));
+                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("AspNetCore"));
+                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("AspNetCore.All"));
+                        assertTrue(result.getEvidence(EvidenceType.VERSION).toString().contains("2.0.5"));
+                        break;
+                    case "Microsoft.Extensions.Logging":
+                        foundCount++;
+                        assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().contains("Microsoft"));
+                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("Microsoft.Extensions.Logging"));
+                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("Extensions"));
+                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("Extensions.Logging"));
+                        assertTrue(result.getEvidence(EvidenceType.VERSION).toString().contains("6.0.0"));
+                        break;
+                    case "NodaTime":
+                        foundCount++;
+                        assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().contains("NodaTime"));
+                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("NodaTime"));
+                        assertTrue("Expected 3.0.0; contained: " + result.getEvidence(EvidenceType.VERSION).stream().map(e->e.toString()).collect(Collectors.joining(",", "{", "}")), result.getEvidence(EvidenceType.VERSION).toString().contains("3.0.0"));
+                        break;
+                    default:
+                        break;
                 }
             }
 
