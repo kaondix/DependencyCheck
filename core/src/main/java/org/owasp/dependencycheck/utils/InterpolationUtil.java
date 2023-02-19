@@ -108,8 +108,17 @@ public final class InterpolationUtil {
         return substitutor.replace(text);
     }
 
+    /**
+     * The syntax style for the interpolation.
+     */
     public enum SyntaxStyle {
+        /**
+         * Default variable interpolation: '${var}'
+         */
         DEFAULT,
+        /**
+         * MS Build variable interpolation: '$(var)'
+         */
         MSBUILD
     }
 

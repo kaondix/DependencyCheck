@@ -112,11 +112,11 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
     @Override
     @SuppressWarnings("StringSplitter")
     protected void analyzeDependency(Dependency dependency, Engine engine) throws AnalysisException {
-        File parent = dependency.getActualFile().getParentFile();
+        final File parent = dependency.getActualFile().getParentFile();
         //TODO while we are supporting props - we still do not support Directory.Build.targets
-        File propsProject = new File(parent, "Directory.Build.props");
-        File propsSolution = new File(parent.getParentFile(), "Directory.Build.props");
-        Properties props = new Properties();
+        final File propsProject = new File(parent, "Directory.Build.props");
+        final File propsSolution = new File(parent.getParentFile(), "Directory.Build.props");
+        final Properties props = new Properties();
         loadDirectoryBuildProps(props, propsSolution);
         loadDirectoryBuildProps(props, propsProject);
 
@@ -189,7 +189,7 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
 
     private void loadDirectoryBuildProps(Properties props, File directoryProps) {
         if (directoryProps.isFile()) {
-            DirectoryBuildPropsParser parser = new DirectoryBuildPropsParser();
+            final DirectoryBuildPropsParser parser = new DirectoryBuildPropsParser();
             try (FileInputStream fis = new FileInputStream(directoryProps);
                     BOMInputStream bis = new BOMInputStream(fis)) {
                 //skip BOM if it exists

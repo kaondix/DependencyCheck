@@ -37,14 +37,20 @@ import org.xml.sax.SAXException;
 /**
  * Parses `Directory.Build.props`.
  *
- * @see <a href="https://learn.microsoft.com/en-us/visualstudio/msbuild/customize-your-build?view=vs-2019#directorybuildprops-and-directorybuildtargets">Directory.Build.props</a>
+ * @see <a href="https://learn.microsoft.com/en-us/visualstudio/msbuild/customize-your-build?view=vs-2019">Directory.Build.props</a>
  * @author Jeremy Long
  */
 public class DirectoryBuildPropsParser {
 
+    /**
+     * Parse the properties from the `directory.build.props` file InputStream.
+     *
+     * @param stream the input stream containing the props file to parse.
+     * @return the properties.
+     */
     public Map<String, String> parse(InputStream stream) {
         try {
-            HashMap<String, String> props = new HashMap<>();
+            final HashMap<String, String> props = new HashMap<>();
 
             final DocumentBuilder db = XmlUtils.buildSecureDocumentBuilder();
             final Document d = db.parse(stream);
@@ -58,7 +64,7 @@ public class DirectoryBuildPropsParser {
                     for (int x = 0; x < propertyNodes.getLength(); x++) {
                         final Node node = propertyNodes.item(x);
                         if (node instanceof Element) {
-                            Element property = (Element) node;
+                            final Element property = (Element) node;
                             final String name = property.getNodeName();
                             final Node value = property.getChildNodes().item(0);
                             if (value != null) {

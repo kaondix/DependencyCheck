@@ -23,8 +23,6 @@ import java.util.List;
 import java.util.Properties;
 import javax.annotation.concurrent.ThreadSafe;
 
-import org.apache.commons.text.StringSubstitutor;
-import org.apache.commons.text.lookup.StringLookup;
 import org.owasp.dependencycheck.utils.InterpolationUtil;
 
 /**
@@ -348,5 +346,4 @@ public class Model implements Serializable {
         this.parentArtifactId = InterpolationUtil.interpolate(this.parentArtifactId, properties);
         this.parentVersion = InterpolationUtil.interpolate(this.parentVersion, properties);
     }
-
 }

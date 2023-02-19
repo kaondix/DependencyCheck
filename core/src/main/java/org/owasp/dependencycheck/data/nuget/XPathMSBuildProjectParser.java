@@ -49,6 +49,7 @@ public class XPathMSBuildProjectParser {
      * Parses the given stream for MSBuild PackageReference elements.
      *
      * @param stream the input stream to parse
+     * @param props the Directory.Build.props properties
      * @return a collection of discovered NuGet package references
      * @throws MSBuildProjectParseException if an exception occurs
      */
