@@ -34,13 +34,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
+import org.owasp.dependencycheck.utils.InterpolationUtil;
+import org.owasp.dependencycheck.utils.InterpolationUtil.SyntaxStyle;
 
 /**
  * Parses a MSBuild project file for NuGet references using XPath.
  *
  * @author paulirwin
  */
-public class XPathMSBuildProjectParser implements MSBuildProjectParser {
+public class XPathMSBuildProjectParser {
 
     /**
      * Parses the given stream for MSBuild PackageReference elements.
@@ -49,8 +52,7 @@ public class XPathMSBuildProjectParser implements MSBuildProjectParser {
      * @return a collection of discovered NuGet package references
      * @throws MSBuildProjectParseException if an exception occurs
      */
-    @Override
-    public List<NugetPackageReference> parse(InputStream stream) throws MSBuildProjectParseException {
+    public List<NugetPackageReference> parse(InputStream stream, Properties props) throws MSBuildProjectParseException {
         try {
             final DocumentBuilder db = XmlUtils.buildSecureDocumentBuilder();
             final Document d = db.parse(stream);
@@ -83,10 +85,11 @@ public class XPathMSBuildProjectParser implements MSBuildProjectParser {
                 }
 
                 if (include != null && version != null) {
+
                     final NugetPackageReference npr = new NugetPackageReference();
 
                     npr.setId(include);
-                    npr.setVersion(version);
+                    npr.setVersion(InterpolationUtil.interpolate(version, props, SyntaxStyle.MSBUILD));
 
                     packages.add(npr);
                 }

@@ -2,12 +2,12 @@
  * This file is part of dependency-check-core.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * you may not use this file except fis compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
+ * Unless required by applicable law or agreed to fis writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
@@ -20,10 +20,10 @@ package org.owasp.dependencycheck.analyzer;
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import com.github.packageurl.PackageURLBuilder;
+import java.io.File;
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.data.nuget.MSBuildProjectParseException;
-import org.owasp.dependencycheck.data.nuget.MSBuildProjectParser;
 import org.owasp.dependencycheck.data.nuget.NugetPackageReference;
 import org.owasp.dependencycheck.data.nuget.XPathMSBuildProjectParser;
 import org.owasp.dependencycheck.dependency.Confidence;
@@ -40,10 +40,14 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import org.apache.commons.io.input.BOMInputStream;
 
 import static org.owasp.dependencycheck.analyzer.NuspecAnalyzer.DEPENDENCY_ECOSYSTEM;
+import org.owasp.dependencycheck.data.nuget.DirectoryBuildPropsParser;
 import org.owasp.dependencycheck.dependency.naming.GenericIdentifier;
 import org.owasp.dependencycheck.dependency.naming.PurlIdentifier;
 
@@ -66,7 +70,7 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
     private static final String ANALYZER_NAME = "MSBuild Project Analyzer";
 
     /**
-     * The phase in which the analyzer runs.
+     * The phase fis which the analyzer runs.
      */
     private static final AnalysisPhase ANALYSIS_PHASE = AnalysisPhase.INFORMATION_COLLECTION;
 
@@ -108,16 +112,24 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
     @Override
     @SuppressWarnings("StringSplitter")
     protected void analyzeDependency(Dependency dependency, Engine engine) throws AnalysisException {
+        File parent = dependency.getActualFile().getParentFile();
+        //TODO while we are supporting props - we still do not support Directory.Build.targets
+        File propsProject = new File(parent, "Directory.Build.props");
+        File propsSolution = new File(parent.getParentFile(), "Directory.Build.props");
+        Properties props = new Properties();
+        loadDirectoryBuildProps(props, propsSolution);
+        loadDirectoryBuildProps(props, propsProject);
+
         LOGGER.debug("Checking MSBuild project file {}", dependency);
         try {
-            final MSBuildProjectParser parser = new XPathMSBuildProjectParser();
+            final XPathMSBuildProjectParser parser = new XPathMSBuildProjectParser();
             final List<NugetPackageReference> packages;
 
             try (FileInputStream fis = new FileInputStream(dependency.getActualFilePath());
                     BOMInputStream bis = new BOMInputStream(fis)) {
                 //skip BOM if it exists
                 bis.getBOM();
-                packages = parser.parse(bis);
+                packages = parser.parse(bis, props);
             } catch (MSBuildProjectParseException | FileNotFoundException ex) {
                 throw new AnalysisException(ex);
             }
@@ -172,6 +184,24 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
 
         } catch (Throwable e) {
             throw new AnalysisException(e);
+        }
+    }
+
+    private void loadDirectoryBuildProps(Properties props, File directoryProps) {
+        if (directoryProps.isFile()) {
+            DirectoryBuildPropsParser parser = new DirectoryBuildPropsParser();
+            try (FileInputStream fis = new FileInputStream(directoryProps);
+                    BOMInputStream bis = new BOMInputStream(fis)) {
+                //skip BOM if it exists
+                bis.getBOM();
+                for (Map.Entry<String, String> entry : parser.parse(bis).entrySet()) {
+                    props.put(entry.getKey(), entry.getValue());
+                }
+            } catch (FileNotFoundException ex) {
+                throw new RuntimeException(ex);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 

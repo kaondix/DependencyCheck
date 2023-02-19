@@ -75,7 +75,7 @@ public class MSBuildProjectAnalyzerTest extends BaseTest {
             analyzer.setEnabled(true);
             analyzer.analyze(toScan, engine);
 
-            assertEquals("4 dependencies should be found", 4, engine.getDependencies().length);
+            assertEquals("5 dependencies should be found", 5, engine.getDependencies().length);
 
             int foundCount = 0;
 
@@ -108,10 +108,15 @@ public class MSBuildProjectAnalyzerTest extends BaseTest {
                     assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("Extensions"));
                     assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("Extensions.Logging"));
                     assertTrue(result.getEvidence(EvidenceType.VERSION).toString().contains("6.0.0"));
+                } else if ("NodaTime".equals(result.getName())) {
+                    foundCount++;
+                    assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().contains("NodaTime"));
+                    assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("NodaTime"));
+                    assertTrue(result.getEvidence(EvidenceType.VERSION).toString().contains("3.0.0"));
                 }
             }
 
-            assertEquals("4 expected dependencies should be found", 4, foundCount);
+            assertEquals("5 expected dependencies should be found", 5, foundCount);
         }
     }
 }
