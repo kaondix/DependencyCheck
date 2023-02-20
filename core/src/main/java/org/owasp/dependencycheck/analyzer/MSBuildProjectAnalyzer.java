@@ -90,13 +90,13 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
     /**
      * The import value to compare for GetDirectoryNameOfFileAbove.
      */
-    private static final String IMPORT_GET_DIRECTORY
-            = "$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory)..,Directory.Build.props))\\Directory.Build.props";
+    private static final String IMPORT_GET_DIRECTORY =
+            "$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory)..,Directory.Build.props))\\Directory.Build.props";
     /**
      * The import value to compare for GetPathOfFileAbove.
      */
-    private static final String IMPORT_GET_PATH_OF_FILE
-            = "$([MSBuild]::GetPathOfFileAbove('Directory.Build.props','$(MSBuildThisFileDirectory)../'))";
+    private static final String IMPORT_GET_PATH_OF_FILE =
+            "$([MSBuild]::GetPathOfFileAbove('Directory.Build.props','$(MSBuildThisFileDirectory)../'))";
 
     @Override
     public String getName() {
@@ -271,7 +271,8 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
             } else if (importStatement.startsWith("$(MSBuildThisFileDirectory)")) {
                 final String path = importStatement.substring(27);
                 final File currentDirectory = currentFile.getParentFile();
-                final Path p = Paths.get(currentDirectory.getAbsolutePath(), path.replace('\\', File.separatorChar).replace('/', File.separatorChar));
+                final Path p = Paths.get(currentDirectory.getAbsolutePath(),
+                        path.replace('\\', File.separatorChar).replace('/', File.separatorChar));
                 final File f = p.normalize().toFile();
                 if (f.isFile() && !f.equals(currentFile)) {
                     return f;
@@ -279,7 +280,8 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
             }
         } else {
             final File currentDirectory = currentFile.getParentFile();
-            final Path p = Paths.get(currentDirectory.getAbsolutePath(), importStatement.replace('\\', File.separatorChar).replace('/', File.separatorChar));
+            final Path p = Paths.get(currentDirectory.getAbsolutePath(),
+                    importStatement.replace('\\', File.separatorChar).replace('/', File.separatorChar));
 
             final File f = p.normalize().toFile();
 
