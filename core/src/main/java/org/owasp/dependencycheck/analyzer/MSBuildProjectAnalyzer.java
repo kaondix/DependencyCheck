@@ -127,11 +127,13 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
     @SuppressWarnings("StringSplitter")
     protected void analyzeDependency(Dependency dependency, Engine engine) throws AnalysisException {
         final File parent = dependency.getActualFile().getParentFile();
-        //TODO while we are supporting props - we still do not support Directory.Build.targets
-        final Properties props = loadDirectoryBuildProps(parent);
 
-        LOGGER.debug("Checking MSBuild project file {}", dependency);
         try {
+            //TODO while we are supporting props - we still do not support Directory.Build.targets
+            final Properties props = loadDirectoryBuildProps(parent);
+
+            LOGGER.debug("Checking MSBuild project file {}", dependency);
+
             final XPathMSBuildProjectParser parser = new XPathMSBuildProjectParser();
             final List<NugetPackageReference> packages;
 
@@ -202,8 +204,10 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
      *
      * @param directory the project directory.
      * @return the properties from the Directory.Build.props.
+     * @throws MSBuildProjectParseException thrown if there is an error parsing
+     * the Directory.Build.props files.
      */
-    private Properties loadDirectoryBuildProps(File directory) {
+    private Properties loadDirectoryBuildProps(File directory) throws MSBuildProjectParseException {
         final Properties props = new Properties();
         if (directory == null || !directory.isDirectory()) {
             return props;
@@ -287,7 +291,7 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
         return null;
     }
 
-    private Map<String, String> readDirectoryBuildProps(File directoryProps) {
+    private Map<String, String> readDirectoryBuildProps(File directoryProps) throws MSBuildProjectParseException {
         Map<String, String> entries = null;
         final Set<String> imports = new HashSet<>();
         if (directoryProps != null && directoryProps.isFile()) {
@@ -298,10 +302,8 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
                 bis.getBOM();
                 entries = parser.parse(bis);
                 imports.addAll(parser.getImports());
-            } catch (FileNotFoundException ex) {
-                throw new RuntimeException(ex);
             } catch (IOException ex) {
-                throw new RuntimeException(ex);
+                throw new MSBuildProjectParseException("Error reading Directory.Build.props", ex);
             }
 
             for (String importStatement : imports) {

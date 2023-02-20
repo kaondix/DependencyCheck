@@ -60,14 +60,15 @@ public class DirectoryBuildPropsParser {
     }
 
     /**
-     * Parse the properties from the `Directory.Build.props` file InputStream.
-     * If any import nodes are found while parsing, the values will be available
+     * Parse the properties from the `Directory.Build.props` file InputStream.If
+     * any import nodes are found while parsing, the values will be available
      * via `getImports()` after parsing is complete.
      *
      * @param stream the input stream containing the props file to parse.
      * @return the properties.
+     * @throws MSBuildProjectParseException thrown if there is a parsing error.
      */
-    public Map<String, String> parse(InputStream stream) {
+    public Map<String, String> parse(InputStream stream) throws MSBuildProjectParseException {
         try {
             final HashMap<String, String> props = new HashMap<>();
 
@@ -105,7 +106,7 @@ public class DirectoryBuildPropsParser {
             }
             return props;
         } catch (ParserConfigurationException | SAXException | IOException | XPathExpressionException ex) {
-            throw new RuntimeException(ex);
+            throw new MSBuildProjectParseException("Error parsing Directory.Build.props", ex);
         }
     }
 }
