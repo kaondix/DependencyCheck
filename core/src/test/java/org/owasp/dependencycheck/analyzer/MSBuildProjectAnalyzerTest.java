@@ -44,6 +44,7 @@ public class MSBuildProjectAnalyzerTest extends BaseTest {
         instance.initialize(getSettings());
         instance.prepare(null);
         instance.setEnabled(true);
+
     }
 
     @Test
@@ -84,48 +85,103 @@ public class MSBuildProjectAnalyzerTest extends BaseTest {
                 assertEquals(DEPENDENCY_ECOSYSTEM, result.getEcosystem());
                 assertTrue(result.isVirtual());
 
-                if (null != result.getName()) switch (result.getName()) {
-                    case "Humanizer":
-                        foundCount++;
-                        assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().contains("Humanizer"));
-                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("Humanizer"));
-                        assertTrue(result.getEvidence(EvidenceType.VERSION).toString().contains("2.2.0"));
-                        break;
-                    case "JetBrains.Annotations":
-                        foundCount++;
-                        assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().contains("JetBrains"));
-                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("JetBrains.Annotations"));
-                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("Annotations"));
-                        assertTrue(result.getEvidence(EvidenceType.VERSION).toString().contains("11.1.0"));
-                        break;
-                    case "Microsoft.AspNetCore.All":
-                        foundCount++;
-                        assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().contains("Microsoft"));
-                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("Microsoft.AspNetCore.All"));
-                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("AspNetCore"));
-                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("AspNetCore.All"));
-                        assertTrue(result.getEvidence(EvidenceType.VERSION).toString().contains("2.0.5"));
-                        break;
-                    case "Microsoft.Extensions.Logging":
-                        foundCount++;
-                        assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().contains("Microsoft"));
-                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("Microsoft.Extensions.Logging"));
-                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("Extensions"));
-                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("Extensions.Logging"));
-                        assertTrue(result.getEvidence(EvidenceType.VERSION).toString().contains("6.0.0"));
-                        break;
-                    case "NodaTime":
-                        foundCount++;
-                        assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().contains("NodaTime"));
-                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("NodaTime"));
-                        assertTrue("Expected 3.0.0; contained: " + result.getEvidence(EvidenceType.VERSION).stream().map(e->e.toString()).collect(Collectors.joining(",", "{", "}")), result.getEvidence(EvidenceType.VERSION).toString().contains("3.0.0"));
-                        break;
-                    default:
-                        break;
+                if (null != result.getName()) {
+                    switch (result.getName()) {
+                        case "Humanizer":
+                            foundCount++;
+                            assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().contains("Humanizer"));
+                            assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("Humanizer"));
+                            assertTrue(result.getEvidence(EvidenceType.VERSION).toString().contains("2.2.0"));
+                            break;
+                        case "JetBrains.Annotations":
+                            foundCount++;
+                            assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().contains("JetBrains"));
+                            assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("JetBrains.Annotations"));
+                            assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("Annotations"));
+                            assertTrue(result.getEvidence(EvidenceType.VERSION).toString().contains("11.1.0"));
+                            break;
+                        case "Microsoft.AspNetCore.All":
+                            foundCount++;
+                            assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().contains("Microsoft"));
+                            assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("Microsoft.AspNetCore.All"));
+                            assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("AspNetCore"));
+                            assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("AspNetCore.All"));
+                            assertTrue(result.getEvidence(EvidenceType.VERSION).toString().contains("2.0.5"));
+                            break;
+                        case "Microsoft.Extensions.Logging":
+                            foundCount++;
+                            assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().contains("Microsoft"));
+                            assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("Microsoft.Extensions.Logging"));
+                            assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("Extensions"));
+                            assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("Extensions.Logging"));
+                            assertTrue(result.getEvidence(EvidenceType.VERSION).toString().contains("6.0.0"));
+                            break;
+                        case "NodaTime":
+                            foundCount++;
+                            assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().contains("NodaTime"));
+                            assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("NodaTime"));
+                            assertTrue("Expected 3.0.0; contained: " + result.getEvidence(EvidenceType.VERSION).stream().map(e -> e.toString()).collect(Collectors.joining(",", "{", "}")), result.getEvidence(EvidenceType.VERSION).toString().contains("3.0.0"));
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
 
             assertEquals("5 expected dependencies should be found", 5, foundCount);
+        }
+    }
+
+    @Test
+    public void testMSBuildProjectAnalysis_WithImports() throws Exception {
+        testMSBuildProjectAnalysisWithImport("msbuild/ProjectA/ProjectA.csproj", "3.0.0", "1.0.0");
+        testMSBuildProjectAnalysisWithImport("msbuild/ProjectB/ProjectB.csproj", "3.0.0", "2.0.0");
+        testMSBuildProjectAnalysisWithImport("msbuild/ProjectC/ProjectC.csproj", "3.0.0", "3.0.0");
+        testMSBuildProjectAnalysisWithImport("msbuild/ProjectD/ProjectD.csproj", "4.0.0", "4.0.0");
+        testMSBuildProjectAnalysisWithImport("msbuild/ProjectE/ProjectE.csproj", "3.0.0", "5.0.0");
+    }
+
+    public void testMSBuildProjectAnalysisWithImport(String path, String nodaVersion, String humanizerVersion) throws Exception {
+
+        try (Engine engine = new Engine(getSettings())) {
+            File file = BaseTest.getResourceAsFile(this, path);
+            Dependency toScan = new Dependency(file);
+            MSBuildProjectAnalyzer analyzer = new MSBuildProjectAnalyzer();
+            analyzer.setFilesMatched(true);
+            analyzer.initialize(getSettings());
+            analyzer.prepare(engine);
+            analyzer.setEnabled(true);
+            analyzer.analyze(toScan, engine);
+
+            assertEquals("2 dependencies should be found", 2, engine.getDependencies().length);
+
+            int foundCount = 0;
+
+            for (Dependency result : engine.getDependencies()) {
+                assertEquals(DEPENDENCY_ECOSYSTEM, result.getEcosystem());
+                assertTrue(result.isVirtual());
+
+                if (null != result.getName()) {
+                    switch (result.getName()) {
+                        case "Humanizer":
+                            foundCount++;
+                            assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().contains("Humanizer"));
+                            assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("Humanizer"));
+                            assertTrue("Expected " + humanizerVersion + "; contained: " + result.getEvidence(EvidenceType.VERSION).stream().map(e -> e.toString()).collect(Collectors.joining(",", "{", "}")), result.getEvidence(EvidenceType.VERSION).toString().contains(humanizerVersion));
+                            break;
+                        case "NodaTime":
+                            foundCount++;
+                            assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().contains("NodaTime"));
+                            assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("NodaTime"));
+                            assertTrue("Expected " + nodaVersion + "; contained: " + result.getEvidence(EvidenceType.VERSION).stream().map(e -> e.toString()).collect(Collectors.joining(",", "{", "}")), result.getEvidence(EvidenceType.VERSION).toString().contains(nodaVersion));
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            assertEquals("2 expected dependencies should be found", 2, foundCount);
         }
     }
 }

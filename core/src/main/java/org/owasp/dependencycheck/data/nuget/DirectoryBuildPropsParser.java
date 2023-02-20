@@ -20,7 +20,9 @@ package org.owasp.dependencycheck.data.nuget;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
@@ -37,13 +39,22 @@ import org.xml.sax.SAXException;
 /**
  * Parses `Directory.Build.props`.
  *
- * @see <a href="https://learn.microsoft.com/en-us/visualstudio/msbuild/customize-your-build?view=vs-2019">Directory.Build.props</a>
+ * @see
+ * <a href="https://learn.microsoft.com/en-us/visualstudio/msbuild/customize-your-build?view=vs-2019">Directory.Build.props</a>
  * @author Jeremy Long
  */
 public class DirectoryBuildPropsParser {
 
+    private Set<String> imports = new HashSet<>();
+
+    public Set<String> getImports() {
+        return imports;
+    }
+
     /**
-     * Parse the properties from the `directory.build.props` file InputStream.
+     * Parse the properties from the `Directory.Build.props` file InputStream.
+     * If any import nodes are found while parsing, the values will be available
+     * via `getImports()` after parsing is complete.
      *
      * @param stream the input stream containing the props file to parse.
      * @return the properties.
@@ -56,6 +67,16 @@ public class DirectoryBuildPropsParser {
             final Document d = db.parse(stream);
 
             final XPath xpath = XPathFactory.newInstance().newXPath();
+
+            //<Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+            final NodeList importList = (NodeList) xpath.evaluate("//Import", d, XPathConstants.NODESET);
+            if (importList != null) {
+                for (int i = 0; i < importList.getLength(); i++) {
+                    final Node importNode = importList.item(i);
+                    final Node project = importNode.getAttributes().getNamedItem("Project");
+                    imports.add(project.getNodeValue());
+                }
+            }
             final NodeList propertyGroups = (NodeList) xpath.evaluate("//PropertyGroup", d, XPathConstants.NODESET);
             if (propertyGroups != null) {
                 for (int i = 0; i < propertyGroups.getLength(); i++) {

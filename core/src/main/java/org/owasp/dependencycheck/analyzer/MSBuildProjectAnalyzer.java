@@ -41,9 +41,13 @@ import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import org.apache.commons.io.input.BOMInputStream;
 
 import static org.owasp.dependencycheck.analyzer.NuspecAnalyzer.DEPENDENCY_ECOSYSTEM;
@@ -114,11 +118,7 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
     protected void analyzeDependency(Dependency dependency, Engine engine) throws AnalysisException {
         final File parent = dependency.getActualFile().getParentFile();
         //TODO while we are supporting props - we still do not support Directory.Build.targets
-        final File propsProject = new File(parent, "Directory.Build.props");
-        final File propsSolution = new File(parent.getParentFile(), "Directory.Build.props");
-        final Properties props = new Properties();
-        loadDirectoryBuildProps(props, propsSolution);
-        loadDirectoryBuildProps(props, propsProject);
+        final Properties props = loadDirectoryBuildProps(parent);
 
         LOGGER.debug("Checking MSBuild project file {}", dependency);
         try {
@@ -187,22 +187,126 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
         }
     }
 
-    private void loadDirectoryBuildProps(Properties props, File directoryProps) {
-        if (directoryProps.isFile()) {
+    /**
+     * Attempts to load the `Directory.Build.props` file.
+     *
+     * @param directory the project directory.
+     * @return
+     */
+    private Properties loadDirectoryBuildProps(File directory) {
+        final Properties props = new Properties();
+        if (directory == null || !directory.isDirectory()) {
+            return props;
+        }
+
+        File directoryProps = locateDirectoryBuildProps(directory);
+        final Map<String, String> entries = readDirectoryBuildProps(directoryProps);
+
+        for (Map.Entry<String, String> entry : entries.entrySet()) {
+            props.put(entry.getKey(), entry.getValue());
+        }
+
+        return props;
+    }
+
+    /**
+     * Walk the current directory up to find `Directory.Build.props`.
+     *
+     * @param directory the directory to begin searching at.
+     * @return the `Directory.Build.props` file if found; otherwise null.
+     */
+    private File locateDirectoryBuildProps(File directory) {
+        File search = directory;
+        while (search != null && search.isDirectory()) {
+            final File props = new File(search, "Directory.Build.props");
+            if (props.isFile()) {
+                return props;
+            }
+            search = search.getParentFile();
+        }
+        return null;
+    }
+
+    /**
+     * Exceedingly naive processing of MSBuild Import statements. Only four
+     * cases are supported:
+     * <ul>
+     * <li>A relative path to the import</li>
+     * <li>$(MSBuildThisFileDirectory)../path.to.props</li>
+     * <li>$([MSBuild]::GetPathOfFileAbove('Directory.Build.props',
+     * '$(MSBuildThisFileDirectory)../'))</li>
+     * <li>$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory)..,
+     * Directory.Build.props))\Directory.Build.props</li>
+     * </ul>
+     *
+     * @param importStatement the import statement
+     * @param currentFile the props file containing the import
+     * @return a reference to the file if it could be found, otherwise null.
+     */
+    private File getImport(String importStatement, File currentFile) {
+        //<Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+        //<Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory).., Directory.Build.props))\Directory.Build.props" />
+        if (importStatement == null || importStatement.isEmpty()) {
+            return null;
+        }
+        if (importStatement.startsWith("$")) {
+            String compact = importStatement.replaceAll("\\s", "");
+            if (compact.equalsIgnoreCase("$([MSBuild]::GetPathOfFileAbove('Directory.Build.props','$(MSBuildThisFileDirectory)../'))")
+                    || compact.equalsIgnoreCase("$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory)..,Directory.Build.props))\\Directory.Build.props")) {
+                return locateDirectoryBuildProps(currentFile.getParentFile().getParentFile());
+            } else if (importStatement.startsWith("$(MSBuildThisFileDirectory)")) {
+                String path = importStatement.substring(27);
+                File currentDirectory = currentFile.getParentFile();
+                Path p = Paths.get(currentDirectory.getAbsolutePath(), path.replace('\\', File.separatorChar).replace('/', File.separatorChar));
+                File f = p.normalize().toFile();
+                if (f.isFile() && !f.equals(currentFile)) {
+                    return f;
+                }
+            }
+        } else {
+            File currentDirectory = currentFile.getParentFile();
+            Path p = Paths.get(currentDirectory.getAbsolutePath(), importStatement.replace('\\', File.separatorChar).replace('/', File.separatorChar));
+
+            File f = p.normalize().toFile();
+
+            if (f.isFile() && !f.equals(currentFile)) {
+                return f;
+            }
+        }
+        LOGGER.warn("Unable to import Directory.Build.props import `{}` in `{}`", importStatement, currentFile);
+        return null;
+    }
+
+    private Map<String, String> readDirectoryBuildProps(File directoryProps) {
+        Map<String, String> entries = null;
+        final Set<String> imports = new HashSet<>();
+        if (directoryProps != null && directoryProps.isFile()) {
             final DirectoryBuildPropsParser parser = new DirectoryBuildPropsParser();
             try (FileInputStream fis = new FileInputStream(directoryProps);
                     BOMInputStream bis = new BOMInputStream(fis)) {
                 //skip BOM if it exists
                 bis.getBOM();
-                for (Map.Entry<String, String> entry : parser.parse(bis).entrySet()) {
-                    props.put(entry.getKey(), entry.getValue());
-                }
+                entries = parser.parse(bis);
+                imports.addAll(parser.getImports());
             } catch (FileNotFoundException ex) {
                 throw new RuntimeException(ex);
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
+
+            for (String importStatement : imports) {
+                File parentBuildProps = getImport(importStatement, directoryProps);
+                if (!directoryProps.equals(parentBuildProps)) {
+                    final Map<String, String> parentEntries = readDirectoryBuildProps(parentBuildProps);
+                    if (parentEntries != null) {
+                        parentEntries.putAll(entries);
+                        entries = parentEntries;
+                    }
+                }
+            }
+            return entries;
         }
+        return null;
     }
 
 }
