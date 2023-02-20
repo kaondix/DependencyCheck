@@ -70,7 +70,7 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
     private static final String ANALYZER_NAME = "MSBuild Project Analyzer";
 
     /**
-     * The phase fis which the analyzer runs.
+     * The phase in which the analyzer runs.
      */
     private static final AnalysisPhase ANALYSIS_PHASE = AnalysisPhase.INFORMATION_COLLECTION;
 
