@@ -151,7 +151,7 @@ public final class InterpolationUtil {
          */
         @Override
         public String lookup(String key) {
-            return props.getProperty(key);
+            return props.getProperty(key, "");
         }
     }
 }
