@@ -87,6 +87,16 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
      * The file filter used to determine which files this analyzer supports.
      */
     private static final FileFilter FILTER = FileFilterBuilder.newInstance().addExtensions(SUPPORTED_EXTENSIONS).build();
+    /**
+     * The import value to compare for GetDirectoryNameOfFileAbove.
+     */
+    private static final String IMPORT_GET_DIRECTORY
+            = "$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory)..,Directory.Build.props))\\Directory.Build.props";
+    /**
+     * The import value to compare for GetPathOfFileAbove.
+     */
+    private static final String IMPORT_GET_PATH_OF_FILE
+            = "$([MSBuild]::GetPathOfFileAbove('Directory.Build.props','$(MSBuildThisFileDirectory)../'))";
 
     @Override
     public String getName() {
@@ -191,7 +201,7 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
      * Attempts to load the `Directory.Build.props` file.
      *
      * @param directory the project directory.
-     * @return
+     * @return the properties from the Directory.Build.props.
      */
     private Properties loadDirectoryBuildProps(File directory) {
         final Properties props = new Properties();
@@ -199,7 +209,7 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
             return props;
         }
 
-        File directoryProps = locateDirectoryBuildProps(directory);
+        final File directoryProps = locateDirectoryBuildProps(directory);
         final Map<String, String> entries = readDirectoryBuildProps(directoryProps);
 
         for (Map.Entry<String, String> entry : entries.entrySet()) {
@@ -250,24 +260,24 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
             return null;
         }
         if (importStatement.startsWith("$")) {
-            String compact = importStatement.replaceAll("\\s", "");
-            if (compact.equalsIgnoreCase("$([MSBuild]::GetPathOfFileAbove('Directory.Build.props','$(MSBuildThisFileDirectory)../'))")
-                    || compact.equalsIgnoreCase("$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory)..,Directory.Build.props))\\Directory.Build.props")) {
+            final String compact = importStatement.replaceAll("\\s", "");
+            if (IMPORT_GET_PATH_OF_FILE.equalsIgnoreCase(compact)
+                    || IMPORT_GET_DIRECTORY.equalsIgnoreCase(compact)) {
                 return locateDirectoryBuildProps(currentFile.getParentFile().getParentFile());
             } else if (importStatement.startsWith("$(MSBuildThisFileDirectory)")) {
-                String path = importStatement.substring(27);
-                File currentDirectory = currentFile.getParentFile();
-                Path p = Paths.get(currentDirectory.getAbsolutePath(), path.replace('\\', File.separatorChar).replace('/', File.separatorChar));
-                File f = p.normalize().toFile();
+                final String path = importStatement.substring(27);
+                final File currentDirectory = currentFile.getParentFile();
+                final Path p = Paths.get(currentDirectory.getAbsolutePath(), path.replace('\\', File.separatorChar).replace('/', File.separatorChar));
+                final File f = p.normalize().toFile();
                 if (f.isFile() && !f.equals(currentFile)) {
                     return f;
                 }
             }
         } else {
-            File currentDirectory = currentFile.getParentFile();
-            Path p = Paths.get(currentDirectory.getAbsolutePath(), importStatement.replace('\\', File.separatorChar).replace('/', File.separatorChar));
+            final File currentDirectory = currentFile.getParentFile();
+            final Path p = Paths.get(currentDirectory.getAbsolutePath(), importStatement.replace('\\', File.separatorChar).replace('/', File.separatorChar));
 
-            File f = p.normalize().toFile();
+            final File f = p.normalize().toFile();
 
             if (f.isFile() && !f.equals(currentFile)) {
                 return f;
@@ -295,7 +305,7 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
             }
 
             for (String importStatement : imports) {
-                File parentBuildProps = getImport(importStatement, directoryProps);
+                final File parentBuildProps = getImport(importStatement, directoryProps);
                 if (!directoryProps.equals(parentBuildProps)) {
                     final Map<String, String> parentEntries = readDirectoryBuildProps(parentBuildProps);
                     if (parentEntries != null) {

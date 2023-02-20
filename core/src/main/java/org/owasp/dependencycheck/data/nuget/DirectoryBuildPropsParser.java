@@ -45,8 +45,16 @@ import org.xml.sax.SAXException;
  */
 public class DirectoryBuildPropsParser {
 
+    /**
+     * The collection of imports identified during parsing.
+     */
     private Set<String> imports = new HashSet<>();
 
+    /**
+     * Returns the imports identified during parsing.
+     *
+     * @return the imports identified during parsing.
+     */
     public Set<String> getImports() {
         return imports;
     }
