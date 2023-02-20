@@ -26,8 +26,6 @@ import static org.junit.Assert.*;
  * @author Jeremy Long
  */
 public class InterpolationUtilTest {
-    
-
 
     /**
      * Test of interpolate method, of class InterpolationUtil.
@@ -50,6 +48,27 @@ public class InterpolationUtilTest {
         String text = "This is a test of '${key}' and '${nothing}'";
         String expResults = "This is a test of 'value' and ''";
         String results = InterpolationUtil.interpolate(text, prop);
+        assertEquals(expResults, results);
+    }
+
+    @Test
+    public void testInterpolateMSBuild() {
+        Properties prop = new Properties();
+        prop.setProperty("key", "value");
+        prop.setProperty("nested", "nested $(key)");
+        String text = "This is a test of '$(key)' '$(nested)'";
+        String expResults = "This is a test of 'value' 'nested value'";
+        String results = InterpolationUtil.interpolate(text, prop, InterpolationUtil.SyntaxStyle.MSBUILD);
+        assertEquals(expResults, results);
+    }
+
+    @Test
+    public void testInterpolateNonexistentErasedMSBuild() {
+        Properties prop = new Properties();
+        prop.setProperty("key", "value");
+        String text = "This is a test of '$(key)' and '$(nothing)'";
+        String expResults = "This is a test of 'value' and ''";
+        String results = InterpolationUtil.interpolate(text, prop, InterpolationUtil.SyntaxStyle.MSBUILD);
         assertEquals(expResults, results);
     }
 }
