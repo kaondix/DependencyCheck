@@ -6180,4 +6180,12 @@
         <packageUrl regex="true">^(?!pkg:maven/org.eclipse.platform).+$</packageUrl>
         <cpe>cpe:/a:eclipse:eclipse_ide</cpe>
     </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+        suppress various improper matches to the CPE that belongs only to pkg:maven/org.json/json
+        FP per #5502
+        ]]></notes>
+        <packageUrl regex="true">^(?!pkg:maven/org\.json/json/).+$</packageUrl>
+        <cpe>cpe:/a:json-java_project:json-java</cpe>
+    </suppress>
 </suppressions>
