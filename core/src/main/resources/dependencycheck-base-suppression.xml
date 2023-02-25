@@ -6196,4 +6196,11 @@
         <packageUrl regex="true">^(?!pkg:npm/flat@).+$</packageUrl>
         <cpe>cpe:/a:flat_project:flat</cpe>
     </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+        FP per issue #5489, make sure to include all apacha calcite-avatica modules
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.calcite\.avatica/.*$</packageUrl>
+        <cpe>cpe:/a:apache:calcite:</cpe>
+    </suppress>
 </suppressions>
