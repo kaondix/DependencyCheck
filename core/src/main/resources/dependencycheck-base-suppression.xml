@@ -6203,4 +6203,11 @@
         <packageUrl regex="true">^pkg:maven/org\.apache\.calcite\.avatica/.*$</packageUrl>
         <cpe>cpe:/a:apache:calcite:</cpe>
     </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+        FP per issue #5381, apollo_project:apollo is a PHP project unrelated to apollographql
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.apollographql\.apollo/.*$</packageUrl>
+        <cpe>cpe:/a:apollo_project:apollo</cpe>
+    </suppress>
 </suppressions>
