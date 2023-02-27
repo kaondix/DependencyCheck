@@ -975,6 +975,9 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
     @SuppressWarnings("CanBeFinal")
     @Parameter(property = "hostedSuppressionsForceUpdate")
     private Boolean hostedSuppressionsForceUpdate;
+    @SuppressWarnings("CanBeFinal")
+    @Parameter(property = "hostedSuppressionsEnabled")
+    private Boolean hostedSuppressionsEnabled;
     /**
      * Skip excessive hosted suppression file update checks for a designated
      * duration in hours (defaults to 2 hours).
@@ -2318,6 +2321,7 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
         settings.setIntIfNotNull(Settings.KEYS.HOSTED_SUPPRESSIONS_VALID_FOR_HOURS, hostedSuppressionsValidForHours);
         settings.setStringIfNotNull(Settings.KEYS.HOSTED_SUPPRESSIONS_URL, hostedSuppressionsUrl);
         settings.setBooleanIfNotNull(Settings.KEYS.HOSTED_SUPPRESSIONS_FORCEUPDATE, hostedSuppressionsForceUpdate);
+        settings.setBooleanIfNotNull(Settings.KEYS.HOSTED_SUPPRESSIONS_ENABLED, hostedSuppressionsEnabled);
     }
 
     /**
