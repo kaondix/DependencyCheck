@@ -975,6 +975,9 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
     @SuppressWarnings("CanBeFinal")
     @Parameter(property = "hostedSuppressionsForceUpdate")
     private Boolean hostedSuppressionsForceUpdate;
+    /**
+     * Whether the hosted suppressions file will be used.
+     */
     @SuppressWarnings("CanBeFinal")
     @Parameter(property = "hostedSuppressionsEnabled")
     private Boolean hostedSuppressionsEnabled;
