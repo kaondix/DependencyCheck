@@ -55,7 +55,8 @@ public class XPathMSBuildProjectParser {
      * @return a collection of discovered NuGet package references
      * @throws MSBuildProjectParseException if an exception occurs
      */
-    public List<NugetPackageReference> parse(InputStream stream, Properties props, Map<String, String> centrallyManaged) throws MSBuildProjectParseException {
+    public List<NugetPackageReference> parse(InputStream stream, Properties props,
+            Map<String, String> centrallyManaged) throws MSBuildProjectParseException {
         try {
             final DocumentBuilder db = XmlUtils.buildSecureDocumentBuilder();
             final Document d = db.parse(stream);

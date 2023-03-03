@@ -92,13 +92,13 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
     /**
      * The import value to compare for GetDirectoryNameOfFileAbove.
      */
-    private static final String IMPORT_GET_DIRECTORY
-            = "$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory)..,Directory.Build.props))\\Directory.Build.props";
+    private static final String IMPORT_GET_DIRECTORY = "$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory)..,"
+            + "Directory.Build.props))\\Directory.Build.props";
     /**
      * The import value to compare for GetPathOfFileAbove.
      */
-    private static final String IMPORT_GET_PATH_OF_FILE
-            = "$([MSBuild]::GetPathOfFileAbove('Directory.Build.props','$(MSBuildThisFileDirectory)../'))";
+    private static final String IMPORT_GET_PATH_OF_FILE = "$([MSBuild]::GetPathOfFileAbove('Directory.Build.props','"
+            + "$(MSBuildThisFileDirectory)../'))";
     /**
      * The msbuild properties file name.
      */
@@ -142,7 +142,7 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
             //TODO while we are supporting props - we still do not support Directory.Build.targets
             final Properties props = loadDirectoryBuildProps(parent);
 
-            Map<String, String> centrallyManaged = loadCentrallyManaged(parent, props);
+            final Map<String, String> centrallyManaged = loadCentrallyManaged(parent, props);
 
             LOGGER.debug("Checking MSBuild project file {}", dependency);
 
@@ -238,6 +238,7 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
     /**
      * Walk the current directory up to find `Directory.Build.props`.
      *
+     * @param name the name of the build file to load.
      * @param directory the directory to begin searching at.
      * @return the `Directory.Build.props` file if found; otherwise null.
      */

@@ -62,7 +62,7 @@ public class DirectoryPackagesPropsParser {
             final Map<String, String> packages = new HashMap<>();
             final Node centralNode = (Node) xpath.evaluate("/Project/PropertyGroup/ManagePackageVersionsCentrally", d, XPathConstants.NODE);
             if (centralNode != null && centralNode.getChildNodes().getLength() == 1) {
-                String val = centralNode.getChildNodes().item(0).getNodeValue();
+                final String val = centralNode.getChildNodes().item(0).getNodeValue();
                 if (!"true".equalsIgnoreCase(val)) {
                     return packages;
                 }
