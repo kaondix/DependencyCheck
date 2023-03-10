@@ -139,6 +139,7 @@ public class MSBuildProjectAnalyzerTest extends BaseTest {
         testMSBuildProjectAnalysisWithImport("msbuild/ProjectC/ProjectC.csproj", "3.0.0", "3.0.0");
         testMSBuildProjectAnalysisWithImport("msbuild/ProjectD/ProjectD.csproj", "4.0.0", "4.0.0");
         testMSBuildProjectAnalysisWithImport("msbuild/ProjectE/ProjectE.csproj", "3.0.0", "5.0.0");
+        testMSBuildProjectAnalysisWithImport("msbuild/ProjectF/ProjectF.csproj", "5.1.0", "6.1.0");
     }
 
     public void testMSBuildProjectAnalysisWithImport(String path, String nodaVersion, String humanizerVersion) throws Exception {

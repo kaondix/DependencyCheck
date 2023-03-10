@@ -43,6 +43,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +53,7 @@ import org.apache.commons.io.input.BOMInputStream;
 
 import static org.owasp.dependencycheck.analyzer.NuspecAnalyzer.DEPENDENCY_ECOSYSTEM;
 import org.owasp.dependencycheck.data.nuget.DirectoryBuildPropsParser;
+import org.owasp.dependencycheck.data.nuget.DirectoryPackagesPropsParser;
 import org.owasp.dependencycheck.dependency.naming.GenericIdentifier;
 import org.owasp.dependencycheck.dependency.naming.PurlIdentifier;
 
@@ -90,13 +92,21 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
     /**
      * The import value to compare for GetDirectoryNameOfFileAbove.
      */
-    private static final String IMPORT_GET_DIRECTORY =
-            "$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory)..,Directory.Build.props))\\Directory.Build.props";
+    private static final String IMPORT_GET_DIRECTORY = "$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory)..,"
+            + "Directory.Build.props))\\Directory.Build.props";
     /**
      * The import value to compare for GetPathOfFileAbove.
      */
-    private static final String IMPORT_GET_PATH_OF_FILE =
-            "$([MSBuild]::GetPathOfFileAbove('Directory.Build.props','$(MSBuildThisFileDirectory)../'))";
+    private static final String IMPORT_GET_PATH_OF_FILE = "$([MSBuild]::GetPathOfFileAbove('Directory.Build.props','"
+            + "$(MSBuildThisFileDirectory)../'))";
+    /**
+     * The msbuild properties file name.
+     */
+    private static final String DIRECTORY_BUILDPROPS = "Directory.Build.props";
+    /**
+     * The nuget centrally managed props file.
+     */
+    private static final String DIRECTORY_PACKAGESPROPS = "Directory.Packages.props";
 
     @Override
     public String getName() {
@@ -132,6 +142,8 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
             //TODO while we are supporting props - we still do not support Directory.Build.targets
             final Properties props = loadDirectoryBuildProps(parent);
 
+            final Map<String, String> centrallyManaged = loadCentrallyManaged(parent, props);
+
             LOGGER.debug("Checking MSBuild project file {}", dependency);
 
             final XPathMSBuildProjectParser parser = new XPathMSBuildProjectParser();
@@ -141,7 +153,7 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
                     BOMInputStream bis = new BOMInputStream(fis)) {
                 //skip BOM if it exists
                 bis.getBOM();
-                packages = parser.parse(bis, props);
+                packages = parser.parse(bis, props, centrallyManaged);
             } catch (MSBuildProjectParseException | FileNotFoundException ex) {
                 throw new AnalysisException(ex);
             }
@@ -213,7 +225,7 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
             return props;
         }
 
-        final File directoryProps = locateDirectoryBuildProps(directory);
+        final File directoryProps = locateDirectoryBuildFile(DIRECTORY_BUILDPROPS, directory);
         final Map<String, String> entries = readDirectoryBuildProps(directoryProps);
 
         for (Map.Entry<String, String> entry : entries.entrySet()) {
@@ -226,13 +238,14 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
     /**
      * Walk the current directory up to find `Directory.Build.props`.
      *
+     * @param name the name of the build file to load.
      * @param directory the directory to begin searching at.
      * @return the `Directory.Build.props` file if found; otherwise null.
      */
-    private File locateDirectoryBuildProps(File directory) {
+    private File locateDirectoryBuildFile(String name, File directory) {
         File search = directory;
         while (search != null && search.isDirectory()) {
-            final File props = new File(search, "Directory.Build.props");
+            final File props = new File(search, name);
             if (props.isFile()) {
                 return props;
             }
@@ -267,7 +280,7 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
             final String compact = importStatement.replaceAll("\\s", "");
             if (IMPORT_GET_PATH_OF_FILE.equalsIgnoreCase(compact)
                     || IMPORT_GET_DIRECTORY.equalsIgnoreCase(compact)) {
-                return locateDirectoryBuildProps(currentFile.getParentFile().getParentFile());
+                return locateDirectoryBuildFile("Directory.Build.props", currentFile.getParentFile().getParentFile());
             } else if (importStatement.startsWith("$(MSBuildThisFileDirectory)")) {
                 final String path = importStatement.substring(27);
                 final File currentDirectory = currentFile.getParentFile();
@@ -321,6 +334,22 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
             return entries;
         }
         return null;
+    }
+
+    private Map<String, String> loadCentrallyManaged(File folder, Properties props) throws MSBuildProjectParseException {
+        final File packages = locateDirectoryBuildFile(DIRECTORY_PACKAGESPROPS, folder);
+        if (packages != null && packages.isFile()) {
+            final DirectoryPackagesPropsParser parser = new DirectoryPackagesPropsParser();
+            try (FileInputStream fis = new FileInputStream(packages);
+                    BOMInputStream bis = new BOMInputStream(fis)) {
+                //skip BOM if it exists
+                bis.getBOM();
+                return parser.parse(bis, props);
+            } catch (IOException ex) {
+                throw new MSBuildProjectParseException("Error reading Directory.Build.props", ex);
+            }
+        }
+        return new HashMap<>();
     }
 
 }
