@@ -326,7 +326,7 @@ public class MSBuildProjectAnalyzer extends AbstractFileTypeAnalyzer {
 
             for (String importStatement : imports) {
                 final File parentBuildProps = getImport(importStatement, directoryProps);
-                if (parentBuildProps!=null && !directoryProps.equals(parentBuildProps)) {
+                if (parentBuildProps != null && !directoryProps.equals(parentBuildProps)) {
                     final Map<String, String> parentEntries = readDirectoryBuildProps(parentBuildProps);
                     if (parentEntries != null) {
                         parentEntries.putAll(entries);
