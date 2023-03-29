@@ -695,11 +695,9 @@ Getting Help: <a href="https://github.com/jeremylong/DependencyCheck/issues" tar
                         <li><i>Dependencies Scanned</i>:&nbsp;$depCount ($dependencies.size() unique)</li>
                         <li><i>Vulnerable Dependencies</i>:&nbsp;<span id="vulnerableCount">$vulnDepCount</span></li>
                         <li><i>Vulnerabilities Found</i>:&nbsp;$vulnCount</li>
-                        <li><i>Vulnerabilities Suppressed</i>:&nbsp;
+                        <li><i>Vulnerabilities Suppressed</i>:&nbsp;$vulnSuppressedCount
                             #if($vulnSuppressedCount>0)
-                                <a id="suppressed-vulnerabilities-link" href="#header-suppressed">$vulnSuppressedCount</a>
-                            #else
-                                0
+                                (<a id="suppressed-vulnerabilities-link" href="#header-suppressed">show</a>)
                             #end
                         </li>
                         <li class="scaninfo">...</li>
