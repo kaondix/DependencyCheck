@@ -143,13 +143,13 @@ git clone --depth 1 https://github.com/jeremylong/DependencyCheck.git
 
 On *nix
 ```
-$ mvn -s settings.xml install
+$ mvn -s settings.xml verify
 $ ./cli/target/release/bin/dependency-check.sh -h
 $ ./cli/target/release/bin/dependency-check.sh --out . --scan ./src/test/resources
 ```
 On Windows
 ```
-> mvn -s settings.xml install
+> mvn -s settings.xml verify
 > .\cli\target\release\bin\dependency-check.bat -h
 > .\cli\target\release\bin\dependency-check.bat --out . --scan ./src/test/resources
 ```
@@ -158,7 +158,7 @@ Then load the resulting 'dependency-check-report.html' into your favorite browse
 
 #### Building without running tests
 To speed up your turnaround cycle times, you can also compile without running the tests each time:  
-`mvn -s settings.xml install -DskipTests=true`
+`mvn -s settings.xml verify -DskipTests=true`
 
 Please remember to at least run the tests once before opening the PR. :) 
 
@@ -266,7 +266,7 @@ Building From Source
 To build dependency-check (using Java 8) run the command:
 
 ```
-mvn -s settings.xml install
+mvn -s settings.xml verify
 ```
 
 Running dependency-check on dependency-check
@@ -295,7 +295,7 @@ Building The Docker Image
 To build dependency-check docker image run the command:
 
 ```
-mvn -s settings.xml install
+mvn -s settings.xml verify
 ./build-docker.sh
 ```
 
