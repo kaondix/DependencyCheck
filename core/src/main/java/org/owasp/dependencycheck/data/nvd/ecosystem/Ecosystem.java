@@ -62,6 +62,10 @@ public final class Ecosystem {
      * The JavaScript ecosystem.
      */
     public static final String JAVASCRIPT = "js";
+     /**
+     * The Libman ecosystem.
+     */
+    public static final String LIBMAN = "libman";
     /**
      * The Node.JS ecosystem.
      */
