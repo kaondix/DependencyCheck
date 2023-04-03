@@ -140,7 +140,9 @@ public class LibmanAnalyzer extends AbstractFileTypeAnalyzer {
      * @throws AnalysisException when there's an exception during analysis
      */
     @Override
-    public void analyzeDependency(Dependency dependency, Engine engine) throws AnalysisException {
+    public void analyzeDependency(Dependency dependency, Engine engine) throws AnalysisException {        
+        engine.removeDependency(dependency);
+
         LOGGER.debug("Checking file {}", dependency);
 
         try {
