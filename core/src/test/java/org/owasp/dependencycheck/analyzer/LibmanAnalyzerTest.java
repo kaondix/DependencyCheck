@@ -13,23 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Copyright (c) 2018 Paul Irwin. All Rights Reserved.
+ * Copyright (c) 2023 The OWASP Foundation. All Rights Reserved.
  */
 package org.owasp.dependencycheck.analyzer;
 
 import org.junit.Before;
 import org.junit.Test;
+
 import org.owasp.dependencycheck.BaseTest;
 import org.owasp.dependencycheck.Engine;
+import org.owasp.dependencycheck.data.nvd.ecosystem.Ecosystem;
 import org.owasp.dependencycheck.dependency.Dependency;
 import org.owasp.dependencycheck.dependency.EvidenceType;
+import org.owasp.dependencycheck.utils.Settings;
 
 import java.io.File;
 
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
-import static org.owasp.dependencycheck.analyzer.LibmanAnalyzer.DEPENDENCY_ECOSYSTEM;
 
+/**
+ * @author Arjen Korevaar
+ */
 public class LibmanAnalyzerTest extends BaseTest {
 
     private Engine engine;
@@ -51,44 +56,64 @@ public class LibmanAnalyzerTest extends BaseTest {
 
     @Test
     public void testGetAnalyzerName() {
-        assertEquals("Libman Analyzer", analyzer.getName());
+        String expected = "Libman Analyzer";
+        String actual = analyzer.getName();
+
+        assertEquals(expected, actual);
     }
 
     @Test
     public void testSupportedFileNames() {
-        assertTrue(analyzer.accept(new File("libman.json")));
+        boolean condition = analyzer.accept(new File("libman.json"));
+
+        assertTrue(condition);
+    }
+
+    @Test
+    public void testGetAnalyzerEnabledSettingKey() {
+        String expected = Settings.KEYS.ANALYZER_LIBMAN_ENABLED;
+        String actual = analyzer.getAnalyzerEnabledSettingKey();
+
+        assertEquals(expected, actual);
     }
 
     @Test
     public void testLibmanAnalysis() throws Exception {
         try (Engine engine = new Engine(getSettings())) {
             File file = BaseTest.getResourceAsFile(this, "libman/libman.json");
-            Dependency toScan = new Dependency(file);
+            Dependency dependency = new Dependency(file);
 
-            analyzer.analyze(toScan, engine);
+            analyzer.analyze(dependency, engine);
 
-            int foundCount = 0;
+            int count = 0;
 
             for (Dependency result : engine.getDependencies()) {
-                assertEquals(DEPENDENCY_ECOSYSTEM, result.getEcosystem());
+                assertEquals(Ecosystem.LIBMAN, result.getEcosystem());
 
                 switch (result.getName()) {
                     case "bootstrap":
-                        foundCount++;
-                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("bootstrap"));
-                        assertTrue(result.getEvidence(EvidenceType.VERSION).toString().contains("4.6.0"));
+                        count++;
+                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().equals("bootstrap"));
+                        assertTrue(result.getEvidence(EvidenceType.VERSION).toString().equals("4.6.0"));
                         break;
 
                     case "jquery":
-                        foundCount++;
-                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("jquery"));
-                        assertTrue(result.getEvidence(EvidenceType.VERSION).toString().contains("3.6.3"));
+                        count++;
+                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().equals("jquery"));
+                        assertTrue(result.getEvidence(EvidenceType.VERSION).toString().equals("3.6.3"));
                         break;
 
                     case "font-awesome":
-                        foundCount++;
-                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("font-awesome"));
-                        assertTrue(result.getEvidence(EvidenceType.VERSION).toString().contains("6.2.1"));
+                        count++;
+                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().equals("font-awesome"));
+                        assertTrue(result.getEvidence(EvidenceType.VERSION).toString().equals("6.2.1"));
+                        break;
+
+                    case "jquery-ui":
+                        count++;
+                        assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().equals("regru"));
+                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().equals("jquery-ui"));
+                        assertTrue(result.getEvidence(EvidenceType.VERSION).toString().equals("1.6.3"));
                         break;
 
                     default:
@@ -96,7 +121,7 @@ public class LibmanAnalyzerTest extends BaseTest {
                 }
             }
 
-            assertEquals("3 dependencies should be found", 3, foundCount);
+            assertEquals("4 dependencies should be found", 4, count);
         }
     }
 }

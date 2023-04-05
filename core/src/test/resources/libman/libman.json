@@ -29,6 +29,11 @@
             "destination": "wwwroot/lib/font-awesome/"
         },
         {
+            "provider": "unpkg",
+            "library": "@regru/jquery-ui@1.6.3",
+            "destination": "wwwroot/lib/jquery-ui/"
+        },
+        {
             "provider": "filesystem",
             "library": "../../path/to/library.js",
             "destination": "wwwroot/lib/mylib/",

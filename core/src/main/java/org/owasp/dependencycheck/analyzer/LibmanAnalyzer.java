@@ -30,6 +30,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.annotation.concurrent.ThreadSafe;
 import javax.json.Json;
@@ -53,7 +55,7 @@ public class LibmanAnalyzer extends AbstractFileTypeAnalyzer {
      * A descriptor for the type of dependencies processed or added by this
      * analyzer.
      */
-    public static final String DEPENDENCY_ECOSYSTEM = Ecosystem.LIBMAN;
+    private static final String DEPENDENCY_ECOSYSTEM = Ecosystem.LIBMAN;
 
     /**
      * The logger.
@@ -73,12 +75,18 @@ public class LibmanAnalyzer extends AbstractFileTypeAnalyzer {
     /**
      * The file filter used to determine which files this analyzer supports.
      */
-    public static final String FILE_NAME = "libman.json";
+    private static final String FILE_NAME = "libman.json";
 
     /**
      * The file filter used to determine which files this analyzer supports.
      */
     private static final FileFilter FILTER = FileFilterBuilder.newInstance().addFilenames(FILE_NAME).build();
+
+    /**
+     * Regex used to match Library property.
+     */
+    private static final Pattern LIBRARY_REGEX = Pattern
+            .compile("(\\@(?<package>[a-zA-Z]+)\\/)?(?<name>.+)\\@(?<version>.+)", Pattern.CASE_INSENSITIVE);
 
     /**
      * Initializes the analyzer once before any analysis is performed.
@@ -136,11 +144,11 @@ public class LibmanAnalyzer extends AbstractFileTypeAnalyzer {
      * Performs the analysis.
      *
      * @param dependency the dependency to analyze
-     * @param engine     the engine
+     * @param engine the engine
      * @throws AnalysisException when there's an exception during analysis
      */
     @Override
-    public void analyzeDependency(Dependency dependency, Engine engine) throws AnalysisException {        
+    public void analyzeDependency(Dependency dependency, Engine engine) throws AnalysisException {
         engine.removeDependency(dependency);
 
         LOGGER.debug("Checking file {}", dependency);
@@ -160,32 +168,44 @@ public class LibmanAnalyzer extends AbstractFileTypeAnalyzer {
                 final JsonArray libraries = json.getJsonArray("libraries");
 
                 libraries.forEach(e -> {
-                    JsonObject library = (JsonObject) e;
+                    JsonObject reference = (JsonObject) e;
 
-                    final String provider = library.getString("provider", defaultProvider);
+                    final String provider = reference.getString("provider", defaultProvider);
 
-                    if (provider == "filesystem") {
+                    if (provider == "filesystem") {                        
                         return;
                     }
 
-                    final String name = library.getString("library").split("@", 0)[0];
-                    final String version = library.getString("library").split("@", 0)[1];
+                    final String library = reference.getString("library");
+
+                    final Matcher matcher = LIBRARY_REGEX.matcher(library);
+
+                    if (!matcher.find()) {
+                        LOGGER.warn("Unable to parse library %s", library);
+                        return;
+                    }
+
+                    final String vendor = matcher.group("package");
+                    final String name = matcher.group("name");
+                    final String version = matcher.group("version");
 
                     final Dependency child = new Dependency(dependency.getActualFile(), true);
 
                     child.setEcosystem(DEPENDENCY_ECOSYSTEM);
                     child.setName(name);
                     child.setVersion(version);
+                    child.addEvidence(EvidenceType.PRODUCT, FILE_NAME, "Product", name, Confidence.HIGHEST);
+                    child.addEvidence(EvidenceType.VERSION, FILE_NAME, "Version", version, Confidence.HIGHEST);
 
-                    child.addEvidence(EvidenceType.PRODUCT, FILE_NAME, "name", name, Confidence.HIGHEST);
-                    child.addEvidence(EvidenceType.VERSION, FILE_NAME, "version", version, Confidence.HIGHEST);
+                    if (vendor != null)
+                        child.addEvidence(EvidenceType.VENDOR, FILE_NAME, "Vendor", vendor, Confidence.HIGHEST);
 
                     engine.addDependency(child);
                 });
             } catch (JsonException e) {
-                LOGGER.warn(String.format("Failed to parse %s file.", FILE_NAME), e);
+                LOGGER.warn(String.format("Failed to parse %s file", FILE_NAME), e);
             } catch (IOException e) {
-                throw new AnalysisException("Problem occurred while reading dependency file.", e);
+                throw new AnalysisException("Problem occurred while reading dependency file", e);
             }
         } catch (Throwable e) {
             throw new AnalysisException(e);
