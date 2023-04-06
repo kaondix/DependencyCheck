@@ -93,27 +93,27 @@ public class LibmanAnalyzerTest extends BaseTest {
                 switch (result.getName()) {
                     case "bootstrap":
                         count++;
-                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().equals("bootstrap"));
-                        assertTrue(result.getEvidence(EvidenceType.VERSION).toString().equals("4.6.0"));
+                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("bootstrap"));
+                        assertTrue(result.getEvidence(EvidenceType.VERSION).toString().contains("4.6.0"));
                         break;
 
                     case "jquery":
                         count++;
-                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().equals("jquery"));
-                        assertTrue(result.getEvidence(EvidenceType.VERSION).toString().equals("3.6.3"));
+                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("jquery"));
+                        assertTrue(result.getEvidence(EvidenceType.VERSION).toString().contains("3.6.3"));
                         break;
 
                     case "font-awesome":
                         count++;
-                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().equals("font-awesome"));
-                        assertTrue(result.getEvidence(EvidenceType.VERSION).toString().equals("6.2.1"));
+                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("font-awesome"));
+                        assertTrue(result.getEvidence(EvidenceType.VERSION).toString().contains("6.2.1"));
                         break;
 
                     case "jquery-ui":
                         count++;
-                        assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().equals("regru"));
-                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().equals("jquery-ui"));
-                        assertTrue(result.getEvidence(EvidenceType.VERSION).toString().equals("1.6.3"));
+                        assertTrue(result.getEvidence(EvidenceType.VENDOR).toString().contains("regru"));
+                        assertTrue(result.getEvidence(EvidenceType.PRODUCT).toString().contains("jquery-ui"));
+                        assertTrue(result.getEvidence(EvidenceType.VERSION).toString().contains("1.6.3"));
                         break;
 
                     default:

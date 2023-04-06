@@ -181,7 +181,7 @@ public class LibmanAnalyzer extends AbstractFileTypeAnalyzer {
                     final Matcher matcher = LIBRARY_REGEX.matcher(library);
 
                     if (!matcher.find()) {
-                        LOGGER.warn("Unable to parse library %s", library);
+                        LOGGER.warn("Unable to parse library {}", library);
                         return;
                     }
 
