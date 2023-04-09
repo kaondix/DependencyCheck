@@ -17,15 +17,9 @@
  */
 package org.owasp.dependencycheck.analyzer;
 
-import org.apache.commons.io.FileUtils;
-import org.owasp.dependencycheck.Engine;
-import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
-import org.owasp.dependencycheck.dependency.Confidence;
-import org.owasp.dependencycheck.dependency.Dependency;
-import org.owasp.dependencycheck.utils.FileFilterBuilder;
-import org.owasp.dependencycheck.utils.Settings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.github.packageurl.MalformedPackageURLException;
+import com.github.packageurl.PackageURL;
+import com.github.packageurl.PackageURLBuilder;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -39,9 +33,23 @@ import javax.json.JsonArray;
 import javax.json.JsonException;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
+
+import org.apache.commons.io.FileUtils;
+
+import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.data.nvd.ecosystem.Ecosystem;
+import org.owasp.dependencycheck.dependency.Confidence;
+import org.owasp.dependencycheck.dependency.Dependency;
 import org.owasp.dependencycheck.dependency.EvidenceType;
+import org.owasp.dependencycheck.dependency.naming.PurlIdentifier;
+import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.exception.InitializationException;
+import org.owasp.dependencycheck.utils.Checksum;
+import org.owasp.dependencycheck.utils.FileFilterBuilder;
+import org.owasp.dependencycheck.utils.Settings;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Analyzer which parses a libman.json file to gather module information.
@@ -55,7 +63,7 @@ public class LibmanAnalyzer extends AbstractFileTypeAnalyzer {
      * A descriptor for the type of dependencies processed or added by this
      * analyzer.
      */
-    private static final String DEPENDENCY_ECOSYSTEM = Ecosystem.LIBMAN;
+    private static final String DEPENDENCY_ECOSYSTEM = Ecosystem.NODEJS;
 
     /**
      * The logger.
@@ -144,71 +152,87 @@ public class LibmanAnalyzer extends AbstractFileTypeAnalyzer {
      * Performs the analysis.
      *
      * @param dependency the dependency to analyze
-     * @param engine the engine
+     * @param engine     the engine
      * @throws AnalysisException when there's an exception during analysis
      */
     @Override
     public void analyzeDependency(Dependency dependency, Engine engine) throws AnalysisException {
-        engine.removeDependency(dependency);
+        LOGGER.debug("Checking file {}", dependency.getActualFilePath());
 
-        LOGGER.debug("Checking file {}", dependency);
+        if (FILE_NAME.equals(dependency.getFileName())) {
+            engine.removeDependency(dependency);
+        }
 
-        try {
-            final File dependencyFile = dependency.getActualFile();
+        final File dependencyFile = dependency.getActualFile();
 
-            if (!dependencyFile.isFile() || dependencyFile.length() == 0) {
-                return;
-            }
+        if (!dependencyFile.isFile() || dependencyFile.length() == 0) {
+            return;
+        }
 
-            try (JsonReader jsonReader = Json.createReader(FileUtils.openInputStream(dependencyFile))) {
-                final JsonObject json = jsonReader.readObject();
+        try (JsonReader jsonReader = Json.createReader(FileUtils.openInputStream(dependencyFile))) {
+            final JsonObject json = jsonReader.readObject();
+            final String defaultProvider = json.getString("defaultProvider");
+            final JsonArray libraries = json.getJsonArray("libraries");
 
-                final String defaultProvider = json.getString("defaultProvider");
+            libraries.forEach(e -> {
+                JsonObject reference = (JsonObject) e;
 
-                final JsonArray libraries = json.getJsonArray("libraries");
+                final String provider = reference.getString("provider", defaultProvider);
+                final String library = reference.getString("library");
 
-                libraries.forEach(e -> {
-                    JsonObject reference = (JsonObject) e;
+                if (provider.equals("filesystem")) {
+                    LOGGER.warn("Unable to determine name and version for filesystem package: {}", library);
+                    return;
+                }
 
-                    final String provider = reference.getString("provider", defaultProvider);
+                final Matcher matcher = LIBRARY_REGEX.matcher(library);
 
-                    if (provider == "filesystem") {                        
-                        return;
-                    }
+                if (!matcher.find()) {
+                    LOGGER.warn("Unable to parse library, unknown format: {}", library);
+                    return;
+                }
 
-                    final String library = reference.getString("library");
+                final String vendor = matcher.group("package");
+                final String name = matcher.group("name");
+                final String version = matcher.group("version");
 
-                    final Matcher matcher = LIBRARY_REGEX.matcher(library);
+                LOGGER.debug("Found Libman package: vendor {}, name {}, version {}", vendor, name, version);
 
-                    if (!matcher.find()) {
-                        LOGGER.warn("Unable to parse library {}", library);
-                        return;
-                    }
+                final Dependency child = new Dependency(dependency.getActualFile(), true);
 
-                    final String vendor = matcher.group("package");
-                    final String name = matcher.group("name");
-                    final String version = matcher.group("version");
+                child.setEcosystem(DEPENDENCY_ECOSYSTEM);
+                child.setName(name);
+                child.setVersion(version);
+            
+                child.addEvidence(EvidenceType.VENDOR, FILE_NAME, "vendor", (vendor != null ? vendor : name), Confidence.HIGHEST);
+                child.addEvidence(EvidenceType.PRODUCT, FILE_NAME, "name", name, Confidence.HIGHEST);
+                child.addEvidence(EvidenceType.VERSION, FILE_NAME, "version", version, Confidence.HIGHEST);
 
-                    final Dependency child = new Dependency(dependency.getActualFile(), true);
+                final String packagePath = String.format("%s:%s", name, version);
 
-                    child.setEcosystem(DEPENDENCY_ECOSYSTEM);
-                    child.setName(name);
-                    child.setVersion(version);
-                    child.addEvidence(EvidenceType.PRODUCT, FILE_NAME, "Product", name, Confidence.HIGHEST);
-                    child.addEvidence(EvidenceType.VERSION, FILE_NAME, "Version", version, Confidence.HIGHEST);
+                child.setSha1sum(Checksum.getSHA1Checksum(packagePath));
+                child.setSha256sum(Checksum.getSHA256Checksum(packagePath));
+                child.setMd5sum(Checksum.getMD5Checksum(packagePath));
+                child.setPackagePath(packagePath);
 
-                    if (vendor != null)
-                        child.addEvidence(EvidenceType.VENDOR, FILE_NAME, "Vendor", vendor, Confidence.HIGHEST);
+                try {
+                    final PackageURL purl = PackageURLBuilder.aPackageURL()
+                        .withType("libman")
+                        .withName(name)
+                        .withVersion(version)
+                        .build();
+                    final PurlIdentifier id = new PurlIdentifier(purl, Confidence.HIGHEST);
+                    child.addSoftwareIdentifier(id);
+                } catch (MalformedPackageURLException ex) {
+                    LOGGER.warn("Unable to build package url for {}", ex.toString());
+                }
 
-                    engine.addDependency(child);
-                });
-            } catch (JsonException e) {
-                LOGGER.warn(String.format("Failed to parse %s file", FILE_NAME), e);
-            } catch (IOException e) {
-                throw new AnalysisException("Problem occurred while reading dependency file", e);
-            }
-        } catch (Throwable e) {
-            throw new AnalysisException(e);
+                engine.addDependency(child);
+            });
+        } catch (JsonException e) {
+            LOGGER.warn(String.format("Failed to parse %s file", FILE_NAME), e);
+        } catch (IOException e) {
+            throw new AnalysisException("Problem occurred while reading dependency file", e);
         }
     }
 }

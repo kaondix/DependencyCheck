@@ -88,8 +88,6 @@ public class LibmanAnalyzerTest extends BaseTest {
             int count = 0;
 
             for (Dependency result : engine.getDependencies()) {
-                assertEquals(Ecosystem.LIBMAN, result.getEcosystem());
-
                 switch (result.getName()) {
                     case "bootstrap":
                         count++;
