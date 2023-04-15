@@ -174,7 +174,7 @@ public class LibmanAnalyzer extends AbstractFileTypeAnalyzer {
 
             final String libmanVersion = json.getString("version");
 
-            if (!libmanVersion.equals("1.0")) {
+            if (!"1.0".equals(libmanVersion)) {
                 LOGGER.warn("The Libman analyzer currently only supports Libman version 1.0");
                 return;
             }
@@ -188,7 +188,7 @@ public class LibmanAnalyzer extends AbstractFileTypeAnalyzer {
                 final String provider = reference.getString("provider", defaultProvider);
                 final String library = reference.getString("library");
 
-                if (provider.equals("filesystem")) {
+                if ("filesystem".equals(provider)) {
                     LOGGER.warn("Unable to determine name and version for filesystem package: {}", library);
                     return;
                 }
