@@ -159,7 +159,7 @@ public class LibmanAnalyzer extends AbstractFileTypeAnalyzer {
     public void analyzeDependency(Dependency dependency, Engine engine) throws AnalysisException {
         LOGGER.debug("Checking file {}", dependency.getActualFilePath());
 
-        if (FILE_NAME.equals(dependency.getFileName())) {
+        if (FILE_NAME.equals(dependency.getFileName()) && !dependency.isVirtual()) {
             engine.removeDependency(dependency);
         }
 
@@ -171,6 +171,14 @@ public class LibmanAnalyzer extends AbstractFileTypeAnalyzer {
 
         try (JsonReader jsonReader = Json.createReader(FileUtils.openInputStream(dependencyFile))) {
             final JsonObject json = jsonReader.readObject();
+
+            final String libmanVersion = json.getString("version");
+
+            if (!libmanVersion.equals("1.0")) {
+                LOGGER.warn("The Libman analyzer currently only supports Libman version 1.0");
+                return;
+            }
+
             final String defaultProvider = json.getString("defaultProvider");
             final JsonArray libraries = json.getJsonArray("libraries");
 
@@ -203,8 +211,9 @@ public class LibmanAnalyzer extends AbstractFileTypeAnalyzer {
                 child.setEcosystem(DEPENDENCY_ECOSYSTEM);
                 child.setName(name);
                 child.setVersion(version);
-            
-                child.addEvidence(EvidenceType.VENDOR, FILE_NAME, "vendor", (vendor != null ? vendor : name), Confidence.HIGHEST);
+
+                child.addEvidence(EvidenceType.VENDOR, FILE_NAME, "vendor", (vendor != null ? vendor : name),
+                        Confidence.HIGHEST);
                 child.addEvidence(EvidenceType.PRODUCT, FILE_NAME, "name", name, Confidence.HIGHEST);
                 child.addEvidence(EvidenceType.VERSION, FILE_NAME, "version", version, Confidence.HIGHEST);
 
@@ -217,10 +226,10 @@ public class LibmanAnalyzer extends AbstractFileTypeAnalyzer {
 
                 try {
                     final PackageURL purl = PackageURLBuilder.aPackageURL()
-                        .withType("libman")
-                        .withName(name)
-                        .withVersion(version)
-                        .build();
+                            .withType("libman")
+                            .withName(name)
+                            .withVersion(version)
+                            .build();
                     final PurlIdentifier id = new PurlIdentifier(purl, Confidence.HIGHEST);
                     child.addSoftwareIdentifier(id);
                 } catch (MalformedPackageURLException ex) {
