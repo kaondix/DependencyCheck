@@ -1062,8 +1062,8 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
     @Parameter(property = "odc.dependencies.scan", defaultValue = "true", required = false)
     private boolean scanDependencies = true;
 
-    @Parameter(name = "proxy")
-    private ProxyConfig proxyConfig;
+    @Parameter
+    private ProxyConfig proxy;
     
     // </editor-fold>
     //<editor-fold defaultstate="collapsed" desc="Base Maven implementation">
@@ -2164,12 +2164,12 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
         settings.setStringIfNotNull(Settings.KEYS.ANALYZER_PNPM_PATH, pathToPnpm);
 
         // use global maven proxy if provided
-        final Proxy proxy = getMavenProxy();
-        if (proxy != null) {
-            settings.setString(Settings.KEYS.PROXY_SERVER, proxy.getHost());
-            settings.setString(Settings.KEYS.PROXY_PORT, Integer.toString(proxy.getPort()));
-            final String userName = proxy.getUsername();
-            String password = proxy.getPassword();
+        final Proxy mavenProxy = getMavenProxy();
+        if (mavenProxy != null) {
+            settings.setString(Settings.KEYS.PROXY_SERVER, mavenProxy.getHost());
+            settings.setString(Settings.KEYS.PROXY_PORT, Integer.toString(mavenProxy.getPort()));
+            final String userName = mavenProxy.getUsername();
+            String password = mavenProxy.getPassword();
             if (password != null && !password.isEmpty()) {
                 if (settings.getBoolean(Settings.KEYS.PROXY_DISABLE_SCHEMAS, true)) {
                     System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");
@@ -2177,12 +2177,12 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
                 try {
                     password = decryptPasswordFromSettings(password);
                 } catch (SecDispatcherException ex) {
-                    password = handleSecDispatcherException("proxy", proxy.getId(), password, ex);
+                    password = handleSecDispatcherException("proxy", mavenProxy.getId(), password, ex);
                 }
             }
             settings.setStringIfNotNull(Settings.KEYS.PROXY_USERNAME, userName);
             settings.setStringIfNotNull(Settings.KEYS.PROXY_PASSWORD, password);
-            settings.setStringIfNotNull(Settings.KEYS.PROXY_NON_PROXY_HOSTS, proxy.getNonProxyHosts());
+            settings.setStringIfNotNull(Settings.KEYS.PROXY_NON_PROXY_HOSTS, mavenProxy.getNonProxyHosts());
         }
         // or use standard Java system properties
         else if (System.getProperty("http.proxyHost") != null) {
@@ -2201,11 +2201,11 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
             }
         }
         // or use configured <proxy>
-        else if ( this.proxyConfig != null && this.proxyConfig.host != null) {
-            settings.setString(Settings.KEYS.PROXY_SERVER, this.proxyConfig.host);
-            settings.setString(Settings.KEYS.PROXY_PORT, Integer.toString(this.proxyConfig.port));
-            settings.setStringIfNotNull(Settings.KEYS.PROXY_USERNAME, this.proxyConfig.username);
-            settings.setStringIfNotNull(Settings.KEYS.PROXY_PASSWORD, this.proxyConfig.password);
+        else if ( this.proxy != null && this.proxy.host != null) {
+            settings.setString(Settings.KEYS.PROXY_SERVER, this.proxy.host);
+            settings.setString(Settings.KEYS.PROXY_PORT, Integer.toString(this.proxy.port));
+            settings.setStringIfNotNull(Settings.KEYS.PROXY_USERNAME, this.proxy.username);
+            settings.setStringIfNotNull(Settings.KEYS.PROXY_PASSWORD, this.proxy.password);
         }
         
         final String[] suppressions = determineSuppressions();
