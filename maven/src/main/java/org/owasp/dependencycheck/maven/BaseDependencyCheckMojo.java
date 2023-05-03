@@ -1062,6 +1062,9 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
     @Parameter(property = "odc.dependencies.scan", defaultValue = "true", required = false)
     private boolean scanDependencies = true;
 
+    @Parameter(name = "proxy")
+    private ProxyConfig proxyConfig;
+    
     // </editor-fold>
     //<editor-fold defaultstate="collapsed" desc="Base Maven implementation">
     /**
@@ -2160,10 +2163,9 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
         settings.setStringIfNotNull(Settings.KEYS.ANALYZER_YARN_PATH, pathToYarn);
         settings.setStringIfNotNull(Settings.KEYS.ANALYZER_PNPM_PATH, pathToPnpm);
 
+        // use global maven proxy if provided
         final Proxy proxy = getMavenProxy();
-        boolean proxySet = false;
         if (proxy != null) {
-            proxySet = true;
             settings.setString(Settings.KEYS.PROXY_SERVER, proxy.getHost());
             settings.setString(Settings.KEYS.PROXY_PORT, Integer.toString(proxy.getPort()));
             final String userName = proxy.getUsername();
@@ -2182,7 +2184,8 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
             settings.setStringIfNotNull(Settings.KEYS.PROXY_PASSWORD, password);
             settings.setStringIfNotNull(Settings.KEYS.PROXY_NON_PROXY_HOSTS, proxy.getNonProxyHosts());
         }
-        if (!proxySet && System.getProperty("http.proxyHost") != null) {
+        // or use standard Java system properties
+        else if (System.getProperty("http.proxyHost") != null) {
             settings.setString(Settings.KEYS.PROXY_SERVER, System.getProperty("http.proxyHost", ""));
             if (System.getProperty("http.proxyPort") != null) {
                 settings.setString(Settings.KEYS.PROXY_PORT, System.getProperty("http.proxyPort"));
@@ -2197,6 +2200,14 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
                 settings.setString(Settings.KEYS.PROXY_NON_PROXY_HOSTS, System.getProperty("http.nonProxyHosts"));
             }
         }
+        // or use configured <proxy>
+        else if ( this.proxyConfig != null && this.proxyConfig.host != null) {
+            settings.setString(Settings.KEYS.PROXY_SERVER, this.proxyConfig.host);
+            settings.setString(Settings.KEYS.PROXY_PORT, Integer.toString(this.proxyConfig.port));
+            settings.setStringIfNotNull(Settings.KEYS.PROXY_USERNAME, this.proxyConfig.username);
+            settings.setStringIfNotNull(Settings.KEYS.PROXY_PASSWORD, this.proxyConfig.password);
+        }
+        
         final String[] suppressions = determineSuppressions();
         settings.setArrayIfNotEmpty(Settings.KEYS.SUPPRESSION_FILE, suppressions);
         settings.setBooleanIfNotNull(Settings.KEYS.UPDATE_VERSION_CHECK_ENABLED, versionCheckEnabled);
