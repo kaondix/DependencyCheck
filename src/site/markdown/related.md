@@ -30,3 +30,4 @@ of the products listed below.
 * [Sonatype Nexus Intelligence](https://www.sonatype.com/nexus-intelligence) and [Sonatype Nexus Lifecycle](https://www.sonatype.com/nexus-lifecycle)
 * [Palamida](http://www.palamida.com/products/enterpriseedition.html)
 * [Black Duck](https://www.blackducksoftware.com/products/black-duck-suite/code-center)
+* [Dependency Shield](https://www.dependencyshield.com/)
