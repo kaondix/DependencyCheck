@@ -228,7 +228,7 @@
         <packageUrl regex="true">^pkg:(generic|nuget)/(ProcessSnapshotCleanup|QTAgent.{0,10}|QTDCAgent|QTDCAgent32|TDEnvCleanup|UiaComWrapper|VSTestVideoRecorder|VisualStudioDatastoreConfigurationProvider|msdia140typelib_clr0200)@.*$</packageUrl>
         <cpe>cpe:/a:microsoft:visual_studio</cpe>
     </suppress>
-    <suppress base="true"> 
+    <suppress base="true">
         <notes><![CDATA[
         FP per #3000
         ]]></notes>
@@ -625,11 +625,11 @@
         ]]></notes>
         <filePath regex="true">.*(\.(dll|jar|ear|war|pom|nupkg|nuspec|aar)|pom\.xml|package.json|packages.config)$</filePath>
         <cpe>cpe:/a:sandbox:sandbox</cpe>
-        <cpe>cpe:/a:openmedia:openmedia</cpe>        
+        <cpe>cpe:/a:openmedia:openmedia</cpe>
         <cpe>cpe:/a:file_project:file</cpe>
         <cpe>cpe:/a:file:file</cpe>
         <cpe>cpe:/a:shim:shim</cpe>
-        <cpe>cpe:/a:shim_project:shim</cpe>        
+        <cpe>cpe:/a:shim_project:shim</cpe>
         <cpe>cpe:/a:date_project:date</cpe>
         <cpe>cpe:/a:net_dns:net_dns</cpe>
         <cpe>cpe:/a:nodejs:node.js</cpe>
@@ -1652,21 +1652,21 @@
     <suppress base="true">
         <notes><![CDATA[
         Suppresses false positives for components within guava.
-        ]]></notes>   
+        ]]></notes>
         <packageUrl regex="true">^pkg:maven/com\.google\.guava/failureaccess@.*$</packageUrl>
         <cpe>cpe:/a:google:guava</cpe>
     </suppress>
     <suppress base="true">
         <notes><![CDATA[
         Suppresses false positives for components within guava.
-        ]]></notes>     
+        ]]></notes>
         <packageUrl regex="true">^pkg:maven/com\.google\.guava/listenablefuture@.*$</packageUrl>
         <cpe>cpe:/a:google:guava</cpe>
     </suppress>
     <suppress base="true">
         <notes><![CDATA[
         Suppresses false positives for components within guava.
-        ]]></notes>        
+        ]]></notes>
         <packageUrl regex="true">^pkg:maven/com\.h3xstream\.retirejs/retirejs\-core@.*$</packageUrl>
         <cpe>cpe:/a:xstream_project:xstream</cpe>
     </suppress>
@@ -1958,14 +1958,14 @@
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/org\.apache\.kerby/mysql\-backend@.*$</packageUrl>
         <cpe>cpe:/a:mysql:mysql</cpe>
-    </suppress>  
+    </suppress>
     <suppress base="true">
         <notes><![CDATA[
         FP per #1657
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/com\.alibaba/druid@.*$</packageUrl>
         <cpe>cpe:/a:alibaba:alibaba</cpe>
-    </suppress>  
+    </suppress>
     <suppress base="true">
         <notes><![CDATA[
         drop wizard false positives
@@ -2666,7 +2666,7 @@
         ]]></notes>
         <gav regex="true">^org\.apache\.cxf\.xjc-utils:.*:.*$</gav>
         <cpe>cpe:/a:apache:cxf</cpe>
-    </suppress> 
+    </suppress>
     <suppress base="true">
         <notes><![CDATA[
             false positives per issue #3820
@@ -2764,7 +2764,7 @@
     <suppress base="true">
         <notes><![CDATA[
         False positive per issue #1068
-        ]]></notes>   
+        ]]></notes>
         <gav regex="true">^org\.asynchttpclient:netty-resolver-dns:.*$</gav>
         <cpe>cpe:/a:dns-sync_project:dns-sync</cpe>
     </suppress>
@@ -2973,7 +2973,7 @@
         <notes><![CDATA[
         FP per issue #944 - just suppressing the single CVE instead of the entire match
             as a future CVE could be meaningful to this library.
-        ]]></notes>   
+        ]]></notes>
         <gav regex="true">^com\.evernote:evernote-api:.*$</gav>
         <cve>CVE-2016-4900</cve>
     </suppress>
@@ -2994,7 +2994,7 @@
     <suppress base="true">
         <notes><![CDATA[
         FP per issue #1003
-        ]]></notes>   
+        ]]></notes>
         <gav regex="true">^org\.mapstruct:mapstruct:.*$</gav>
         <cpe>cpe:/a:bean_project:bean</cpe>
     </suppress>
@@ -3020,7 +3020,7 @@
         <cpe>cpe:/a:apache:tomcat</cpe>
         <cpe>cpe:/a:apache_tomcat:apache_tomcat</cpe>
         <cpe>cpe:/a:apache_software_foundation:tomcat</cpe>
-    </suppress>    
+    </suppress>
     <suppress base="true">
         <notes><![CDATA[
         general FP cleanup
@@ -4464,7 +4464,7 @@
     <!-- begin cpan support-->
     <suppress base="true">
         <notes><![CDATA[
-        broad suppressions for all cpan 
+        broad suppressions for all cpan
         ]]></notes>
         <packageUrl regex="true">^pkg:cpan/.*$</packageUrl>
         <cpe>cpe:/a:mysql:mysql</cpe>
@@ -4472,7 +4472,7 @@
     </suppress>
     <suppress base="true">
         <notes><![CDATA[
-        broad suppressions for all cpan 
+        broad suppressions for all cpan
         ]]></notes>
         <packageUrl regex="true">^pkg:cpan/(?!perl@).*$</packageUrl>
         <cpe>cpe:/a:perl:perl</cpe>
@@ -6385,5 +6385,13 @@
    ]]></notes>
         <packageUrl regex="true">^pkg:maven/io\.kamon/kamon-prometheus_2\.13@.*$</packageUrl>
         <cpe>cpe:/a:prometheus:prometheus</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
+   FP per issue #5779
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.fasterxml\.jackson\.core/jackson-databind@.*$</packageUrl>
+        <cpe>cpe:/a:fasterxml:jackson-databind</cpe>
+        <cve>CVE-2023-35116</cve>
     </suppress>
 </suppressions>
