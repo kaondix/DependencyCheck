@@ -29,10 +29,10 @@ import org.owasp.dependencycheck.utils.Settings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class NexusSearchTest extends BaseTest {
+public class NexusV2SearchTest extends BaseTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(NexusSearchTest.class);
-    private NexusSearch searcher;
+    private static final Logger LOGGER = LoggerFactory.getLogger(NexusV2SearchTest.class);
+    private NexusV2Search searcher;
 
     @Before
     @Override
@@ -40,7 +40,7 @@ public class NexusSearchTest extends BaseTest {
         super.setUp();
         String nexusUrl = getSettings().getString(Settings.KEYS.ANALYZER_NEXUS_URL);
         LOGGER.debug(nexusUrl);
-        searcher = new NexusSearch(getSettings(), false);
+        searcher = new NexusV2Search(getSettings(), false);
         Assume.assumeTrue(searcher.preflightRequest());
     }
 

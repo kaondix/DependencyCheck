@@ -45,7 +45,7 @@ import org.xml.sax.SAXException;
  * @author colezlaw
  */
 @ThreadSafe
-public class NexusSearch {
+public class NexusV2Search {
 
     /**
      * The root URL for the Nexus repository service.
@@ -63,7 +63,7 @@ public class NexusSearch {
     /**
      * Used for logging.
      */
-    private static final Logger LOGGER = LoggerFactory.getLogger(NexusSearch.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(NexusV2Search.class);
 
     /**
      * Creates a NexusSearch for the given repository URL.
@@ -73,7 +73,7 @@ public class NexusSearch {
      * @throws java.net.MalformedURLException thrown if the configured URL is
      * invalid
      */
-    public NexusSearch(Settings settings, boolean useProxy) throws MalformedURLException {
+    public NexusV2Search(Settings settings, boolean useProxy) throws MalformedURLException {
         this.settings = settings;
         this.useProxy = useProxy;
 
