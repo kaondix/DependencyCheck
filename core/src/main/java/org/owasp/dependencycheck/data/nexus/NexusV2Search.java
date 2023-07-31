@@ -45,7 +45,7 @@ import org.xml.sax.SAXException;
  * @author colezlaw
  */
 @ThreadSafe
-public class NexusV2Search {
+public class NexusV2Search implements NexusSearch {
 
     /**
      * The root URL for the Nexus repository service.
@@ -83,16 +83,7 @@ public class NexusV2Search {
 
     }
 
-    /**
-     * Searches the configured Nexus repository for the given sha1 hash. If the
-     * artifact is found, a <code>MavenArtifact</code> is populated with the
-     * coordinate information.
-     *
-     * @param sha1 The SHA-1 hash string for which to search
-     * @return the populated Maven coordinates
-     * @throws IOException if it's unable to connect to the specified repository
-     * or if the specified artifact is not found.
-     */
+    @Override
     public MavenArtifact searchSha1(String sha1) throws IOException {
         if (null == sha1 || !sha1.matches("^[0-9A-Fa-f]{40}$")) {
             throw new IllegalArgumentException("Invalid SHA1 format");
@@ -168,12 +159,7 @@ public class NexusV2Search {
         }
     }
 
-    /**
-     * Do a preflight request to see if the repository is actually working.
-     *
-     * @return whether the repository is listening and returns the /status URL
-     * correctly
-     */
+    @Override
     public boolean preflightRequest() {
         final HttpURLConnection conn;
         try {

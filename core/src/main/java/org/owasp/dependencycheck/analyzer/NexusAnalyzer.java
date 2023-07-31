@@ -21,6 +21,7 @@ import org.apache.commons.io.FileUtils;
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.data.nexus.MavenArtifact;
+import org.owasp.dependencycheck.data.nexus.NexusSearch;
 import org.owasp.dependencycheck.data.nexus.NexusV2Search;
 import org.owasp.dependencycheck.dependency.Confidence;
 import org.owasp.dependencycheck.dependency.Dependency;
@@ -100,7 +101,7 @@ public class NexusAnalyzer extends AbstractFileTypeAnalyzer {
     /**
      * The Nexus Search to be set up for this analyzer.
      */
-    private NexusV2Search searcher;
+    private NexusSearch searcher;
 
     /**
      * Field indicating if the analyzer is enabled.
