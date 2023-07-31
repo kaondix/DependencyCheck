@@ -35,7 +35,11 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Class of methods to search Nexus v3 repositories.
@@ -108,7 +112,8 @@ public class NexusV3Search implements NexusSearch {
         }
     }
 
-    private String retrievePageAndAddMatchingArtifact(List<MavenArtifact> collectedMatchingArtifacts, String sha1, String continuationToken) throws IOException {
+    private String retrievePageAndAddMatchingArtifact(List<MavenArtifact> collectedMatchingArtifacts, String sha1, String continuationToken)
+            throws IOException {
         final URL url;
         LOGGER.debug("Search with continuation token {}", continuationToken);
         if (continuationToken == null) {
@@ -150,7 +155,7 @@ public class NexusV3Search implements NexusSearch {
         try (InputStream in = new BufferedInputStream(conn.getInputStream());
              JsonReader jsonReader = Json.createReader(in)) {
             final JsonObject jsonResponse = jsonReader.readObject();
-            String continuationToken = jsonResponse.getString("continuationToken", null);
+            final String continuationToken = jsonResponse.getString("continuationToken", null);
             final JsonArray components = jsonResponse.getJsonArray("items");
             boolean found = false;
             for (int i = 0; i < components.size() && !found; i++) {

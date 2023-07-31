@@ -187,7 +187,7 @@ public class NexusAnalyzer extends AbstractFileTypeAnalyzer {
      */
     private NexusSearch createNexusSearchOrDisable(boolean useProxy) throws InitializationException {
         final Settings settings = getSettings();
-        final String nexusRootURL=settings.getString(Settings.KEYS.ANALYZER_NEXUS_URL);
+        final String nexusRootURL = settings.getString(Settings.KEYS.ANALYZER_NEXUS_URL);
         final NexusSearch result;
         try {
             if (nexusRootURL.toLowerCase(Locale.ROOT).contains("service/local/")) {
