@@ -831,7 +831,7 @@ public class CPEAnalyzer extends AbstractAnalyzer {
         String bestGuessURL = null;
         final Set<IdentifierMatch> collected = new HashSet<>();
 
-        considerDependencyVersion(dependency, vendor, product, currentConfidence, collected, bestGuess);
+        considerDependencyVersion(dependency, vendor, product, currentConfidence, collected);
 
         //TODO the following algorithm incorrectly identifies things as a lower version
         // if there lower confidence evidence when the current (highest) version number
@@ -1019,7 +1019,6 @@ public class CPEAnalyzer extends AbstractAnalyzer {
      * @param vendor the vendor name
      * @param confidence the current confidence level
      * @param collected a reference to the identifiers matched
-     * @param bestGuess the current best guess as to the dependency version
      * @throws AnalysisException thrown if aliens attacked and valid input could
      * not be used to construct a CPE
      * @throws UnsupportedEncodingException thrown if run on a system that
@@ -1027,7 +1026,7 @@ public class CPEAnalyzer extends AbstractAnalyzer {
      */
     private void considerDependencyVersion(Dependency dependency,
             String vendor, String product, Confidence confidence,
-            final Set<IdentifierMatch> collected, DependencyVersion bestGuess)
+            final Set<IdentifierMatch> collected)
             throws AnalysisException, UnsupportedEncodingException {
 
         if (dependency.getVersion() != null && !dependency.getVersion().isEmpty()) {
@@ -1055,7 +1054,7 @@ public class CPEAnalyzer extends AbstractAnalyzer {
                         final IdentifierMatch match = new IdentifierMatch(depCpe, url, IdentifierConfidence.EXACT_MATCH, confidence);
                         collected.add(match);
                     } catch (CpeValidationException ex) {
-                        throw new AnalysisException(String.format("Unable to create a CPE for %s:%s:%s", vendor, product, bestGuess.toString()));
+                        throw new AnalysisException(String.format("Unable to create a CPE for %s:%s:%s", vendor, product, depVersion));
                     }
                 }
             }
