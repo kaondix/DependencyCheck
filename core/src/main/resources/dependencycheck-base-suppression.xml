@@ -2884,6 +2884,13 @@
     </suppress>
     <suppress base="true">
         <notes><![CDATA[
+        FP per #5860
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.vaadin/vaadin-swing-kit-flow@.*$</packageUrl>
+        <cpe>cpe:/a:vaadin:flow</cpe>
+    </suppress>
+    <suppress base="true">
+        <notes><![CDATA[
         FP per #2191
         ]]></notes>
         <packageUrl regex="true">^pkg:maven/org\.webjars\.(bower|bowergithub|npm).*$</packageUrl>
