@@ -252,6 +252,7 @@ public class Evidence implements Serializable, Comparable<Evidence> {
      */
     @Override
     public String toString() {
-        return "Evidence{" + "name=" + name + ", source=" + source + ", value=" + value + ", confidence=" + confidence + ", fromHint=" + fromHint + '}';
+        return "Evidence{" + "name=" + name + ", source=" + source + ", value=" + value + ", confidence=" + confidence
+                + ", fromHint=" + fromHint + '}';
     }
 }

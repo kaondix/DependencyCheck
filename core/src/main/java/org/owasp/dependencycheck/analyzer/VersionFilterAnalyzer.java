@@ -165,8 +165,8 @@ public class VersionFilterAnalyzer extends AbstractAnalyzer {
                     LOGGER.debug("filtering evidence from {}", dependency.getFileName());
 
                     for (Evidence e : dependency.getEvidence(EvidenceType.VERSION)) {
-                        if (!e.isFromHint() &&
-                                !(pomMatch && VERSION.equals(e.getName())
+                        if (!e.isFromHint()
+                                && !(pomMatch && VERSION.equals(e.getName())
                                 && (NEXUS.equals(e.getSource()) || CENTRAL.equals(e.getSource()) || POM.equals(e.getSource())))
                                 && !(fileMatch && VERSION.equals(e.getName()) && FILE.equals(e.getSource()))
                                 && !(manifestMatch && MANIFEST.equals(e.getSource()) && IMPLEMENTATION_VERSION.equals(e.getName()))) {
