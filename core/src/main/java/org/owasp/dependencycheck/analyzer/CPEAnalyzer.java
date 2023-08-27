@@ -49,6 +49,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.data.cpe.CpeMemoryIndex;
@@ -1036,7 +1037,8 @@ public class CPEAnalyzer extends AbstractAnalyzer {
             if (dependency.getName() != null && !dependency.getName().isEmpty()) {
                 final String name = dependency.getName();
                 for (String word : product.split("[^a-zA-Z0-9]")) {
-                    useDependencyVersion &= name.contains(word) || stopWords.contains(word);
+                    useDependencyVersion &= name.contains(word) || stopWords.contains(word)
+                            || wordMatchesEcosystem(dependency.getEcosystem(), word);
                 }
             }
 
@@ -1059,6 +1061,26 @@ public class CPEAnalyzer extends AbstractAnalyzer {
                 }
             }
         }
+    }
+
+    /**
+     * If a CPE product word represents the ecosystem of a dependency it is not required
+     * to appear in the dependencyName to still consider the CPE product a match.
+     *
+     * @param ecosystem The ecosystem of the dependency
+     * @param word       The word from the CPE product to check
+     * @return {@code true} when the CPE product word is known to match the ecosystem of the dependency
+     * @implNote This method is not intended to cover every possible case where the ecosystem is represented by the word. It is a
+     * best-effort attempt to prevent {@link #considerDependencyVersion(Dependency, String, String, Confidence, Set)}
+     * from not taking an exact-match versioned CPE into account because the ecosystem-related word does not appear in
+     * the dependencyName. It helps prevent false-positive cases like https://github.com/jeremylong/DependencyCheck/issues/5545
+     * @see #considerDependencyVersion(Dependency, String, String, Confidence, Set)
+     */
+    private boolean wordMatchesEcosystem(@Nullable String ecosystem, String word) {
+        if (Ecosystem.JAVA.equalsIgnoreCase(word)) {
+            return Ecosystem.JAVA.equals(ecosystem);
+        }
+        return false;
     }
 
     /**
