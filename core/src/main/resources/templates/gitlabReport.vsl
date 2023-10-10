@@ -101,9 +101,7 @@
                         "name": "$enc.json($vulnerability.name)",
                         "description": "$enc.json($vulnerability.description)",
                         "severity": "$enc.json($vulnerability.cvssV3.getBaseSeverity())",
-                        ## we have to include this field to be compliant with the format spec
-                        "solution": "" ## todo: not in our dataset?
-
+                        ## "solution": "" --> not implemented
                         "links": [
                             #foreach( $ref in $vulnerability.getReferences(true) )
                                 {
