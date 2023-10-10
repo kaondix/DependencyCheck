@@ -54,19 +54,26 @@
                     #end
                     ##    ((List<Dependency>)context.get("dependencies")).get(5).getVulnerabilities().stream().collect(Collectors.toList()).get(0)
                     {
-                        "id": "$enc.json($vulnerability.name)", ##todo
+                        "id": "$enc.json($vulnerability.name)",
                         "identifiers": [
-                            #foreach( $ref in $vulnerability.getReferences(true) )
-                                {
-                                    "type": "$enc.json($ref.source)",
-                                    "name": "$enc.json($ref.name)",
-                                    "value": "$enc.json($ref.name)",
+                            {
+                                "type": "$enc.json($vulnerability.getSource().name())"
+                                #if( $vulnerability.getSource().name().equals("NVD") )
+                                    , "name": "$enc.json($vulnerability.name)"
+                                #elseif( $vulnerability.getSource().name().equals("NPM") )
+                                    , "name": "$enc.json($vulnerability.name) (NPM)"
+                                #else
+                                    , "name": "$enc.json($vulnerability.name)"
+                                #end
+                                , "value": "$enc.json($dependency.Sha1sum)"
 
-                                    ## optional properties
-                                    "url": "$enc.json($ref.url)"
-                                }
-                                #if( $foreach.hasNext ),#end
-                            #end
+                                ## optional properties
+                                #if( $vulnerability.getSource().name().equals("NVD") )
+                                    , "url": "https://web.nvd.nist.gov/view/vuln/detail?vulnId=$enc.url($vulnerability.name)"
+                                #elseif( $vulnerability.getSource().name().equals("NPM") )
+                                    , "url": "https://github.com/advisories/$enc.url($vulnerability.name)"
+                                #end
+                            }
                         ],
                         "location": {
                             "file": "$enc.json($dependency.filePath)",
@@ -97,7 +104,17 @@
                         ## we have to include this field to be compliant with the format spec
                         "solution": "" ## todo: not in our dataset?
 
-                        ## "links": [], --> not implemented
+                        "links": [
+                            #foreach( $ref in $vulnerability.getReferences(true) )
+                                {
+                                    "name": "$enc.json($ref.name)",
+
+                                    ## optional properties
+                                    "url": "$enc.json($ref.url)"
+                                }
+                                #if( $foreach.hasNext ),#end
+                            #end
+                        ],
                         ## "details": [], --> not implemented
                         ## "tracking": {}, --> not implemented
                         ## "flags": [], --> not implemented.
