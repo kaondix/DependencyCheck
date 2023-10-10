@@ -112,7 +112,7 @@
                                 }
                                 #if( $foreach.hasNext ),#end
                             #end
-                        ],
+                        ]
                         ## "details": [], --> not implemented
                         ## "tracking": {}, --> not implemented
                         ## "flags": [], --> not implemented.
