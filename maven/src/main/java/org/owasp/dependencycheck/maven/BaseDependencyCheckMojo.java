@@ -2132,6 +2132,7 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
         return new Engine(settings);
     }
 
+    //CSOFF: MethodLength
     /**
      * Takes the properties supplied and updates the dependency-check settings.
      * Additionally, this sets the system properties required to change the
@@ -2348,6 +2349,7 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
         settings.setBooleanIfNotNull(Settings.KEYS.HOSTED_SUPPRESSIONS_FORCEUPDATE, hostedSuppressionsForceUpdate);
         settings.setBooleanIfNotNull(Settings.KEYS.HOSTED_SUPPRESSIONS_ENABLED, hostedSuppressionsEnabled);
     }
+    //CSON: MethodLength
 
     /**
      * Retrieves the server credentials from the settings.xml, decrypts the
@@ -2383,8 +2385,7 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
      * names. This is used to retrieve an encrypted password as an API key.
      *
      * @param serverId the server id
-     * @param userSettingKey the property name for the username
-     * @param passwordSettingKey the property name for the password
+     * @param apiKeySetting the property name for the username
      */
     private void configureServerCredentialsApiKey(String serverId, String apiKeySetting) {
         if (serverId != null) {

@@ -339,7 +339,6 @@ public final class CliParser {
         options
                 .addOption(newOption(ARGUMENT.UPDATE_ONLY,
                         "Only update the local NVD data cache; no scan will be executed."))
-                
                 .addOption(newOptionWithArg(ARGUMENT.NVD_API_DELAY, "milliseconds",
                         "Time in milliseconds to wait between downloading from the NVD."))
                 .addOption(newOptionWithArg(ARGUMENT.NVD_API_DATAFEED_URL, "url",
@@ -350,7 +349,6 @@ public final class CliParser {
                         "Credentials for basic authentication to the NVD API Datafeed."))
                 .addOption(newOptionWithArg(ARGUMENT.NVD_API_VALID_FOR_HOURS, "hours",
                         "The number of hours to wait before checking for new updates from the NVD."))
-                
                 .addOption(newOptionWithArg(ARGUMENT.PROXY_PORT, "port",
                         "The proxy port to use when downloading resources."))
                 .addOption(newOptionWithArg(ARGUMENT.PROXY_SERVER, "server",
@@ -496,11 +494,11 @@ public final class CliParser {
                 .addOption(newOption(ARGUMENT.PURGE_NVD, "Purges the local NVD data cache"))
                 .addOption(newOption(ARGUMENT.DISABLE_HOSTED_SUPPRESSIONS, "Disable the usage of the hosted suppressions file"))
                 .addOption(newOption(ARGUMENT.HOSTED_SUPPRESSIONS_FORCEUPDATE, "Force the hosted suppressions file to update even"
-                                                                               + " if autoupdate is disabled"))
+                        + " if autoupdate is disabled"))
                 .addOption(newOptionWithArg(ARGUMENT.HOSTED_SUPPRESSIONS_VALID_FOR_HOURS, "hours",
-                                            "The number of hours to wait before checking for new updates of the the hosted suppressions file."))
+                        "The number of hours to wait before checking for new updates of the the hosted suppressions file."))
                 .addOption(newOptionWithArg(ARGUMENT.HOSTED_SUPPRESSIONS_URL, "url",
-                                            "The URL for a mirrored hosted suppressions file"));
+                        "The URL for a mirrored hosted suppressions file"));
 
     }
 
@@ -1517,20 +1515,23 @@ public final class CliParser {
          */
         public static final String FAIL_JUNIT_ON_CVSS = "junitFailOnCVSS";
         /**
-         * The CLI argument to set the number of hours to wait before re-checking hosted suppressions file for updates.
+         * The CLI argument to set the number of hours to wait before
+         * re-checking hosted suppressions file for updates.
          */
         public static final String DISABLE_HOSTED_SUPPRESSIONS = "disableHostedSuppressions";
         /**
-         * The CLI argument to set the number of hours to wait before re-checking hosted suppressions file for updates.
+         * The CLI argument to set the number of hours to wait before
+         * re-checking hosted suppressions file for updates.
          */
         public static final String HOSTED_SUPPRESSIONS_VALID_FOR_HOURS = "hostedSuppressionsValidForHours";
         /**
-         * The CLI argument to set Whether the hosted suppressions file will update regardless of the `noupdate` argument.
+         * The CLI argument to set Whether the hosted suppressions file will
+         * update regardless of the `noupdate` argument.
          */
         public static final String HOSTED_SUPPRESSIONS_FORCEUPDATE = "hostedSuppressionsForceUpdate";
         /**
-         * The CLI argument to set the location of a mirrored hosted suppressions
-         * file .
+         * The CLI argument to set the location of a mirrored hosted
+         * suppressions file .
          */
         public static final String HOSTED_SUPPRESSIONS_URL = "hostedSuppressionsUrl";
     }

@@ -41,8 +41,8 @@ import org.owasp.dependencycheck.reporting.ReportGenerator.Format;
 import org.owasp.dependencycheck.utils.Settings;
 import org.owasp.dependencycheck.utils.SeverityUtil;
 import org.slf4j.impl.StaticLoggerBinder;
-//CSOFF: MethodCount
 
+//CSOFF: MethodCount
 /**
  * An Ant task definition to execute dependency-check during an Ant build.
  *

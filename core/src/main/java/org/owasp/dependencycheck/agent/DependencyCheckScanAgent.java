@@ -248,7 +248,7 @@ public class DependencyCheckScanAgent {
         this.applicationName = applicationName;
     }
     /**
-     * Get the value of nvdApiKey
+     * Get the value of nvdApiKey.
      *
      * @return the value of nvdApiKey
      */
@@ -257,7 +257,7 @@ public class DependencyCheckScanAgent {
     }
 
     /**
-     * Set the value of nvdApiKey
+     * Set the value of nvdApiKey.
      *
      * @param nvdApiKey new value of nvdApiKey
      */
@@ -948,7 +948,6 @@ public class DependencyCheckScanAgent {
         settings.setStringIfNotEmpty(Settings.KEYS.DB_USER, databaseUser);
         settings.setStringIfNotEmpty(Settings.KEYS.DB_PASSWORD, databasePassword);
         settings.setStringIfNotEmpty(Settings.KEYS.ADDITIONAL_ZIP_EXTENSIONS, zipExtensions);
-        
         settings.setStringIfNotEmpty(Settings.KEYS.NVD_API_KEY, nvdApiKey);
         settings.setStringIfNotEmpty(Settings.KEYS.ANALYZER_ASSEMBLY_DOTNET_PATH, pathToCore);
     }

@@ -275,7 +275,7 @@ public class NvdApiDataSource implements CachedWebDataSource {
         if (delay > 0) {
             builder.withDelay(delay);
         }
-        
+
         //TODO consider using CVE_CPE_STARTS_WITH_FILTER
 
         ExecutorService processingExecutorService = null;
