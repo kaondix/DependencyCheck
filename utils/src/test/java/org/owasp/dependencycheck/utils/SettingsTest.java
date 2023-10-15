@@ -323,11 +323,11 @@ public class SettingsTest extends BaseTest {
         assertThat("password should be masked",
                 getSettings().getPrintableValue("odc.database.password", "s3Cr3t!"),
                 equalTo("********"));
-        
+
         assertThat("tokens should be masked",
                 getSettings().getPrintableValue("odc.api.token", "asf4b$3428vasd84$#$45asda"),
                 equalTo("********"));
-        
+
         assertThat("other keys should not be masked",
                 getSettings().getPrintableValue("odc.version", "5.0.0"),
                 equalTo("5.0.0"));

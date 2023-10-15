@@ -277,7 +277,6 @@ public class NvdApiDataSource implements CachedWebDataSource {
         }
 
         //TODO consider using CVE_CPE_STARTS_WITH_FILTER
-
         ExecutorService processingExecutorService = null;
         try {
             processingExecutorService = Executors.newFixedThreadPool(PROCESSING_THREAD_POOL_SIZE);
