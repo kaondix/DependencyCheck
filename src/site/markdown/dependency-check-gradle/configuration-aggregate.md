@@ -27,7 +27,7 @@ check.dependsOn dependencyCheckAggregate
 
 Property             | Description                                                                                                          | Default Value
 ---------------------|----------------------------------------------------------------------------------------------------------------------|------------------
-autoUpdate           | Sets whether auto-updating of the NVD CVE/CPE data is enabled. It is not recommended that this be turned to false.   | true
+autoUpdate           | Sets whether auto-updating of the NVD API CVE data is enabled. It is not recommended that this be turned to false.   | true
 analyzedTypes        | The default artifact types that will be analyzed.                                                                    | ['jar', 'aar', 'js', 'war', 'ear', 'zip']
 format               | The report format to be generated (HTML, XML, CSV, JSON, JUNIT, SARIF, ALL).                                         | HTML
 formats              | A list of report formats to be generated (HTML, XML, CSV, JSON, JUNIT, SARIF, ALL).                                  | &nbsp;
