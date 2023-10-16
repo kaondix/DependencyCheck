@@ -319,7 +319,7 @@ public final class CliParser {
                 .addOptionGroup(newOptionGroup(newOptionWithArg(ARGUMENT.SUPPRESSION_FILES, "file",
                         "The file path to the suppression XML file. This can be specified more then once to utilize multiple suppression files")))
                 .addOption(newOption(ARGUMENT.EXPERIMENTAL, "Enables the experimental analyzers."))
-                .addOption(newOption(ARGUMENT.NVD_API_KEY, "The API Key to access the NVD API."))
+                .addOption(newOptionWithArg(ARGUMENT.NVD_API_KEY, "apiKey", "The API Key to access the NVD API."))
                 .addOption(newOptionWithArg(ARGUMENT.FAIL_ON_CVSS, "score",
                         "Specifies if the build should be failed if a CVSS score above a specified level is identified. The default is 11; "
                         + "since the CVSS scores are 0-10, by default the build will never fail."))
