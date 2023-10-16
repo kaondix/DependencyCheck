@@ -87,7 +87,7 @@ _odc_completions()
             --nodeAuditSkipDevDependencies
             --nodePackageSkipDevDependencies
             --nonProxyHosts <list>
-            --nvdApiKey
+            --nvdApiKey <apiKey>
             --nvdDatafeed <url>
             --nvdUser <user>
             --nvdPassword <password>
