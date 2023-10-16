@@ -910,7 +910,7 @@ public abstract class BaseDependencyCheckMojo extends AbstractMojo implements Ma
      * password.
      */
     @SuppressWarnings("CanBeFinal")
-    @Parameter(property = "nvdApiKey")
+    @Parameter(property = "serverId")
     private String serverId;
     /**
      * The NVD API Key.
