@@ -299,7 +299,7 @@ public class NvdApiDataSource implements CachedWebDataSource {
                         errorCount = 0;
                         ctr += 1;
                         if ((ctr % 10) == 0) {
-                            double percent = (double) (ctr * 2000) / max * 100;
+                            final double percent = (double) (ctr * 2000) / max * 100;
                             LOGGER.info(String.format("Processing %,d/%,d (%.0f%%)", ctr * 2000, max, percent));
                         }
 
