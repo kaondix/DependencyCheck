@@ -170,7 +170,7 @@ public final class Settings {
         /**
          * The delay between requests for the NVD API.
          */
-        public static final String NVD_API_DELAY = "nvd.api.key";
+        public static final String NVD_API_DELAY = "nvd.api.delay";
         /**
          * The properties key to control the skipping of the check for NVD
          * updates.
