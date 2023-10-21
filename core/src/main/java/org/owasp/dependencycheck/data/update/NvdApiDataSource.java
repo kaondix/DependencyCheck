@@ -17,7 +17,6 @@
  */
 package org.owasp.dependencycheck.data.update;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.github.jeremylong.openvulnerability.client.nvd.DefCveItem;
 import io.github.jeremylong.openvulnerability.client.nvd.NvdApiException;
 import io.github.jeremylong.openvulnerability.client.nvd.NvdCveClient;
