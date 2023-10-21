@@ -18,7 +18,6 @@
 package org.owasp.dependencycheck.data.update;
 
 import io.github.jeremylong.openvulnerability.client.nvd.DefCveItem;
-import io.github.jeremylong.openvulnerability.client.nvd.NvdApiException;
 import io.github.jeremylong.openvulnerability.client.nvd.NvdCveClient;
 import io.github.jeremylong.openvulnerability.client.nvd.NvdCveClientBuilder;
 import java.io.File;
