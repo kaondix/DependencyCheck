@@ -263,8 +263,11 @@ public class NvdApiDataSource implements CachedWebDataSource {
         final String key = settings.getString(Settings.KEYS.NVD_API_KEY);
         if (key != null) {
             builder.withApiKey(key)
-                    .withDelay(3000)
+                    .withDelay(2500)
                     .withThreadCount(4);
+        } else {
+            LOGGER.warn("An NVD API Key was not provided - it is highly recommended to use an NVD API key as the update can take a VERY long time without an API Key");
+            builder.withDelay(8000);
         }
         long delay = 0;
         try {
@@ -282,24 +285,25 @@ public class NvdApiDataSource implements CachedWebDataSource {
             processingExecutorService = Executors.newFixedThreadPool(PROCESSING_THREAD_POOL_SIZE);
             final List<Future<NvdApiProcessor>> submitted = new ArrayList<>();
             int errorCount = 0;
+            int max = -1;
+            int ctr = 0;
             try (NvdCveClient api = builder.build()) {
                 while (api.hasNext()) {
-                    try {
-                        final Collection<DefCveItem> items = api.next();
-                        if (items != null && !items.isEmpty()) {
-                            final Future<NvdApiProcessor> f = processingExecutorService.submit(new NvdApiProcessor(cveDb, items));
-                            submitted.add(f);
-                            errorCount = 0;
+                    final Collection<DefCveItem> items = api.next();
+                    max = api.getTotalAvailable();
+                    if (ctr == 0) {
+                        LOGGER.info(String.format("NVD API has %,d records in this update", max));
+                    }
+                    if (items != null && !items.isEmpty()) {
+                        final Future<NvdApiProcessor> f = processingExecutorService.submit(new NvdApiProcessor(cveDb, items));
+                        submitted.add(f);
+                        errorCount = 0;
+                        ctr += 1;
+                        if ((ctr % 10) == 0) {
+                            double percent = (double) (ctr * 2000) / max * 100;
+                            LOGGER.info(String.format("Processing %,d/%,d (%.0f%%)", ctr * 2000, max, percent));
                         }
-                    } catch (NvdApiException ex) {
-                        if (ex.getCause() instanceof JsonProcessingException) {
-                            errorCount += 1;
-                            if (errorCount > 10) {
-                                throw ex;
-                            }
-                        } else {
-                            throw ex;
-                        }
+
                     }
                 }
                 lastModifiedRequest = api.getLastUpdated();
