@@ -17,6 +17,12 @@
  */
 package org.owasp.dependencycheck.reporting;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.owasp.dependencycheck.dependency.Dependency;
+import org.owasp.dependencycheck.dependency.Vulnerability;
 import org.owasp.dependencycheck.dependency.naming.CpeIdentifier;
 import org.owasp.dependencycheck.dependency.naming.GenericIdentifier;
 import org.owasp.dependencycheck.dependency.naming.Identifier;
@@ -75,5 +81,128 @@ public class ReportTool {
      */
     public float estimateSeverity(String severity) {
         return SeverityUtil.estimateCvssV2(severity);
+    }
+
+    /**
+     * Creates a list of SARIF rules for the SARIF report.
+     *
+     * @param dependencies the list of dependencies to extract rules from
+     * @return the list of SARIF rules
+     */
+    public Collection<SarifRule> convertToSarifRules(List<Dependency> dependencies) {
+        final Map<String, SarifRule> rules = new HashMap<>();
+        for (Dependency d : dependencies) {
+            for (Vulnerability v : d.getVulnerabilities()) {
+                if (!rules.containsKey(v.getName())) {
+                    final SarifRule r = new SarifRule(v.getName(),
+                            buildShortDescription(d, v, v.getKnownExploitedVulnerability() != null),
+                            buildDescription(v.getDescription(), v.getKnownExploitedVulnerability()),
+                            v.getSource().name(),
+                            v.getCvssV2(),
+                            v.getCvssV3());
+                    rules.put(v.getName(), r);
+                }
+            }
+        }
+        return rules.values();
+    }
+
+    private String determineScore(Vulnerability vuln) {
+        if (vuln.getUnscoredSeverity() != null) {
+            if ("0.0".equals(vuln.getUnscoredSeverity())) {
+                return "Unknown";
+            } else {
+                return normalizeSeverity(vuln.getUnscoredSeverity().toLowerCase());
+            }
+        } else if (vuln.getCvssV3() != null && vuln.getCvssV3().getBaseSeverity() != null) {
+            return normalizeSeverity(vuln.getCvssV3().getBaseSeverity().toLowerCase());
+        } else if (vuln.getCvssV2() != null && vuln.getCvssV2().getSeverity() != null) {
+            return normalizeSeverity(vuln.getCvssV2().getSeverity());
+        }
+        return "Unknown";
+    }
+
+    private String normalizeSeverity(String sev) {
+        switch (sev) {
+            case "critical":
+                return "Critical";
+            case "high":
+                return "High";
+            case "medium":
+            case "moderate":
+                return "Medium";
+            case "low":
+            case "informational":
+            case "info":
+                return "Low";
+            default:
+                return "Unknown";
+        }
+    }
+
+    /**
+     * Builds the short description for the Sarif format.
+     *
+     * @param d the dependency
+     * @param vuln the vulnerability
+     * @param knownExploited true if the vulnerability is known to be exploited
+     * @return the short description
+     */
+    private String buildShortDescription(Dependency d, Vulnerability vuln, boolean knownExploited) {
+        final StringBuilder sb = new StringBuilder();
+        sb.append(determineScore(vuln))
+                .append(" severity - ")
+                .append(vuln.getName());
+        if (vuln.getCwes() != null && !vuln.getCwes().isEmpty()) {
+            final String cwe = vuln.getCwes().getFullCwes().values().iterator().next();
+            if (cwe != null && !"NVD-CWE-Other".equals(cwe) && !"NVD-CWE-noinfo".equals(cwe)) {
+                sb.append(" ").append(cwe);
+            }
+        }
+        sb.append(" vulnerability in ");
+        if (d.getSoftwareIdentifiers() != null && !d.getSoftwareIdentifiers().isEmpty()) {
+            sb.append(d.getSoftwareIdentifiers().iterator().next());
+        } else {
+            sb.append(d.getDisplayFileName());
+        }
+        if (knownExploited) {
+            sb.append(" *Known Exploited Vulnerability*");
+        }
+        return sb.toString();
+    }
+
+    private String buildDescription(String description,
+            org.owasp.dependencycheck.data.knownexploited.json.Vulnerability knownExploitedVulnerability) {
+        final StringBuilder sb = new StringBuilder();
+        if (knownExploitedVulnerability != null) {
+            sb.append("CISA Known Exploited Vulnerability\n");
+            if (knownExploitedVulnerability.getVendorProject() != null) {
+                sb.append("Vendor/Project: ").append(knownExploitedVulnerability.getVendorProject()).append("\n");
+            }
+            if (knownExploitedVulnerability.getProduct() != null) {
+                sb.append("Product: ").append(knownExploitedVulnerability.getProduct()).append("\n");
+            }
+            if (knownExploitedVulnerability.getVulnerabilityName() != null) {
+                sb.append("Vulnerability Name: ").append(knownExploitedVulnerability.getVulnerabilityName()).append("\n");
+            }
+            if (knownExploitedVulnerability.getDateAdded() != null) {
+                sb.append("Date Added: ").append(knownExploitedVulnerability.getDateAdded()).append("\n");
+            }
+            if (knownExploitedVulnerability.getShortDescription() != null) {
+                sb.append("Short Description: ").append(knownExploitedVulnerability.getShortDescription()).append("\n");
+            }
+            if (knownExploitedVulnerability.getRequiredAction() != null) {
+                sb.append("Required Action: ").append(knownExploitedVulnerability.getRequiredAction()).append("\n");
+            }
+            if (knownExploitedVulnerability.getDueDate() != null) {
+                sb.append("Due Date").append(knownExploitedVulnerability.getDueDate()).append("\n");
+            }
+            if (knownExploitedVulnerability.getNotes() != null) {
+                sb.append("Notes: ").append(knownExploitedVulnerability.getNotes()).append("\n");
+            }
+            sb.append("\n");
+        }
+        sb.append(description);
+        return sb.toString();
     }
 }

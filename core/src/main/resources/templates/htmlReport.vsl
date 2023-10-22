@@ -37,12 +37,16 @@ Copyright (c) 2012 Jeremy Long. All Rights Reserved.
         </script>
         <script type="text/javascript">
             $(document).ready(function() {
-                $(".expandable").click(function (event) {
-                    e = event || window.event;
-                    var h = e.target || e.srcElement;
+                function toggleExpandable(h, animate) {
                     var content = "#content" + h.id.substr(6);
                     var header = "#" + h.id;
-                    $(content).slideToggle("fast");
+
+                    if (animate) {
+                        $(content).slideToggle("fast");
+                    } else {
+                        $(content).toggle();
+                    }
+
                     var exprx = /expandable\b/;
                     if (exprx.exec($(header).attr("class"))) {
                         $(header).addClass("collapsed");
@@ -60,8 +64,28 @@ Copyright (c) 2012 Jeremy Long. All Rights Reserved.
                         $(header).addClass("expandablesubsection");
                         $(header).removeClass("collaspablesubsection");
                     }
+                }
+
+                $(".expandable, .collapsed").click(function (event) {
+                    e = event || window.event;
+                    var h = e.target || e.srcElement;
+                    toggleExpandable(h, true);
                     return false;
                 });
+
+                const suppressedVulnerabilitiesLink = $('#suppressed-vulnerabilities-link');
+                suppressedVulnerabilitiesLink.click(function (event) {
+                    // Expand header, if currently collapsed
+                    const header = $('#header-suppressed.expandable').get(0);
+                    if (header !== undefined) {
+                        toggleExpandable(header, false);
+                    }
+
+                    // Let browser perform default link click handling, i.e. scroll to header
+                    return true;
+                });
+
+
                 var table = $("#summaryTable").stupidtable();
                 table.bind('aftertablesort', function (event, data) {
                     var th = $(this).find('th');
@@ -180,6 +204,13 @@ Copyright (c) 2012 Jeremy Long. All Rights Reserved.
             return toggleDisplay(event.target, '.scaninfo', 'show all', 'show less');
           });
           $( "#vulnerabilityDisplayToggle" ).bind( "click", function( event ) {
+            const dependenciesHeader = $('#header-dependencies');
+            const dependenciesHeaderAllText = 'Dependencies (all)';
+            if (dependenciesHeader.text() == dependenciesHeaderAllText) {
+                dependenciesHeader.text('Dependencies (vulnerable)');
+            } else {
+                dependenciesHeader.text(dependenciesHeaderAllText);
+            }
             return toggleDisplay(event.target, '.notvulnerable', 'Showing Vulnerable Dependencies (click to show all)', 'Showing All Dependencies (click to show less)');
           });
           $( ".versionToggle" ).bind( "click", function( event ) {
@@ -531,6 +562,9 @@ Copyright (c) 2012 Jeremy Long. All Rights Reserved.
             .red {
                 background-color: #DF0101;
             }
+            .redtext {
+                color: #DF0101;
+            }
             .left {
                 text-align: left;
             }
@@ -602,12 +636,34 @@ Copyright (c) 2012 Jeremy Long. All Rights Reserved.
             .underline {
                 text-decoration: underline;
             }
+            .tooltip {
+              position: relative;
+              display: inline-block;
+              border-bottom: 1px dotted black;
+            }
+
+            .tooltip .tooltiptext {
+              visibility: hidden;
+              width: 220px;
+              background-color: #cccccc;
+              text-align: center;
+              border-radius: 6px;
+              padding: 5px 0;
+
+              /* Position the tooltip */
+              position: absolute;
+              z-index: 1;
+            }
+
+            .tooltip:hover .tooltiptext {
+              visibility: visible;
+            }
         </style>
     </head>
     <body>
         <div id="modal-background"></div>
         <div id="modal-content">
-            <div>Press CTR-C to copy XML&nbsp;<a href="http://jeremylong.github.io/DependencyCheck/general/suppression.html" class="infolink" target="_blank" title="Help with suppressing false positives">[help]</a></div>
+            <div>Press CTR-C to copy XML&nbsp;<a href="https://jeremylong.github.io/DependencyCheck/general/suppression.html" class="infolink" target="_blank" title="Help with suppressing false positives">[help]</a></div>
                 <button id="modal-suppress-change-to-packageUrl" class="modal-button suppresstype" title="Supress by Maven Group Artifact Version">Suppress By GAV</button>
                 <button id="modal-suppress-change-to-sha1" class="modal-button suppresstype" title="Supress by SHA1 hash">Suppress By SHA1</button><br/>
                 <input type="hidden" id="suppress-name"/>
@@ -624,9 +680,10 @@ the reporting provided constitutes acceptance for use in an AS IS condition, and
 implied or otherwise, with regard to the analysis or its use. Any use of the tool and the reporting provided
 is at the user’s risk. In no event shall the copyright holder or OWASP be held liable for any damages whatsoever
 arising out of or in connection with the use of this tool, the analysis performed, or the resulting report.</p>
-<h3><a href="http://jeremylong.github.io/DependencyCheck/general/thereport.html" target="_blank">How&nbsp;to&nbsp;read&nbsp;the&nbsp;report</a> | 
-<a href="http://jeremylong.github.io/DependencyCheck/general/suppression.html" target="_blank">Suppressing false positives</a> |
-Getting Help: <a href="https://github.com/jeremylong/DependencyCheck/issues" target="_blank">github issues</a></h3>
+<h3><a href="https://jeremylong.github.io/DependencyCheck/general/thereport.html" target="_blank">How&nbsp;to&nbsp;read&nbsp;the&nbsp;report</a> | 
+<a href="https://jeremylong.github.io/DependencyCheck/general/suppression.html" target="_blank">Suppressing false positives</a> |
+Getting Help: <a href="https://github.com/jeremylong/DependencyCheck/issues" target="_blank">github issues</a><br/><br/>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="10pt" height="10pt" viewBox="0 0 10 10" version="1.1"><g id="surface1"><path style=" stroke:none;fill-rule:nonzero;fill:rgb(0%,0%,0%);fill-opacity:1;" d="M 8.125 4.167969 C 7.089844 4.167969 6.25 5.007812 6.25 6.042969 C 6.25 7.078125 7.089844 7.917969 8.125 7.917969 C 9.160156 7.917969 10 7.078125 10 6.042969 C 10 5.007812 9.160156 4.167969 8.125 4.167969 Z M 9.167969 6.25 L 8.332031 6.25 L 8.332031 7.082031 L 7.917969 7.082031 L 7.917969 6.25 L 7.082031 6.25 L 7.082031 5.832031 L 7.917969 5.832031 L 7.917969 5 L 8.332031 5 L 8.332031 5.832031 L 9.167969 5.832031 Z M 6.445312 8.164062 C 5.984375 8.617188 5.5 9.089844 5 9.582031 C 2.320312 6.925781 0 4.9375 0 2.996094 C 0 1.328125 1.289062 0.417969 2.617188 0.417969 C 3.53125 0.417969 4.464844 0.851562 5 1.769531 C 5.53125 0.855469 6.46875 0.421875 7.386719 0.421875 C 8.710938 0.421875 10 1.324219 10 2.996094 C 10 3.308594 9.933594 3.621094 9.824219 3.933594 C 9.605469 3.757812 9.355469 3.617188 9.085938 3.511719 C 9.136719 3.335938 9.167969 3.164062 9.167969 2.996094 C 9.167969 1.800781 8.242188 1.253906 7.386719 1.253906 C 6.027344 1.253906 5.3125 2.703125 5 3.347656 C 4.6875 2.703125 3.964844 1.25 2.617188 1.25 C 1.652344 1.25 0.832031 1.882812 0.832031 2.996094 C 0.832031 4.429688 2.808594 6.265625 5 8.414062 L 5.878906 7.554688 C 6.035156 7.785156 6.226562 7.988281 6.445312 8.164062 Z M 6.445312 8.164062 "/></g></svg>&nbsp;<a aria-label="Sponsor @jeremylong" target="_blank" href="https://github.com/sponsors/jeremylong">Sponsor</a></h3>
 ]]#
             <h2 class="">Project:&nbsp;$enc.html($applicationName)</h2>
             #if ($groupID && $artifactID && $applicationVersion)
@@ -659,7 +716,11 @@ Getting Help: <a href="https://github.com/jeremylong/DependencyCheck/issues" tar
                         <li><i>Dependencies Scanned</i>:&nbsp;$depCount ($dependencies.size() unique)</li>
                         <li><i>Vulnerable Dependencies</i>:&nbsp;<span id="vulnerableCount">$vulnDepCount</span></li>
                         <li><i>Vulnerabilities Found</i>:&nbsp;$vulnCount</li>
-                        <li><i>Vulnerabilities Suppressed</i>:&nbsp;$vulnSuppressedCount</li>
+                        <li><i>Vulnerabilities Suppressed</i>:&nbsp;$vulnSuppressedCount
+                            #if($vulnSuppressedCount>0)
+                                (<a id="suppressed-vulnerabilities-link" href="#header-suppressed">show</a>)
+                            #end
+                        </li>
                         <li class="scaninfo">...</li>
                         #foreach($prop in $properties.getMetaData().entrySet())
                         <li class="scaninfo hidden"><i>$enc.html($prop.key)</i>: $enc.html($prop.value)</li>
@@ -702,11 +763,12 @@ Getting Help: <a href="https://github.com/jeremylong/DependencyCheck/issues" tar
                         <th class="sortable" data-sort="string" title="The name of the dependency">Dependency</th>
                         <th class="sortable" data-sort="string" title="The Common Platform Enumeration">Vulnerability&nbsp;IDs</th>
                         <th class="sortable" data-sort="string" title="The Build Coordinates">Package</th>
-                        <th class="sortable" data-sort="int"    title="The highest CVE Severity">Highest&nbsp;Severity</th>
+                        <th class="sortable" data-sort="float"  title="The highest CVE Severity">Highest&nbsp;Severity</th>
                         <th class="sortable" data-sort="int"    title="The number of Common Vulnerability and Exposure (CVE) entries">CVE&nbsp;Count</th>
                         <th class="sortable" data-sort="string" title="The confidence rating dependency-check has for the identified CPE">Confidence</th>
                         <th class="sortable" data-sort="int"    title="The count of evidence collected to identify the CPE">Evidence&nbsp;Count</th>
                     </tr></thead>
+                    #set($hasknown=0)
                     #foreach($dependency in $dependencies)
                     #set($lnkcnt=$lnkcnt+1)
                     <tr class="#if($dependency.getVulnerabilities().size()==0)notvulnerable#else vulnerable#end">
@@ -759,25 +821,19 @@ Getting Help: <a href="https://github.com/jeremylong/DependencyCheck/issues" tar
                         #end</td>
                         #set($cveImpact=-1)
                         #set($cveSeverity="&nbsp;")
-                        #foreach($vuln in $dependency.getVulnerabilities())
+                        #if($dependency.getVulnerabilities().size()>0)
+                            #set($severestVuln=$dependency.getVulnerabilities(true).iterator().next())
                             ## yes - we are mixing v2 and v3...  no consistency in data so doing the best we can
-                            #if ($vuln.cvssV3)
-                                #if ($cveImpact<$vuln.cvssV3.baseScore)
-                                    #set($cveImpact=$vuln.cvssV3.baseScore)
-                                    #set($cveSeverity=$enc.html($vuln.cvssV3.baseSeverity))
-                                #end
-                            #elseif ($vuln.cvssV2)
-                                #if ($cveImpact<$vuln.cvssV2.score)
-                                    #set($cveImpact=$vuln.cvssV2.score)
-                                    #set($cveSeverity=$enc.html($vuln.cvssV2.severity))
-                                #end
+                            ## with a set sorted approximately on descending severity
+                            #if ($severestVuln.cvssV3)
+                                #set($cveImpact=$severestVuln.cvssV3.baseScore)
+                            #elseif ($severestVuln.cvssV2)
+                                #set($cveImpact=$severestVuln.cvssV2.score)
                             #end
-                            #if ($vuln.unscoredSeverity)
-                                #if($vuln.unscoredSeverity.equals("0.0"))
-                                    #set($cveSeverity="Unknown")
-                                #else
-                                    #set($cveSeverity=$enc.html($vuln.unscoredSeverity))
-                                #end
+                            #set($cveSeverity=$enc.html($severestVuln.highestSeverityText))
+                            #if($dependency.hasKnownExploitedVulnerability())
+                                #set($cveSeverity=$cveSeverity+"*")
+                                #set($hasknown=1)
                             #end
                         #end
                         #set($sortValue=$cveImpact*10)
@@ -788,7 +844,10 @@ Getting Help: <a href="https://github.com/jeremylong/DependencyCheck/issues" tar
                     </tr>
                     #end
                 </table>
-                <h2>Dependencies</h2>
+                #if($hasknown==1)
+                <p>* indicates the dependency has a known exploited vulnerability</p>
+                #end
+                <h2 id="header-dependencies">Dependencies (vulnerable)</h2>
                 #set($lnkcnt=0)
                 #set($vsctr=0) ##counter to create unique groups for vulnerable software
                 #foreach($dependency in $dependencies)
@@ -800,7 +859,7 @@ Getting Help: <a href="https://github.com/jeremylong/DependencyCheck/issues" tar
                         #end
                         <p>
                         #if ($dependency.license)
-                            #if ($dependency.license.startsWith("http://"))
+                            #if ($dependency.license.matches("https?://.+"))
                             <b>License:</b><pre class="indent"><a href="$enc.html($dependency.license)">$enc.html($dependency.license)</a></pre>
                             #else
                             <b>License:</b><pre class="indent">$enc.html($dependency.license)</pre>
@@ -813,15 +872,23 @@ Getting Help: <a href="https://github.com/jeremylong/DependencyCheck/issues" tar
                             <b>SHA256:</b>$enc.html($dependency.Sha256sum)
                             #end
                             #if ($dependency.projectReferences.size()==1)
-                                <br/><b>Referenced In Project/Scope:</b>
-                                #foreach($ref in $dependency.projectReferences)
-                                    $enc.html($ref)
-                                #end
+                                <br/><b>Referenced In Project/Scope:</b> $enc.html($dependency.projectReferences.iterator().next())
                             #end
                             #if ($dependency.projectReferences.size()>1)
                                 <br/><b>Referenced In Projects/Scopes:</b><ul>
                                 #foreach($ref in $dependency.projectReferences)
                                     <li>$enc.html($ref)</li>
+                                #end
+                                </ul>
+                            #end
+                            #if ($dependency.includedBy.size()==1)
+                                #set($incBy=$dependency.includedBy.iterator().next())
+                                <br/><span class="tooltip"><span class="tooltiptext">$enc.html($dependency.DisplayFileName) is in the transitive dependency tree of the listed items.</span><b>Included by:</b></span> $enc.html($incBy.getReference())#if($incBy.getType()) ($enc.html($incBy.getType()))#end
+                            #end
+                            #if ($dependency.includedBy.size()>1)
+                                <br/><span class="tooltip"><span class="tooltiptext">$enc.html($dependency.DisplayFileName) is in the transitive dependency tree of the listed items.</span><b>Included by:</b></span><ul>
+                                #foreach($parent in $dependency.includedBy)
+                                    <li>$enc.html($parent.getReference())#if($parent.getType()) ($enc.html($parent.getType()))#end</li>
                                 #end
                                 </ul>
                             #end
@@ -919,16 +986,28 @@ Getting Help: <a href="https://github.com/jeremylong/DependencyCheck/issues" tar
                         </div>
                     #if($dependency.getVulnerabilities().size()>0)
                     #set($cnt=$cnt+1)
-                    <h4 id="header$cnt" class="subsectionheader expandable collaspablesubsection white">Published Vulnerabilities</h4>
+                    <h4 id="header$cnt" class="subsectionheader collapsed collaspablesubsection white">Published Vulnerabilities</h4>
                     <div id="content$cnt" class="subsectioncontent standardsubsection">
                         #foreach($vuln in $dependency.getVulnerabilities(true))
                             #set($vsctr=$vsctr+1)
                             #if($vuln.getSource().name().equals("NVD"))
-                                <p><b><a target="_blank" href="http://web.nvd.nist.gov/view/vuln/detail?vulnId=$enc.url($vuln.name)">$enc.html($vuln.name)</a></b>&nbsp;&nbsp;<button class="copybutton" title="Generate Suppression XML for this CVE for this file" data-display-name="$enc.html($dependency.DisplayFileName)" data-sha1="$enc.html($dependency.Sha1sum)" data-pkgurl="#if($supressPkgUrl)$enc.html($supressPkgUrl)#end" data-type-to-suppress="cve" data-id-to-suppress="$enc.html($vuln.name)">suppress</button></p>
+                                <p><b><a target="_blank" href="https://web.nvd.nist.gov/view/vuln/detail?vulnId=$enc.url($vuln.name)">$enc.html($vuln.name)</a></b>&nbsp;&nbsp;<button class="copybutton" title="Generate Suppression XML for this CVE for this file" data-display-name="$enc.html($dependency.DisplayFileName)" data-sha1="$enc.html($dependency.Sha1sum)" data-pkgurl="#if($supressPkgUrl)$enc.html($supressPkgUrl)#end" data-type-to-suppress="cve" data-id-to-suppress="$enc.html($vuln.name)">suppress</button></p>
                             #elseif($vuln.getSource().name().equals("NPM"))
-                                <p><b><a target="_blank" href="https://www.npmjs.com/advisories/$enc.url($vuln.name)">NPM-$enc.html($vuln.name)</a></b>&nbsp;&nbsp;<button class="copybutton" title="Generate Suppression XML for this vulnerability for this file" data-display-name="$enc.html($dependency.DisplayFileName)" data-sha1="$enc.html($dependency.Sha1sum)" data-pkgurl="#if($supressPkgUrl)$enc.html($supressPkgUrl)#end" data-type-to-suppress="vulnerabilityName" data-id-to-suppress="$enc.html($vuln.name)">suppress</button></p>
+                                <p><b><a target="_blank" href="https://github.com/advisories/$enc.url($vuln.name)">$enc.html($vuln.name) (NPM)</a></b>&nbsp;&nbsp;<button class="copybutton" title="Generate Suppression XML for this vulnerability for this file" data-display-name="$enc.html($dependency.DisplayFileName)" data-sha1="$enc.html($dependency.Sha1sum)" data-pkgurl="#if($supressPkgUrl)$enc.html($supressPkgUrl)#end" data-type-to-suppress="vulnerabilityName" data-id-to-suppress="$enc.html($vuln.name)">suppress</button></p>
                             #else
                                 <p><span class="underline"><b>$enc.html($vuln.name)</b>&nbsp;($vuln.getSource().name())</span>&nbsp;&nbsp;<button class="copybutton" title="Generate Suppression XML for this vulnerability for this file" data-display-name="$enc.html($dependency.DisplayFileName)" data-sha1="$enc.html($dependency.Sha1sum)" data-pkgurl="#if($supressPkgUrl)$enc.html($supressPkgUrl)#end" data-type-to-suppress="vulnerabilityName" data-id-to-suppress="$enc.html($vuln.name)">suppress</button></p>
+                            #end
+                            #if($vuln.getKnownExploitedVulnerability())
+                                <b><span class="redtext">CISA Known Exploited Vulnerability:</span></b>
+                                <ul><li>Product: $enc.html($vuln.getKnownExploitedVulnerability().getVendorProject()) $enc.html($vuln.getKnownExploitedVulnerability().getProduct())</li>
+                                <li>Name: $enc.html($vuln.getKnownExploitedVulnerability().getVulnerabilityName())</li>
+                                <li>Date Added:  $enc.html($vuln.getKnownExploitedVulnerability().getDateAdded())</li>
+                                <li>Description:  $enc.html($vuln.getKnownExploitedVulnerability().getShortDescription())</li>
+                                <li>Required Action:  $enc.html($vuln.getKnownExploitedVulnerability().getRequiredAction())</li>
+                                <li>Due Date:  $enc.html($vuln.getKnownExploitedVulnerability().getDueDate())</li>
+                                #if($vuln.getKnownExploitedVulnerability().getNotes())
+                                    <li>Notes: $enc.html($vuln.getKnownExploitedVulnerability().getNotes())</li>
+                                #end</ul>
                             #end
                             <p>#if($vuln.description)
                             <pre>$enc.html($vuln.description)</pre>
@@ -982,7 +1061,7 @@ Getting Help: <a href="https://github.com/jeremylong/DependencyCheck/issues" tar
                             #elseif ($vuln.getVulnerableSoftware().size()!=0)
                                 <p>Vulnerable Software &amp; Versions ($vuln.getSource().name()):
                                     <ul>
-                                    #foreach($vs in $vuln.getVulnerableSoftware())
+                                    #foreach($vs in $vuln.getVulnerableSoftware(true))
                                         <li class="vs$vsctr">$enc.html($vs.toString())</li>
                                     #end
                                     </ul>
@@ -998,9 +1077,8 @@ Getting Help: <a href="https://github.com/jeremylong/DependencyCheck/issues" tar
 
 ## BEGIN SUPPRESSED VULNERABILITIES
                 #if ($vulnSuppressedCount>0 || $cpeSuppressedCount>0)
-                    #set($cnt=$cnt+1)
-                    <h2 id="header$cnt" class="expandable">Suppressed Vulnerabilities</h2>
-                    <div id="content$cnt" class="hidden">
+                    <h2 id="header-suppressed" class="expandable">Suppressed Vulnerabilities</h2>
+                    <div id="content-suppressed" class="hidden">
 
                     #foreach($dependency in $dependencies)
                         #if ($dependency.getSuppressedIdentifiers().size()>0 || $dependency.getSuppressedVulnerabilities().size()>0)
@@ -1012,18 +1090,39 @@ Getting Help: <a href="https://github.com/jeremylong/DependencyCheck/issues" tar
                                 #end
                                 <p>
                                 #if ($dependency.license)
-                                    #if ($dependency.license.startsWith("http://"))
+                                    #if ($dependency.license.matches("https?://.+"))
                                     <b>License:</b><pre class="indent"><a href="$enc.html($dependency.license)">$enc.html($dependency.license)</a></pre>
                                     #else
                                     <b>License:</b><pre class="indent">$enc.html($dependency.license)</pre>
                                     #end
                                 #end
                                     <b>File&nbsp;Path:</b>&nbsp;$enc.html($dependency.FilePath)<br/>
-                                    #if(!$dependency.isVirtual())
+                                #if(!$dependency.isVirtual())
                                     <b>MD5:</b>&nbsp;$enc.html($dependency.Md5sum)<br/>
                                     <b>SHA1:</b>&nbsp;$enc.html($dependency.Sha1sum)<br/>
                                     <b>SHA256:</b>&nbsp;$enc.html($dependency.Sha256sum)
+                                #end
+                                #if ($dependency.projectReferences.size()==1)
+                                    <br/><b>Referenced In Project/Scope:</b> $enc.html($dependency.projectReferences.iterator().next())
+                                #end
+                                #if ($dependency.projectReferences.size()>1)
+                                    <br/><b>Referenced In Projects/Scopes:</b><ul>
+                                    #foreach($ref in $dependency.projectReferences)
+                                        <li>$enc.html($ref)</li>
                                     #end
+                                    </ul>
+                                #end
+                                #if ($dependency.includedBy.size()==1)
+                                    #set($incBy=$dependency.includedBy.iterator().next())
+                                    <br/><span class="tooltip"><span class="tooltiptext">$enc.html($dependency.DisplayFileName) is in the transitive dependency tree of the listed items.</span><b>Included by:</b></span> $enc.html($incBy.getReference())#if($incBy.getType()) ($enc.html($incBy.getType()))#end
+                                #end
+                                #if ($dependency.includedBy.size()>1)
+                                    <br/><b>Included by:</b><ul>
+                                    #foreach($parent in $dependency.includedBy)
+                                        <li>$enc.html($parent.getReference())#if($parent.getType()) ($enc.html($parent.getType()))#end</li>
+                                    #end
+                                    </ul>
+                                #end
                                 </p>
                                 #set($cnt=$cnt+1)
                                 <h4 id="header$cnt" class="subsectionheader expandable expandablesubsection white">Evidence</h4>
@@ -1087,16 +1186,28 @@ Getting Help: <a href="https://github.com/jeremylong/DependencyCheck/issues" tar
                                 </div>
                             #if($dependency.getSuppressedVulnerabilities().size()>0)
                             #set($cnt=$cnt+1)
-                            <h4 id="header$cnt" class="subsectionheader expandable collaspablesubsection white">Suppressed Vulnerabilities</h4>
+                            <h4 id="header$cnt" class="subsectionheader collapsed collaspablesubsection white">Suppressed Vulnerabilities</h4>
                             <div id="content$cnt" class="subsectioncontent standardsubsection">
                                 #foreach($vuln in $dependency.getSuppressedVulnerabilities(true))
                                     #set($vsctr=$vsctr+1)
                                     #if($vuln.getSource().name().equals("NVD"))
-                                        <p><b><a target="_blank" href="http://web.nvd.nist.gov/view/vuln/detail?vulnId=$enc.url($vuln.name)">$enc.html($vuln.name)</a></b>&nbsp;&nbsp;<span class="suppressedLabel" >suppressed</span></p>
+                                        <p><b><a target="_blank" href="https://web.nvd.nist.gov/view/vuln/detail?vulnId=$enc.url($vuln.name)">$enc.html($vuln.name)</a></b>&nbsp;&nbsp;<span class="suppressedLabel" >suppressed</span></p>
                                     #elseif($vuln.getSource().name().equals("NPM"))
-                                        <p><b><a target="_blank" href="https://www.npmjs.com/advisories/$enc.url($vuln.name)">NPM-$enc.html($vuln.name)</a></b>&nbsp;&nbsp;<span class="suppressedLabel" >suppressed</span></p>
+                                        <p><b><a target="_blank" href="https://github.com/advisories/$enc.url($vuln.name)">$enc.html($vuln.name) (NPM)</a></b>&nbsp;&nbsp;<span class="suppressedLabel" >suppressed</span></p>
                                     #else
                                         <p><b>$enc.html($vuln.name)</b> ($vuln.getSource().name())&nbsp;&nbsp;<span class="suppressedLabel" >suppressed</span></p>
+                                    #end
+                                    #if($vuln.getKnownExploitedVulnerability())
+                                        <b><span class="redtext">CISA Known Exploited Vulnerability:</span></b>
+                                        <ul><li>Product: $enc.html($vuln.getKnownExploitedVulnerability().getVendorProject()) $enc.html($vuln.getKnownExploitedVulnerability().getProduct())</li>
+                                        <li>Name: $enc.html($vuln.getKnownExploitedVulnerability().getVulnerabilityName())</li>
+                                        <li>Date Added:  $enc.html($vuln.getKnownExploitedVulnerability().getDateAdded())</li>
+                                        <li>Description:  $enc.html($vuln.getKnownExploitedVulnerability().getShortDescription())</li>
+                                        <li>Required Action:  $enc.html($vuln.getKnownExploitedVulnerability().getRequiredAction())</li>
+                                        <li>Due Date:  $enc.html($vuln.getKnownExploitedVulnerability().getDueDate())</li>
+                                        #if($vuln.getKnownExploitedVulnerability().getNotes())
+                                            <li>Notes: $enc.html($vuln.getKnownExploitedVulnerability().getNotes())</li>
+                                        #end</ul>
                                     #end
                                     <p>#if($vuln.description)
                                     <pre>$enc.html($vuln.description)</pre>
@@ -1150,7 +1261,7 @@ Getting Help: <a href="https://github.com/jeremylong/DependencyCheck/issues" tar
                                     #else
                                         <p>Vulnerable Software &amp; Versions ($vuln.getSource().name()):
                                             <ul>
-                                            #foreach($vs in $vuln.getVulnerableSoftware())
+                                            #foreach($vs in $vuln.getVulnerableSoftware(true))
                                                 <li class="vs$vsctr">$enc.html($vs.toString())</li>
                                             #end
                                             </ul>
@@ -1171,7 +1282,9 @@ Getting Help: <a href="https://github.com/jeremylong/DependencyCheck/issues" tar
             <br/><br/>
             This report contains data retrieved from the <a href="https://nvd.nist.gov">National Vulnerability Database</a>.
             <br/>
-            This report may contain data retrieved from the <a href="https://www.npmjs.com/advisories">NPM Public Advisories</a>.
+            This report may contain data retrieved from the <a href="https://www.cisa.gov/known-exploited-vulnerabilities-catalog">CISA Known Exploited Vulnerability Catalog</a>.
+            <br/>
+            This report may contain data retrieved from the <a href="https://github.com/advisories/">Github Advisory Database (via NPM Audit API)</a>.
             <br/>
             This report may contain data retrieved from <a href="https://retirejs.github.io/retire.js/">RetireJS</a>.
             <br/>

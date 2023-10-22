@@ -19,7 +19,6 @@ package org.owasp.dependencycheck.dependency;
 
 import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
-import com.google.common.base.Strings;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.owasp.dependencycheck.data.nexus.MavenArtifact;
@@ -34,11 +33,14 @@ import java.io.Serializable;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
+import org.apache.commons.lang3.StringUtils;
 
 import org.owasp.dependencycheck.analyzer.exception.UnexpectedAnalysisException;
 import org.owasp.dependencycheck.dependency.naming.CpeIdentifier;
@@ -67,15 +69,15 @@ public class Dependency extends EvidenceCollection implements Serializable {
     /**
      * The MD5 hashing function.
      */
-    private static final HashingFunction MD5_HASHING_FUNCTION = (File file) -> Checksum.getMD5Checksum(file);
+    private static final HashingFunction MD5_HASHING_FUNCTION = Checksum::getMD5Checksum;
     /**
      * The SHA1 hashing function.
      */
-    private static final HashingFunction SHA1_HASHING_FUNCTION = (File file) -> Checksum.getSHA1Checksum(file);
+    private static final HashingFunction SHA1_HASHING_FUNCTION = Checksum::getSHA1Checksum;
     /**
      * The SHA256 hashing function.
      */
-    private static final HashingFunction SHA256_HASHING_FUNCTION = (File file) -> Checksum.getSHA256Checksum(file);
+    private static final HashingFunction SHA256_HASHING_FUNCTION = Checksum::getSHA256Checksum;
     /**
      * A list of Identifiers.
      */
@@ -83,7 +85,7 @@ public class Dependency extends EvidenceCollection implements Serializable {
     /**
      * A list of Identifiers.
      */
-    private final Set<Identifier> vulnerabileSoftwareIdentifiers = new TreeSet<>();
+    private final Set<Identifier> vulnerableSoftwareIdentifiers = new TreeSet<>();
     /**
      * A set of identifiers that have been suppressed.
      */
@@ -99,7 +101,14 @@ public class Dependency extends EvidenceCollection implements Serializable {
     /**
      * A collection of related dependencies.
      */
-    private final Set<Dependency> relatedDependencies = new HashSet<>();
+    private final SortedSet<Dependency> relatedDependencies = new TreeSet<>(Dependency.NAME_COMPARATOR);
+    /**
+     * The set of dependencies that included this dependency (i.e., this is a
+     * transitive dependency because it was included by X). This is a pair where
+     * the left element is the includedBy and the right element is the type
+     * (e.g. buildEnv, plugins).
+     */
+    private final Set<IncludedByReference> includedBy = new HashSet<>();
     /**
      * A list of projects that reference this dependency.
      */
@@ -352,9 +361,6 @@ public class Dependency extends EvidenceCollection implements Serializable {
      * @param filePath the file path of the dependency
      */
     public void setFilePath(String filePath) {
-//        if (this.packagePath == null || this.packagePath.equals(this.filePath)) {
-//            this.packagePath = filePath;
-//        }
         this.filePath = filePath;
     }
 
@@ -423,7 +429,7 @@ public class Dependency extends EvidenceCollection implements Serializable {
      * @return an unmodifiable set of software identifiers
      */
     public synchronized Set<Identifier> getSoftwareIdentifiers() {
-        return Collections.unmodifiableSet(new TreeSet<>(softwareIdentifiers));
+        return Collections.unmodifiableSet(softwareIdentifiers);
     }
 
     /**
@@ -432,7 +438,31 @@ public class Dependency extends EvidenceCollection implements Serializable {
      * @return an unmodifiable set of vulnerability identifiers
      */
     public synchronized Set<Identifier> getVulnerableSoftwareIdentifiers() {
-        return Collections.unmodifiableSet(new TreeSet<>(this.vulnerabileSoftwareIdentifiers));
+        return Collections.unmodifiableSet(this.vulnerableSoftwareIdentifiers);
+    }
+
+    /**
+     * Returns the count of vulnerability identifiers.
+     *
+     * @return the count of vulnerability identifiers
+     */
+    public synchronized int getVulnerableSoftwareIdentifiersCount() {
+        return this.vulnerableSoftwareIdentifiers.size();
+    }
+
+    /**
+     * Returns true if the dependency has a known exploited vulnerability.
+     *
+     * @return true if the dependency has a known exploited vulnerability;
+     * otherwise false.
+     */
+    public synchronized boolean hasKnownExploitedVulnerability() {
+        for (Vulnerability v : vulnerabilities) {
+            if (v.getKnownExploitedVulnerability() != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -452,7 +482,7 @@ public class Dependency extends EvidenceCollection implements Serializable {
      * @param identifiers A set of Identifiers
      */
     protected synchronized void addVulnerableSoftwareIdentifiers(Set<Identifier> identifiers) {
-        this.vulnerabileSoftwareIdentifiers.addAll(identifiers);
+        this.vulnerableSoftwareIdentifiers.addAll(identifiers);
     }
 
     /**
@@ -493,7 +523,7 @@ public class Dependency extends EvidenceCollection implements Serializable {
      * @param identifier a reference to the identifier to add
      */
     public synchronized void addVulnerableSoftwareIdentifier(Identifier identifier) {
-        this.vulnerabileSoftwareIdentifiers.add(identifier);
+        this.vulnerableSoftwareIdentifiers.add(identifier);
     }
 
     /**
@@ -502,7 +532,7 @@ public class Dependency extends EvidenceCollection implements Serializable {
      * @param i the identifier to remove
      */
     public synchronized void removeVulnerableSoftwareIdentifier(Identifier i) {
-        this.vulnerabileSoftwareIdentifiers.remove(i);
+        this.vulnerableSoftwareIdentifiers.remove(i);
     }
 
     /**
@@ -518,6 +548,7 @@ public class Dependency extends EvidenceCollection implements Serializable {
         }
         if (mavenArtifact.getArtifactId() != null && !mavenArtifact.getArtifactId().isEmpty()) {
             this.addEvidence(EvidenceType.PRODUCT, source, "artifactid", mavenArtifact.getArtifactId(), confidence);
+            this.addEvidence(EvidenceType.VENDOR, source, "artifactid", mavenArtifact.getArtifactId(), confidence);
         }
         if (mavenArtifact.getVersion() != null && !mavenArtifact.getVersion().isEmpty()) {
             this.addEvidence(EvidenceType.VERSION, source, "version", mavenArtifact.getVersion(), confidence);
@@ -532,7 +563,7 @@ public class Dependency extends EvidenceCollection implements Serializable {
                                 && mavenArtifact.getGroupId().equals(id.getNamespace())) {
                             found = true;
                             i.setConfidence(Confidence.HIGHEST);
-                            final String url = "http://search.maven.org/#search|ga|1|1%3A%22" + this.getSha1sum() + "%22";
+                            final String url = "https://search.maven.org/search?q=1:" + this.getSha1sum();
                             i.setUrl(url);
                             //i.setUrl(mavenArtifact.getArtifactUrl());
                             LOGGER.debug("Already found identifier {}. Confidence set to highest", i.getValue());
@@ -542,9 +573,8 @@ public class Dependency extends EvidenceCollection implements Serializable {
                 }
             }
         }
-        if (!found && !Strings.isNullOrEmpty(mavenArtifact.getGroupId())
-                && !Strings.isNullOrEmpty(mavenArtifact.getArtifactId())
-                && !Strings.isNullOrEmpty(mavenArtifact.getVersion())) {
+        if (!found && !StringUtils.isAnyEmpty(mavenArtifact.getGroupId(),
+                mavenArtifact.getArtifactId(), mavenArtifact.getVersion())) {
             try {
                 LOGGER.debug("Adding new maven identifier {}", mavenArtifact);
                 final PackageURL p = new PackageURL("maven", mavenArtifact.getGroupId(),
@@ -563,7 +593,7 @@ public class Dependency extends EvidenceCollection implements Serializable {
      * @return the value of suppressedIdentifiers
      */
     public synchronized Set<Identifier> getSuppressedIdentifiers() {
-        return Collections.unmodifiableSet(new TreeSet<>(this.suppressedIdentifiers));
+        return Collections.unmodifiableSet(this.suppressedIdentifiers);
     }
 
     /**
@@ -598,6 +628,15 @@ public class Dependency extends EvidenceCollection implements Serializable {
             vulnerabilitySet = vulnerabilities;
         }
         return Collections.unmodifiableSet(vulnerabilitySet);
+    }
+
+    /**
+     * Get vulnerability count.
+     *
+     * @return the count of vulnerabilities
+     */
+    public synchronized int getVulnerabilitiesCount() {
+        return vulnerabilities.size();
     }
 
     /**
@@ -742,7 +781,54 @@ public class Dependency extends EvidenceCollection implements Serializable {
      * @return the unmodifiable set of relatedDependencies
      */
     public synchronized Set<Dependency> getRelatedDependencies() {
-        return Collections.unmodifiableSet(new HashSet<>(relatedDependencies));
+        return Collections.unmodifiableSet(relatedDependencies);
+    }
+
+    /**
+     * Clears the {@link #relatedDependencies}.
+     */
+    public synchronized void clearRelatedDependencies() {
+        relatedDependencies.clear();
+    }
+
+    /**
+     * Get the unmodifiable set of includedBy (the list of parents of this
+     * transitive dependency).
+     *
+     * @return the unmodifiable set of includedBy
+     */
+    public synchronized Set<IncludedByReference> getIncludedBy() {
+        return Collections.unmodifiableSet(new HashSet<>(includedBy));
+    }
+
+    /**
+     * Adds the parent or root of the transitive dependency chain (i.e., this
+     * was included by the parent dependency X).
+     *
+     * @param includedBy a project reference
+     */
+    public synchronized void addIncludedBy(String includedBy) {
+        this.includedBy.add(new IncludedByReference(includedBy, null));
+    }
+
+    /**
+     * Adds the parent or root of the transitive dependency chain (i.e., this
+     * was included by the parent dependency X).
+     *
+     * @param includedBy a project reference
+     * @param type the type of project reference (i.e. 'plugins', 'buildEnv')
+     */
+    public synchronized void addIncludedBy(String includedBy, String type) {
+        this.includedBy.add(new IncludedByReference(includedBy, type));
+    }
+
+    /**
+     * Adds a set of project references.
+     *
+     * @param includedBy a set of project references
+     */
+    public synchronized void addAllIncludedBy(Set<IncludedByReference> includedBy) {
+        this.includedBy.addAll(includedBy);
     }
 
     /**
@@ -782,6 +868,11 @@ public class Dependency extends EvidenceCollection implements Serializable {
         if (this == dependency) {
             LOGGER.warn("Attempted to add a circular reference - please post the log file to issue #172 here "
                     + "https://github.com/jeremylong/DependencyCheck/issues/172");
+            LOGGER.debug("this: {}", this);
+            LOGGER.debug("dependency: {}", dependency);
+        } else if (NAME_COMPARATOR.compare(this, dependency) == 0) {
+            LOGGER.debug("Attempted to add the same dependency as this, likely due to merging identical dependencies "
+                    + "obtained from different modules");
             LOGGER.debug("this: {}", this);
             LOGGER.debug("dependency: {}", dependency);
         } else if (!relatedDependencies.add(dependency)) {
@@ -853,7 +944,7 @@ public class Dependency extends EvidenceCollection implements Serializable {
                 .append(this.sha1sum, other.sha1sum)
                 .append(this.sha256sum, other.sha256sum)
                 .append(this.softwareIdentifiers, other.softwareIdentifiers)
-                .append(this.vulnerabileSoftwareIdentifiers, other.vulnerabileSoftwareIdentifiers)
+                .append(this.vulnerableSoftwareIdentifiers, other.vulnerableSoftwareIdentifiers)
                 .append(this.suppressedIdentifiers, other.suppressedIdentifiers)
                 .append(this.description, other.description)
                 .append(this.license, other.license)
@@ -882,7 +973,7 @@ public class Dependency extends EvidenceCollection implements Serializable {
                 .append(sha1sum)
                 .append(sha256sum)
                 .append(softwareIdentifiers)
-                .append(vulnerabileSoftwareIdentifiers)
+                .append(vulnerableSoftwareIdentifiers)
                 .append(suppressedIdentifiers)
                 .append(description)
                 .append(license)
@@ -943,6 +1034,14 @@ public class Dependency extends EvidenceCollection implements Serializable {
         this.ecosystem = ecosystem;
     }
 
+    //CSOFF: OperatorWrap
+    /**
+     * Simple sorting by display file name and actual file path.
+     */
+    public static final Comparator<Dependency> NAME_COMPARATOR
+            = Comparator.comparing((Dependency d) -> (d.getDisplayFileName() + d.getFilePath()));
+
+    //CSON: OperatorWrap
     /**
      * A hashing function shortcut.
      */

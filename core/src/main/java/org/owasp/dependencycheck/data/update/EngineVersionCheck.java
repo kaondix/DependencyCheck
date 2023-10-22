@@ -17,13 +17,14 @@
  */
 package org.owasp.dependencycheck.data.update;
 
-import com.google.common.io.ByteStreams;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import javax.annotation.concurrent.ThreadSafe;
+import org.apache.commons.io.IOUtils;
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.data.nvdcve.CveDB;
 import org.owasp.dependencycheck.data.nvdcve.DatabaseException;
@@ -209,7 +210,7 @@ public class EngineVersionCheck implements CachedWebDataSource {
     protected String getCurrentReleaseVersion() {
         HttpURLConnection conn = null;
         try {
-            final String str = settings.getString(Settings.KEYS.ENGINE_VERSION_CHECK_URL, "http://jeremylong.github.io/DependencyCheck/current.txt");
+            final String str = settings.getString(Settings.KEYS.ENGINE_VERSION_CHECK_URL, "https://jeremylong.github.io/DependencyCheck/current.txt");
             final URL url = new URL(str);
             final URLConnectionFactory factory = new URLConnectionFactory(settings);
             conn = factory.createHttpURLConnection(url);
@@ -217,8 +218,8 @@ public class EngineVersionCheck implements CachedWebDataSource {
             if (conn.getResponseCode() != 200) {
                 return null;
             }
-            final String releaseVersion = new String(ByteStreams.toByteArray(conn.getInputStream()), StandardCharsets.UTF_8);
-            if (releaseVersion != null) {
+            try (InputStream is = conn.getInputStream()) {
+                final String releaseVersion = new String(IOUtils.toByteArray(is), StandardCharsets.UTF_8);
                 return releaseVersion.trim();
             }
         } catch (MalformedURLException ex) {

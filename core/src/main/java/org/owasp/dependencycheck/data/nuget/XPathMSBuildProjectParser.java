@@ -34,23 +34,29 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import org.owasp.dependencycheck.utils.InterpolationUtil;
+import org.owasp.dependencycheck.utils.InterpolationUtil.SyntaxStyle;
 
 /**
  * Parses a MSBuild project file for NuGet references using XPath.
  *
  * @author paulirwin
  */
-public class XPathMSBuildProjectParser implements MSBuildProjectParser {
+public class XPathMSBuildProjectParser {
 
     /**
      * Parses the given stream for MSBuild PackageReference elements.
      *
      * @param stream the input stream to parse
+     * @param props the Directory.Build.props properties
+     * @param centrallyManaged a map of centrally managed package references
      * @return a collection of discovered NuGet package references
      * @throws MSBuildProjectParseException if an exception occurs
      */
-    @Override
-    public List<NugetPackageReference> parse(InputStream stream) throws MSBuildProjectParseException {
+    public List<NugetPackageReference> parse(InputStream stream, Properties props,
+            Map<String, String> centrallyManaged) throws MSBuildProjectParseException {
         try {
             final DocumentBuilder db = XmlUtils.buildSecureDocumentBuilder();
             final Document d = db.parse(stream);
@@ -68,14 +74,32 @@ public class XPathMSBuildProjectParser implements MSBuildProjectParser {
                 final Node node = nodeList.item(i);
                 final NamedNodeMap attrs = node.getAttributes();
 
-                final Node include = attrs.getNamedItem("Include");
-                final Node version = attrs.getNamedItem("Version");
+                final Node includeAttr = attrs.getNamedItem("Include");
+                if (includeAttr == null) {
+                    // Issue 5144 work-around for NPE on packageReferences other than includes
+                    continue;
+                }
+                final String include = includeAttr.getNodeValue();
+                String version = null;
+
+                if (centrallyManaged.containsKey(include)) {
+                    if (attrs.getNamedItem("VersionOverride") != null) {
+                        version = attrs.getNamedItem("VersionOverride").getNodeValue();
+                    } else {
+                        version = centrallyManaged.get(include);
+                    }
+                } else if (attrs.getNamedItem("Version") != null) {
+                    version = attrs.getNamedItem("Version").getNodeValue();
+                } else if (xpath.evaluate("Version", node, XPathConstants.NODE) instanceof Node) {
+                    version = ((Node) xpath.evaluate("Version", node, XPathConstants.NODE)).getTextContent();
+                }
 
                 if (include != null && version != null) {
+
                     final NugetPackageReference npr = new NugetPackageReference();
 
-                    npr.setId(include.getNodeValue());
-                    npr.setVersion(version.getNodeValue());
+                    npr.setId(include);
+                    npr.setVersion(InterpolationUtil.interpolate(version, props, SyntaxStyle.MSBUILD));
 
                     packages.add(npr);
                 }

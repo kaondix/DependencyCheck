@@ -35,11 +35,11 @@ Property              | Description                                             
 autoUpdate            | Sets whether auto-updating of the NVD CVE/CPE data is enabled. It is not recommended that this be turned to false.                                                                                             | true
 cveValidForHours      | Sets the number of hours to wait before checking for new updates from the NVD                                                                                                                                  | 4
 failOnError           | Whether the build should fail if there is an error executing the dependency-check analysis                                                                                                                     | true
-failBuildOnCVSS       | Specifies if the build should be failed if a CVSS score equal to or above a specified level is identified. The default is 11 which means since the CVSS scores are 0-10, by default the build will never fail. | 11
+failBuildOnCVSS       | Specifies if the build should be failed if a CVSS score equal to or above a specified level is identified. The default is 11 which means since the CVSS scores are 0-10, by default the build will never fail. More information on CVSS scores can be found at the [NVD](https://nvd.nist.gov/vuln-metrics/cvss)| 11
 junitFailOnCVSS       | If using the JUNIT report format the junitFailOnCVSS sets the CVSS score threshold that is considered a failure.                                                                                               | 0
 prettyPrint           | Whether the XML and JSON formatted reports should be pretty printed.                                                                                                                                           | false
 projectName           | The name of the project being scanned.                                                                                                                                                                         | Dependency-Check
-reportFormat          | The report format to be generated (HTML, XML, CSV, JSON, JUNIT, ALL).                                                                                                                                          | HTML
+reportFormat          | The report format to be generated (HTML, XML, CSV, JSON, JUNIT, SARIF, ALL).                                                                                                                                          | HTML
 reportOutputDirectory | The location to write the report(s). Note, this is not used if generating the report as part of a `mvn site` build                                                                                             | 'target'
 hintsFile             | The file path to the XML hints file \- used to resolve [false negatives](../general/hints.html)                                                                                                                | &nbsp;
 proxyServer           | The Proxy Server; see the [proxy configuration](../data/proxy.html) page for more information.                                                                                                                 | &nbsp;
@@ -58,7 +58,7 @@ The following nested elements can be set on the dependency-check task.
 Element           | Property | Description                                                                                                                                                                                        | Default Value
 ------------------|----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------
 suppressionFile   | path     | The file path to the XML suppression file \- used to suppress [false positives](../general/suppression.html). Element can be specified multiple times. The parameter value can be a local file path, a URL to a suppression file, or even a reference to a file on the class path (see https://github.com/jeremylong/DependencyCheck/issues/1878#issuecomment-487533799) | &nbsp;| &nbsp;
-reportFormat      | format   | The report format to be generated (HTML, XML, CSV, JSON, JUNIT, ALL). Element can be specified multiple times.                                                                                     | &nbsp;
+reportFormat      | format   | The report format to be generated (HTML, XML, CSV, JSON, JUNIT, SARIF, ALL). Element can be specified multiple times.                                                                                     | &nbsp;
 
 
 Analyzer Configuration
@@ -76,15 +76,19 @@ zipExtensions                       | A comma-separated list of additional file 
 jarAnalyzer                         | Sets whether the Jar Analyzer will be used.                                                                | true
 centralAnalyzerEnabled              | Sets whether the Central Analyzer will be used. **Disabling this analyzer for Ant builds is not recommended as it could lead to false negatives (e.g. libraries that have vulnerabilities may not be reported correctly).** If this analyzer is being disabled there is a good chance you also want to disable the Nexus Analyzer (see below).                                  | true
 centralAnalyzerUseCache             | Sets whether the Central Analyer will cache results. Cached results expire after 30 days.                  | true
+dartAnalyzerEnabled                 | Sets whether the [experimental](../analyzers/index.html) Dart Analyzer will be used.                       | true
+knownExploitedEnabled               | Sets whether the Known Exploited Vulnerability update and analyzer are enabled.                            | true
+knownExploitedUrl                   | Sets URL to the CISA Known Exploited Vulnerabilities JSON data feed.                                       | https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json
 ossIndexAnalyzerEnabled             | Sets whether the [OSS Index Analyzer](../analyzers/oss-index-analyzer.html) will be enabled. This analyzer requires an internet connection. | true
 ossindexAnalyzerUseCache            | Sets whether the OSS Index Analyzer will cache results. Cached results expire after 24 hours.              | true
 ossindexAnalyzerUsername            | Sets the username for OSS Index - note an account with OSS Index is not required.                          | &nbsp;
 ossindexAnalyzerPassword            | Sets the password for OSS Index.                                                                           | &nbsp;
+ossIndexAnalyzerWarnOnlyOnRemoteErrors | Whether we should only warn about Sonatype OSS Index remote errors instead of failing completely.       | &nbsp;
 nexusAnalyzerEnabled                | Sets whether Nexus Analyzer will be used (requires Nexus Pro). This analyzer is superceded by the Central Analyzer; however, you can configure this to run against a Nexus Pro installation. | true
 nexusUrl                            | Defines the Nexus web service endpoint (example http://domain.enterprise/nexus/service/local/). If not set the Nexus Analyzer will be disabled. | &nbsp;
 nexusUser                           | The username to authenticate to the Nexus Server's web service end point. If not set the Nexus Analyzer will use an unauthenticated connection. | &nbsp;
 nexusPassword                       | The password to authenticate to the Nexus Server's web service end point. If not set the Nexus Analyzer will use an unauthenticated connection. | &nbsp;
-nexusUsesProxy                      | Whether or not the defined proxy should be used when connecting to Nexus.                                  | true
+nexusUsesProxy                      | Whether the defined proxy should be used when connecting to Nexus.                                  | true
 artifactoryAnalyzerEnabled          | Sets whether Artifactory analyzer will be used                                                             | false
 artifactoryAnalyzerUrl              | The Artifactory server URL.                                                                                | &nbsp;
 artifactoryAnalyzerUseProxy         | Whether Artifactory should be accessed through a proxy or not.                                             | false
@@ -92,35 +96,46 @@ artifactoryAnalyzerParallelAnalysis | Whether the Artifactory analyzer should be
 artifactoryAnalyzerUsername         | The user name (only used with API token) to connect to Artifactory instance                                | &nbsp;
 artifactoryAnalyzerApiToken         | The API token to connect to Artifactory instance, only used if the username or the API key are not defined by artifactoryAnalyzerServerId,artifactoryAnalyzerUsername or artifactoryAnalyzerApiToken | &nbsp;
 artifactoryAnalyzerBearerToken      | The bearer token to connect to Artifactory instance                                                        | &nbsp;
-pyDistributionAnalyzerEnabled       | Sets whether the [experimental](../analyzers/index.html) Python Distribution Analyzer will be used.        | true
-pyPackageAnalyzerEnabled            | Sets whether the [experimental](../analyzers/index.html) Python Package Analyzer will be used.             | true
-rubygemsAnalyzerEnabled             | Sets whether the [experimental](../analyzers/index.html) Ruby Gemspec Analyzer will be used.               | true
+pyDistributionAnalyzerEnabled       | Sets whether the [experimental](../analyzers/index.html) Python Distribution Analyzer will be used. `enableExperimental` must be set to true. | true
+pyPackageAnalyzerEnabled            | Sets whether the [experimental](../analyzers/index.html) Python Package Analyzer will be used. `enableExperimental` must be set to true. | true
+rubygemsAnalyzerEnabled             | Sets whether the [experimental](../analyzers/index.html) Ruby Gemspec Analyzer will be used. `enableExperimental` must be set to true. | true
 opensslAnalyzerEnabled              | Sets whether the openssl Analyzer should be used.                                                          | true
-cmakeAnalyzerEnabled                | Sets whether the [experimental](../analyzers/index.html) CMake Analyzer should be used.                    | true
-autoconfAnalyzerEnabled             | Sets whether the [experimental](../analyzers/index.html) autoconf Analyzer should be used.                 | true
-pipAnalyzerEnabled                  | Sets whether the [experimental](../analyzers/index.html) pip Analyzer should be used.                      | true
-composerAnalyzerEnabled             | Sets whether the [experimental](../analyzers/index.html) PHP Composer Lock File Analyzer should be used.   | true
+cmakeAnalyzerEnabled                | Sets whether the [experimental](../analyzers/index.html) CMake Analyzer should be used. `enableExperimental` must be set to true. | true
+autoconfAnalyzerEnabled             | Sets whether the [experimental](../analyzers/index.html) autoconf Analyzer should be used. `enableExperimental` must be set to true. | true
+pipAnalyzerEnabled                  | Sets whether the [experimental](../analyzers/index.html) pip Analyzer should be used. `enableExperimental` must be set to true. | true
+pipfileAnalyzerEnabled              | Sets whether the [experimental](../analyzers/index.html) Pipfile Analyzer should be used. `enableExperimental` must be set to true. | true
+poetryAnalyzerEnabled               | Sets whether the [experimental](../analyzers/index.html) Poetry Analyzer should be used. `enableExperimental` must be set to true. | true
+composerAnalyzerEnabled             | Sets whether the [experimental](../analyzers/index.html) PHP Composer Lock File Analyzer should be used. `enableExperimental` must be set to true. | true
+cpanfileAnalyzerEnabled             | Sets whether the [experimental](../analyzers/index.html) Perl CPAN File Analyzer should be used. `enableExperimental` must be set to true. | true
 nodeAnalyzerEnabled                 | Sets whether the [retired](../analyzers/index.html) Node.js Analyzer should be used.                       | true
 nodeAuditAnalyzerEnabled            | Sets whether the Node Audit Analyzer should be used. This analyzer requires an internet connection.        | true
 nodeAuditAnalyzerUseCache           | Sets whether the Node Audit Analyzer will cache results. Cached results expire after 24 hours.             | true
 nodeAuditSkipDevDependencies        | Sets whether the Node Audit Analyzer will skip devDependencies.                                            | false
+nodePackageSkipDevDependencies      | Sets whether the Node Package Analyzer will skip devDependencies.                                          | false
+yarnAuditAnalyzerEnabled            | Sets whether the Yarn Audit Analyzer should be used. This analyzer requires yarn and an internet connection. Use `nodeAuditSkipDevDependencies` to skip dev dependencies. | true
+pnpmAuditAnalyzerEnabled            | Sets whether the Pnpm Audit Analyzer should be used. This analyzer requires pnpm and an internet connection. Use `nodeAuditSkipDevDependencies` to skip dev dependencies. | true
+pathToYarn                          | The path to `yarn`.                                                                                        | &nbsp;
+pathToPnpm                          | The path to `pnpm`.                                                                                        | &nbsp;
 retireJsAnalyzerEnabled             | Sets whether the RetireJS Analyzer should be used.                                                         | true
-retirejsForceupdate                 | Sets whether the RetireJS Analyzer should update regardless of the `autoupdate` setting.                   | false
+retireJsForceUpdate                 | Sets whether the RetireJS Analyzer should update regardless of the `autoupdate` setting.                   | false
 retirejsFilterNonVulnerable         | Configures the RetireJS Analyzer to remove non-vulnerable JS dependencies from the report.                 | false
 retirejsFilter                      | A nested configuration that can be specified multple times; The regex defined is used to filter JS files based on content. | &nbsp;
-retireJsUrl                         | The URL to the Retire JS repository.                                                                       | https://raw.githubusercontent.com/Retirejs/retire.js/master/repository/jsrepository.json
+retireJsUrl                         | The URL to the Retire JS repository.                                                                       | https://raw.githubusercontent.com/Retirejs/retire.js/main/repository/jsrepository.json
 nuspecAnalyzerEnabled               | Sets whether the .NET Nuget Nuspec Analyzer will be used.                                                  | true
-nugetconfAnalyzerEnabled            | Sets whether the [experimental](../analyzers/index.html) .NET Nuget packages.config Analyzer will be used. | true
-cocoapodsAnalyzerEnabled            | Sets whether the [experimental](../analyzers/index.html) Cocoapods Analyzer should be used.                | true
-mixAuditAnalyzerEnabled             | Sets whether the [experimental](../analyzers/index.html) Mix Audit Analyzer should be used.                | true
+nugetconfAnalyzerEnabled            | Sets whether the [experimental](../analyzers/index.html) .NET Nuget packages.config Analyzer will be used. `enableExperimental` must be set to true. | true
+libmanAnalyzerEnabled               | Sets whether the Libman Analyzer will be used.                                                             | true
+cocoapodsAnalyzerEnabled            | Sets whether the [experimental](../analyzers/index.html) Cocoapods Analyzer should be used. `enableExperimental` must be set to true. | true
+mixAuditAnalyzerEnabled             | Sets whether the [experimental](../analyzers/index.html) Mix Audit Analyzer should be used. `enableExperimental` must be set to true. | true
 mixAuditPath                        | Sets the path to the mix_audit executable; only used if mix audit analyzer is enabled and experimental analyzers are enabled.  | &nbsp;
-bundleAuditAnalyzerEnabled          | Sets whether the [experimental](../analyzers/index.html) Bundle Audit Analyzer should be used.             | true
+bundleAuditAnalyzerEnabled          | Sets whether the [experimental](../analyzers/index.html) Bundle Audit Analyzer should be used. `enableExperimental` must be set to true. | true
 bundleAuditPath                     | Sets the path to the bundle audit executable; only used if bundle audit analyzer is enabled and experimental analyzers are enabled.  | &nbsp;
-swiftPackageManagerAnalyzerEnabled  | Sets whether the [experimental](../analyzers/index.html) Switft Package Analyzer should be used.           | true
+swiftPackageManagerAnalyzerEnabled  | Sets whether the [experimental](../analyzers/index.html) Swift Package Analyzer should be used. `enableExperimental` must be set to true. | true
+swiftPackageResolvedAnalyzerEnabled | Sets whether the [experimental](../analyzers/index.html) Swift Package Resolved should be used. `enableExperimental` must be set to true. | true
 assemblyAnalyzerEnabled             | Sets whether the .NET Assembly Analyzer should be used.                                                    | true
+msbuildAnalyzerEnabled              | Sets whether the MSBuild Analyzer should be used.                                                          | true
 pathToCore                          | The path to dotnet core .NET assembly analysis on non-windows systems.                                     | &nbsp;
-golangDepEnabled                    | Sets whether or not the [experimental](../analyzers/index.html) Golang Dependency Analyzer should be used. | true
-golangModEnabled                    | Sets whether or not the [experimental](../analyzers/index.html) Goland Module Analyzer should be used; requires `go` to be installed. | true
+golangDepEnabled                    | Sets whether the [experimental](../analyzers/index.html) Golang Dependency Analyzer should be used. `enableExperimental` must be set to true. | true
+golangModEnabled                    | Sets whether the [experimental](../analyzers/index.html) Goland Module Analyzer should be used; requires `go` to be installed. `enableExperimental` must be set to true. | true
 pathToGo                            | The path to `go`.                                                                                          | &nbsp;
 
 Advanced Configuration
@@ -130,13 +145,17 @@ may be the cvedUrl properties, which can be used to host a mirror of the NVD wit
 
 Property             | Description                                                              | Default Value
 ---------------------|--------------------------------------------------------------------------|------------------
-cveUrl12Modified     | URL for the modified CVE 1.2.                                            | http://nvd.nist.gov/download/nvdcve-modified.xml
-cveUrl20Modified     | URL for the modified CVE 2.0.                                            | http://static.nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-modified.xml
-cveUrl12Base         | Base URL for each year's CVE 1.2, the %d will be replaced with the year. | http://nvd.nist.gov/download/nvdcve-%d.xml
-cveUrl20Base         | Base URL for each year's CVE 2.0, the %d will be replaced with the year. | http://static.nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-%d.xml
-dataDirectory        | Data directory that is used to store the local copy of the NVD. This should generally not be changed. | data
-databaseDriverName   | The name of the database driver. Example: org.h2.Driver.                 | &nbsp;
-databaseDriverPath   | The path to the database driver JAR file; only used if the driver is not in the class path. | &nbsp;
+cveUrlModified       | URL for the modified CVE JSON data feed. When mirroring the NVD you must mirror the *.json.gz and the *.meta files. Optional if your custom cveUrlBase is just a domain name change.  | https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-modified.json.gz
+cveUrlBase           | Base URL for each year's CVE JSON data feed, the %d will be replaced with the year.                          | https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-%d.json.gz
+cveWaitTime          | The time in milliseconds to wait between downloads from the NVD.                                             | 4000
+cveStartYear         | The first year of NVD CVE data to download from the NVD.                                                     | 2002
+dataDirectory        | Data directory that is used to store the local copy of the NVD. This should generally not be changed.        | data
+databaseDriverName   | The name of the database driver. Example: org.h2.Driver.                                                     | &nbsp;
+databaseDriverPath   | The path to the database driver JAR file; only used if the driver is not in the class path.                  | &nbsp;
 connectionString     | The connection string used to connect to the database. See using a [database server](../data/database.html). | &nbsp;
-databaseUser         | The username used when connecting to the database.                       | &nbsp;
-databasePassword     | The password used when connecting to the database.                       | &nbsp;
+databaseUser         | The username used when connecting to the database.                                                           | &nbsp;
+databasePassword     | The password used when connecting to the database.                                                           | &nbsp;
+hostedSuppressionsEnabled | Whether the hosted suppression file will be used.                                                       | true
+hostedSuppressionsUrl | The URL to a mirrored copy of the hosted suppressions file for internet-constrained environments            | https://jeremylong.github.io/DependencyCheck/suppressions/publishedSuppressions.xml
+hostedSuppressionsValidForHours | Sets the number of hours to wait before checking for new updates of the hosted suppressions file  | 2
+hostedSuppressionsForceUpdate | Sets whether the hosted suppressions file should update regardless of the `autoupdate` and validForHours settings | false 

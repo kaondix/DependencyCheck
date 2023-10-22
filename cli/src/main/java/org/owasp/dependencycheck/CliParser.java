@@ -64,7 +64,7 @@ public final class CliParser {
     /**
      * The supported reported formats.
      */
-    private static final String SUPPORTED_FORMATS = "HTML, XML, CSV, JSON, JUNIT, or ALL";
+    private static final String SUPPORTED_FORMATS = "HTML, XML, CSV, JSON, JUNIT, SARIF, JENKINS, or ALL";
 
     /**
      * Constructs a new CLI Parser object with the configured settings.
@@ -114,7 +114,7 @@ public final class CliParser {
      */
     private void validateArgs() throws FileNotFoundException, ParseException {
         if (isUpdateOnly() || isRunScan()) {
-            final String value = line.getOptionValue(ARGUMENT.CVE_VALID_FOR_HOURS);
+            String value = line.getOptionValue(ARGUMENT.CVE_VALID_FOR_HOURS);
             if (value != null) {
                 try {
                     final int i = Integer.parseInt(value);
@@ -123,6 +123,17 @@ public final class CliParser {
                     }
                 } catch (NumberFormatException ex) {
                     throw new ParseException("Invalid Setting: cveValidForHours must be a number greater than or equal to 0.");
+                }
+            }
+            value = line.getOptionValue(ARGUMENT.CVE_START_YEAR);
+            if (value != null) {
+                try {
+                    final int i = Integer.parseInt(value);
+                    if (i < 2002) {
+                        throw new ParseException("Invalid Setting: cveStartYear must be a number greater than or equal to 2002.");
+                    }
+                } catch (NumberFormatException ex) {
+                    throw new ParseException("Invalid Setting: cveStartYear must be a number greater than or equal to 2002.");
                 }
             }
         }
@@ -134,16 +145,14 @@ public final class CliParser {
                 validatePathExists(pathToCore, ARGUMENT.PATH_TO_CORE);
             }
             if (line.hasOption(ARGUMENT.OUTPUT_FORMAT)) {
-                String validating = null;
-                try {
-                    for (String format : getReportFormat()) {
-                        validating = format;
-                        Format.valueOf(format);
+                for (String validating : getReportFormat()) {
+                    if (!isValidFormat(validating)
+                            && !isValidFilePath(validating, "format")) {
+                        final String msg = String.format("An invalid 'format' of '%s' was specified. "
+                                + "Supported output formats are %s, and custom template files.",
+                                validating, SUPPORTED_FORMATS);
+                        throw new ParseException(msg);
                     }
-                } catch (IllegalArgumentException ex) {
-                    final String msg = String.format("An invalid 'format' of '%s' was specified. "
-                            + "Supported output formats are " + SUPPORTED_FORMATS, validating);
-                    throw new ParseException(msg);
                 }
             }
             final String base = getStringArgument(ARGUMENT.CVE_BASE_URL);
@@ -162,6 +171,38 @@ public final class CliParser {
                     throw new ParseException("Symbolic Link Depth (symLink) is not a number.");
                 }
             }
+        }
+    }
+
+    /**
+     * Validates the format to be one of the known Formats.
+     *
+     * @param format the format to validate
+     * @return true, if format is known in Format; false otherwise
+     * @see Format
+     */
+    private boolean isValidFormat(String format) {
+        try {
+            Format.valueOf(format);
+            return true;
+        } catch (IllegalArgumentException ex) {
+            return false;
+        }
+    }
+
+    /**
+     * Validates the path to point at an existing file.
+     *
+     * @param path the path to validate if it exists
+     * @param argumentName the argument being validated (e.g. scan, out, etc.)
+     * @return true, if path exists; false otherwise
+     */
+    private boolean isValidFilePath(String path, String argumentName) {
+        try {
+            validatePathExists(path, argumentName);
+            return true;
+        } catch (FileNotFoundException ex) {
+            return false;
         }
     }
 
@@ -249,7 +290,7 @@ public final class CliParser {
         final Options options = new Options();
         addStandardOptions(options);
         addAdvancedOptions(options);
-//        addDeprecatedOptions(options);
+        addDeprecatedOptions(options);
         return options;
     }
 
@@ -278,7 +319,7 @@ public final class CliParser {
                 .addOption(newOption(ARGUMENT.HELP_SHORT, ARGUMENT.HELP, "Print this message."))
                 .addOption(newOption(ARGUMENT.ADVANCED_HELP, "Print the advanced help message."))
                 .addOption(newOption(ARGUMENT.DISABLE_AUTO_UPDATE_SHORT, ARGUMENT.DISABLE_AUTO_UPDATE,
-                        "Disables the automatic updating of the CPE data."))
+                        "Disables the automatic updating of the NVD-CVE, hosted-suppressions and RetireJS data."))
                 .addOption(newOptionWithArg(ARGUMENT.VERBOSE_LOG_SHORT, ARGUMENT.VERBOSE_LOG, "file",
                         "The file path to write verbose logging information."))
                 .addOptionGroup(newOptionGroup(newOptionWithArg(ARGUMENT.SUPPRESSION_FILES, "file",
@@ -307,6 +348,12 @@ public final class CliParser {
                         "Base URL for each year’s CVE files (json.gz), the %d will be replaced with the year."))
                 .addOption(newOptionWithArg(ARGUMENT.CVE_MODIFIED_URL, "url",
                         "URL for the modified CVE (json.gz)."))
+                .addOption(newOptionWithArg(ARGUMENT.CVE_DOWNLOAD_WAIT_TIME, "milliseconds",
+                        "Time in milliseconds to wait between downloading from the NVD."))
+                .addOption(newOptionWithArg(ARGUMENT.CVE_USER, "user",
+                        "Credentials for basic authentication to the CVE data."))
+                .addOption(newOptionWithArg(ARGUMENT.CVE_PASSWORD, "password",
+                        "Credentials for basic authentication to the CVE data."))
                 .addOption(newOptionWithArg(ARGUMENT.PROXY_PORT, "port",
                         "The proxy port to use when downloading resources."))
                 .addOption(newOptionWithArg(ARGUMENT.PROXY_SERVER, "server",
@@ -320,6 +367,8 @@ public final class CliParser {
                         + "Use pipe, comma or colon as list separator."))
                 .addOption(newOptionWithArg(ARGUMENT.CONNECTION_TIMEOUT_SHORT, ARGUMENT.CONNECTION_TIMEOUT, "timeout",
                         "The connection timeout (in milliseconds) to use when downloading resources."))
+                .addOption(newOptionWithArg(ARGUMENT.CONNECTION_READ_TIMEOUT, "timeout",
+                        "The read timeout (in milliseconds) to use when downloading resources."))
                 .addOption(newOptionWithArg(ARGUMENT.CONNECTION_STRING, "connStr",
                         "The connection string to the database."))
                 .addOption(newOptionWithArg(ARGUMENT.DB_NAME, "user",
@@ -340,16 +389,26 @@ public final class CliParser {
                 .addOption(newOptionWithArg(ARGUMENT.PATH_TO_BUNDLE_AUDIT_WORKING_DIRECTORY, "path",
                         "The path to working directory that the bundle-audit command should be executed from when "
                         + "doing Gem bundle analysis."))
+                .addOption(newOptionWithArg(ARGUMENT.CENTRAL_URL, "url",
+                        "Alternative URL for Maven Central Search. If not set the public Sonatype Maven Central will be used."))
+                .addOption(newOptionWithArg(ARGUMENT.OSSINDEX_URL, "url",
+                        "Alternative URL for the OSS Index. If not set the public Sonatype OSS Index will be used."))
                 .addOption(newOptionWithArg(ARGUMENT.OSSINDEX_USERNAME, "username",
                         "The username to authenticate to Sonatype's OSS Index. If not set the Sonatype OSS Index "
                         + "Analyzer will use an unauthenticated connection."))
                 .addOption(newOptionWithArg(ARGUMENT.OSSINDEX_PASSWORD, "password", ""
                         + "The password to authenticate to Sonatype's OSS Index. If not set the Sonatype OSS "
                         + "Index Analyzer will use an unauthenticated connection."))
+                .addOption(newOptionWithArg(ARGUMENT.OSSINDEX_WARN_ONLY_ON_REMOTE_ERRORS, "true/false", ""
+                        + "Whether a Sonatype OSS Index remote error should result in a warning only or a failure."))
                 .addOption(newOption(ARGUMENT.RETIRE_JS_FORCEUPDATE, "Force the RetireJS Analyzer to update "
                         + "even if autoupdate is disabled"))
                 .addOption(newOptionWithArg(ARGUMENT.RETIREJS_URL, "url",
                         "The Retire JS Respository URL"))
+                .addOption(newOptionWithArg(ARGUMENT.RETIREJS_URL_USER, "username",
+                        "The password to authenticate to Retire JS Respository URL"))
+                .addOption(newOptionWithArg(ARGUMENT.RETIREJS_URL_PASSWORD, "password",
+                        "The password to authenticate to Retire JS Respository URL"))
                 .addOption(newOption(ARGUMENT.RETIREJS_FILTER_NON_VULNERABLE, "Specifies that the Retire JS "
                         + "Analyzer should filter out non-vulnerable JS files from the report."))
                 .addOption(newOptionWithArg(ARGUMENT.ARTIFACTORY_PARALLEL_ANALYSIS, "true/false",
@@ -366,8 +425,14 @@ public final class CliParser {
                         "The Artifactory URL."))
                 .addOption(newOptionWithArg(ARGUMENT.PATH_TO_GO, "path",
                         "The path to the `go` executable."))
+                .addOption(newOptionWithArg(ARGUMENT.PATH_TO_YARN, "path",
+                        "The path to the `yarn` executable."))
+                .addOption(newOptionWithArg(ARGUMENT.PATH_TO_PNPM, "path",
+                        "The path to the `pnpm` executable."))
                 .addOption(newOptionWithArg(ARGUMENT.CVE_VALID_FOR_HOURS, "hours",
                         "The number of hours to wait before checking for new updates from the NVD."))
+                .addOption(newOptionWithArg(ARGUMENT.CVE_START_YEAR, "year",
+                        "The first year to retrieve NVD CVE data for; default is 2002."))
                 .addOption(newOptionWithArg(ARGUMENT.RETIREJS_FILTERS, "pattern",
                         "Specify Retire JS content filter used to exclude files from analysis based on their content; "
                         + "most commonly used to exclude based on your applications own copyright line. This "
@@ -391,8 +456,11 @@ public final class CliParser {
                 .addOption(newOptionWithArg(ARGUMENT.PATH_TO_CORE, "path", "The path to dotnet core."))
                 .addOption(newOptionWithArg(ARGUMENT.HINTS_FILE, "file", "The file path to the hints XML file."))
                 .addOption(newOption(ARGUMENT.RETIRED, "Enables the retired analyzers."))
+                .addOption(newOption(ARGUMENT.DISABLE_MSBUILD, "Disable the MS Build Analyzer."))
                 .addOption(newOption(ARGUMENT.DISABLE_JAR, "Disable the Jar Analyzer."))
                 .addOption(newOption(ARGUMENT.DISABLE_ARCHIVE, "Disable the Archive Analyzer."))
+                .addOption(newOption(ARGUMENT.DISABLE_KEV, "Disable the Known Exploited Vulnerability Analyzer."))
+                .addOption(newOptionWithArg(ARGUMENT.KEV_URL, "url", "The url to the CISA Known Exploited Vulnerabilities JSON data feed"))
                 .addOption(newOption(ARGUMENT.DISABLE_ASSEMBLY, "Disable the .NET Assembly Analyzer."))
                 .addOption(newOption(ARGUMENT.DISABLE_PY_DIST, "Disable the Python Distribution Analyzer."))
                 .addOption(newOption(ARGUMENT.DISABLE_CMAKE, "Disable the Cmake Analyzer."))
@@ -400,10 +468,16 @@ public final class CliParser {
                 .addOption(newOption(ARGUMENT.DISABLE_MIX_AUDIT, "Disable the Elixir mix_audit Analyzer."))
                 .addOption(newOption(ARGUMENT.DISABLE_RUBYGEMS, "Disable the Ruby Gemspec Analyzer."))
                 .addOption(newOption(ARGUMENT.DISABLE_BUNDLE_AUDIT, "Disable the Ruby Bundler-Audit Analyzer."))
+                .addOption(newOption(ARGUMENT.DISABLE_FILENAME, "Disable the File Name Analyzer."))
                 .addOption(newOption(ARGUMENT.DISABLE_AUTOCONF, "Disable the Autoconf Analyzer."))
+                .addOption(newOption(ARGUMENT.DISABLE_MAVEN_INSTALL, "Disable the Maven install Analyzer."))
                 .addOption(newOption(ARGUMENT.DISABLE_PIP, "Disable the pip Analyzer."))
+                .addOption(newOption(ARGUMENT.DISABLE_PIPFILE, "Disable the Pipfile Analyzer."))
                 .addOption(newOption(ARGUMENT.DISABLE_COMPOSER, "Disable the PHP Composer Analyzer."))
+                .addOption(newOption(ARGUMENT.DISABLE_CPAN, "Disable the Perl CPAN file Analyzer."))
+                .addOption(newOption(ARGUMENT.DISABLE_POETRY, "Disable the Poetry Analyzer."))
                 .addOption(newOption(ARGUMENT.DISABLE_GOLANG_MOD, "Disable the Golang Mod Analyzer."))
+                .addOption(newOption(ARGUMENT.DISABLE_DART, "Disable the Dart Analyzer."))
                 .addOption(newOption(ARGUMENT.DISABLE_OPENSSL, "Disable the OpenSSL Analyzer."))
                 .addOption(newOption(ARGUMENT.DISABLE_NUSPEC, "Disable the Nuspec Analyzer."))
                 .addOption(newOption(ARGUMENT.DISABLE_NUGETCONF, "Disable the Nuget packages.config Analyzer."))
@@ -414,30 +488,44 @@ public final class CliParser {
                 .addOption(newOption(ARGUMENT.DISABLE_OSSINDEX_CACHE, "Disallow the OSS Index Analyzer from caching results"))
                 .addOption(newOption(ARGUMENT.DISABLE_COCOAPODS, "Disable the CocoaPods Analyzer."))
                 .addOption(newOption(ARGUMENT.DISABLE_SWIFT, "Disable the swift package Analyzer."))
+                .addOption(newOption(ARGUMENT.DISABLE_SWIFT_RESOLVED, "Disable the swift package resolved Analyzer."))
                 .addOption(newOption(ARGUMENT.DISABLE_GO_DEP, "Disable the Golang Package Analyzer."))
                 .addOption(newOption(ARGUMENT.DISABLE_NODE_JS, "Disable the Node.js Package Analyzer."))
+                .addOption(newOption(ARGUMENT.NODE_PACKAGE_SKIP_DEV_DEPENDENCIES, "Configures the Node Package Analyzer to skip devDependencies"))
                 .addOption(newOption(ARGUMENT.DISABLE_NODE_AUDIT, "Disable the Node Audit Analyzer."))
+                .addOption(newOption(ARGUMENT.DISABLE_PNPM_AUDIT, "Disable the Pnpm Audit Analyzer."))
+                .addOption(newOption(ARGUMENT.DISABLE_YARN_AUDIT, "Disable the Yarn Audit Analyzer."))
                 .addOption(newOption(ARGUMENT.DISABLE_NODE_AUDIT_CACHE, "Disallow the Node Audit Analyzer from caching results"))
                 .addOption(newOption(ARGUMENT.DISABLE_NODE_AUDIT_SKIPDEV, "Configures the Node Audit Analyzer to skip devDependencies"))
                 .addOption(newOption(ARGUMENT.DISABLE_RETIRE_JS, "Disable the RetireJS Analyzer."))
-                .addOption(newOption(ARGUMENT.ENABLE_NEXUS, "Disable the Nexus Analyzer."))
+                .addOption(newOption(ARGUMENT.ENABLE_NEXUS, "Enable the Nexus Analyzer."))
                 .addOption(newOption(ARGUMENT.ARTIFACTORY_ENABLED, "Whether the Artifactory Analyzer should be enabled."))
-                .addOption(newOption(ARGUMENT.PURGE_NVD, "Purges the local NVD data cache"));
+                .addOption(newOption(ARGUMENT.PURGE_NVD, "Purges the local NVD data cache"))
+                .addOption(newOption(ARGUMENT.DISABLE_HOSTED_SUPPRESSIONS, "Disable the usage of the hosted suppressions file"))
+                .addOption(newOption(ARGUMENT.HOSTED_SUPPRESSIONS_FORCEUPDATE, "Force the hosted suppressions file to update even"
+                                                                               + " if autoupdate is disabled"))
+                .addOption(newOptionWithArg(ARGUMENT.HOSTED_SUPPRESSIONS_VALID_FOR_HOURS, "hours",
+                                            "The number of hours to wait before checking for new updates of the the hosted suppressions file."))
+                .addOption(newOptionWithArg(ARGUMENT.HOSTED_SUPPRESSIONS_URL, "url",
+                                            "The URL for a mirrored hosted suppressions file"));
 
     }
 
-//    /**
-//     * Adds the deprecated command line options to the given options collection.
-//     * These are split out for purposes of not including them in the help
-//     * message. We need to add the deprecated options so as not to break
-//     * existing scripts.
-//     *
-//     * @param options a collection of command line arguments
-//     */
-//    @SuppressWarnings({"static-access", "deprecation"})
-//    private void addDeprecatedOptions(final Options options) {
-//        //all deprecated arguments have been removed (for now)
-//    }
+    /**
+     * Adds the deprecated command line options to the given options collection.
+     * These are split out for purposes of not including them in the help
+     * message. We need to add the deprecated options so as not to break
+     * existing scripts.
+     *
+     * @param options a collection of command line arguments
+     */
+    @SuppressWarnings({"static-access", "deprecation"})
+    private void addDeprecatedOptions(final Options options) {
+        //not a real option - but enables java debugging via the shell script
+        options.addOption(newOption("debug",
+                "Used to enable java debugging of the cli via dependency-check.sh."));
+    }
+
     /**
      * Determines if the 'version' command line argument was passed in.
      *
@@ -492,13 +580,13 @@ public final class CliParser {
      * Example given `--disableArchive` on the command line would cause this
      * method to return true for the disable archive setting.
      *
-     * @param argument the command line argument
+     * @param disableFlag the command line disable option
      * @param setting the corresponding settings key
      * @return true if the disable option was set, if not set the currently
      * configured value will be returned
      */
-    public boolean hasDisableOption(String argument, String setting) {
-        if (line == null || !line.hasOption(argument)) {
+    public boolean isDisabled(String disableFlag, String setting) {
+        if (line == null || !line.hasOption(disableFlag)) {
             try {
                 return !settings.getBoolean(setting);
             } catch (InvalidSettingException ise) {
@@ -517,12 +605,27 @@ public final class CliParser {
      * otherwise false
      */
     public boolean isNodeAuditDisabled() {
-        if (hasDisableOption("disableNSP", Settings.KEYS.ANALYZER_NODE_AUDIT_ENABLED)) {
-            LOGGER.error("The disableNSP argument has been deprecated and replaced by disableNodeAudit");
-            LOGGER.error("The disableNSP argument will be removed in the next version");
-            return true;
-        }
-        return hasDisableOption(ARGUMENT.DISABLE_NODE_AUDIT, Settings.KEYS.ANALYZER_NODE_AUDIT_ENABLED);
+        return isDisabled(ARGUMENT.DISABLE_NODE_AUDIT, Settings.KEYS.ANALYZER_NODE_AUDIT_ENABLED);
+    }
+
+    /**
+     * Returns true if the disableYarnAudit command line argument was specified.
+     *
+     * @return true if the disableYarnAudit command line argument was specified;
+     * otherwise false
+     */
+    public boolean isYarnAuditDisabled() {
+        return isDisabled(ARGUMENT.DISABLE_YARN_AUDIT, Settings.KEYS.ANALYZER_YARN_AUDIT_ENABLED);
+    }
+
+    /**
+     * Returns true if the disablePnpmAudit command line argument was specified.
+     *
+     * @return true if the disablePnpmAudit command line argument was specified;
+     * otherwise false
+     */
+    public boolean isPnpmAuditDisabled() {
+        return isDisabled(ARGUMENT.DISABLE_PNPM_AUDIT, Settings.KEYS.ANALYZER_PNPM_AUDIT_ENABLED);
     }
 
     /**
@@ -571,7 +674,24 @@ public final class CliParser {
      * @return the value of the argument
      */
     public String getStringArgument(String option) {
+        return getStringArgument(option, null);
+    }
+
+    /**
+     * Returns the argument value for the given option.
+     *
+     * @param option the option
+     * @param key the dependency-check settings key for the option.
+     * @return the value of the argument
+     */
+    public String getStringArgument(String option, String key) {
         if (line != null && line.hasOption(option)) {
+            if (key != null && (option.toLowerCase().endsWith("password")
+                    || option.toLowerCase().endsWith("pass"))) {
+                LOGGER.warn("{} used on the command line, consider moving the password "
+                        + "to a properties file using the key `{}` and using the "
+                        + "--propertyfile argument instead", option, key);
+            }
             return line.getOptionValue(option);
         }
         return null;
@@ -985,6 +1105,10 @@ public final class CliParser {
          */
         public static final String CONNECTION_TIMEOUT = "connectiontimeout";
         /**
+         * The CLI argument name indicating the connection read timeout.
+         */
+        public static final String CONNECTION_READ_TIMEOUT = "readtimeout";
+        /**
          * The short CLI argument name for setting the location of an additional
          * properties file.
          */
@@ -1006,6 +1130,10 @@ public final class CliParser {
          * The CLI argument name for setting the URL for the CVE Data Files.
          */
         public static final String CVE_BASE_URL = "cveUrlBase";
+        /**
+         * The time in milliseconds to wait between downloading NVD CVE data.
+         */
+        public static final String CVE_DOWNLOAD_WAIT_TIME = "cveDownloadWait";
         /**
          * The short CLI argument name for setting the location of the data
          * directory.
@@ -1040,13 +1168,38 @@ public final class CliParser {
          */
         public static final String CVE_VALID_FOR_HOURS = "cveValidForHours";
         /**
+         * The CLI argument name for setting the first year to retrieve NVD
+         * data.
+         */
+        public static final String CVE_START_YEAR = "cveStartYear";
+        /**
+         * The username for basic auth to the CVE data.
+         */
+        public static final String CVE_USER = "cveUser";
+        /**
+         * The password for basic auth to the CVE data.
+         */
+        public static final String CVE_PASSWORD = "cvePassword";
+        /**
          * Disables the Jar Analyzer.
          */
         public static final String DISABLE_JAR = "disableJar";
         /**
+         * Disable the MS Build Analyzer.
+         */
+        public static final String DISABLE_MSBUILD = "disableMSBuild";
+        /**
          * Disables the Archive Analyzer.
          */
         public static final String DISABLE_ARCHIVE = "disableArchive";
+        /**
+         * Disables the Known Exploited Analyzer.
+         */
+        public static final String DISABLE_KEV = "disableKnownExploited";
+        /**
+         * The URL to the CISA Known Exploited Vulnerability JSON datafeed.
+         */
+        public static final String KEV_URL = "kevURL";
         /**
          * Disables the Python Distribution Analyzer.
          */
@@ -1064,17 +1217,33 @@ public final class CliParser {
          */
         public static final String DISABLE_GO_DEP = "disableGolangDep";
         /**
-         * Disables the Python Package Analyzer.
+         * Disables the PHP Composer Analyzer.
          */
         public static final String DISABLE_COMPOSER = "disableComposer";
+        /**
+         * Disables the Perl CPAN File Analyzer.
+         */
+        public static final String DISABLE_CPAN = "disableCpan";
         /**
          * Disables the Golang Mod Analyzer.
          */
         public static final String DISABLE_GOLANG_MOD = "disableGolangMod";
         /**
+         * Disables the Dart Analyzer.
+         */
+        public static final String DISABLE_DART = "disableDart";
+        /**
          * The CLI argument name for setting the path to `go`.
          */
         public static final String PATH_TO_GO = "go";
+        /**
+         * The CLI argument name for setting the path to `yarn`.
+         */
+        public static final String PATH_TO_YARN = "yarn";
+        /**
+         * The CLI argument name for setting the path to `pnpm`.
+         */
+        public static final String PATH_TO_PNPM = "pnpm";
         /**
          * Disables the Ruby Gemspec Analyzer.
          */
@@ -1084,9 +1253,21 @@ public final class CliParser {
          */
         public static final String DISABLE_AUTOCONF = "disableAutoconf";
         /**
+         * Disables the Maven install Analyzer.
+         */
+        public static final String DISABLE_MAVEN_INSTALL = "disableMavenInstall";
+        /**
          * Disables the pip Analyzer.
          */
         public static final String DISABLE_PIP = "disablePip";
+        /**
+         * Disables the Pipfile Analyzer.
+         */
+        public static final String DISABLE_PIPFILE = "disablePipfile";
+        /**
+         * Disables the Poetry Analyzer.
+         */
+        public static final String DISABLE_POETRY = "disablePoetry";
         /**
          * Disables the Cmake Analyzer.
          */
@@ -1100,6 +1281,10 @@ public final class CliParser {
          */
         public static final String DISABLE_SWIFT = "disableSwiftPackageManagerAnalyzer";
         /**
+         * Disables the swift package resolved analyzer.
+         */
+        public static final String DISABLE_SWIFT_RESOLVED = "disableSwiftPackageResolvedAnalyzer";
+        /**
          * Disables the Assembly Analyzer.
          */
         public static final String DISABLE_ASSEMBLY = "disableAssembly";
@@ -1107,6 +1292,10 @@ public final class CliParser {
          * Disables the Ruby Bundler Audit Analyzer.
          */
         public static final String DISABLE_BUNDLE_AUDIT = "disableBundleAudit";
+        /**
+         * Disables the File Name Analyzer.
+         */
+        public static final String DISABLE_FILENAME = "disableFileName";
         /**
          * Disables the Nuspec Analyzer.
          */
@@ -1124,6 +1313,10 @@ public final class CliParser {
          */
         public static final String DISABLE_CENTRAL_CACHE = "disableCentralCache";
         /**
+         * The alternative URL for Maven Central Search.
+         */
+        public static final String CENTRAL_URL = "centralUrl";
+        /**
          * Disables the Nexus Analyzer.
          */
         public static final String ENABLE_NEXUS = "enableNexus";
@@ -1137,6 +1330,10 @@ public final class CliParser {
          */
         public static final String DISABLE_OSSINDEX_CACHE = "disableOssIndexCache";
         /**
+         * The alternative URL for the Sonatype OSS Index.
+         */
+        public static final String OSSINDEX_URL = "ossIndexUrl";
+        /**
          * The username for the Sonatype OSS Index.
          */
         public static final String OSSINDEX_USERNAME = "ossIndexUsername";
@@ -1144,6 +1341,10 @@ public final class CliParser {
          * The password for the Sonatype OSS Index.
          */
         public static final String OSSINDEX_PASSWORD = "ossIndexPassword";
+        /**
+         * The password for the Sonatype OSS Index.
+         */
+        public static final String OSSINDEX_WARN_ONLY_ON_REMOTE_ERRORS = "ossIndexRemoteErrorWarnOnly";
         /**
          * Disables the OpenSSL Analyzer.
          */
@@ -1153,9 +1354,21 @@ public final class CliParser {
          */
         public static final String DISABLE_NODE_JS = "disableNodeJS";
         /**
+         * Skips dev dependencies in Node Package Analyzer.
+         */
+        public static final String NODE_PACKAGE_SKIP_DEV_DEPENDENCIES = "nodePackageSkipDevDependencies";
+        /**
          * Disables the Node Audit Analyzer.
          */
         public static final String DISABLE_NODE_AUDIT = "disableNodeAudit";
+        /**
+         * Disables the Yarn Audit Analyzer.
+         */
+        public static final String DISABLE_YARN_AUDIT = "disableYarnAudit";
+        /**
+         * Disables the Pnpm Audit Analyzer.
+         */
+        public static final String DISABLE_PNPM_AUDIT = "disablePnpmAudit";
         /**
          * Disables the Node Audit Analyzer's ability to cache results locally.
          */
@@ -1177,6 +1390,14 @@ public final class CliParser {
          * The URL to the retire JS repository.
          */
         public static final String RETIREJS_URL = "retireJsUrl";
+        /**
+         * The username to the retire JS repository.
+         */
+        public static final String RETIREJS_URL_USER = "retireJsUrlUser";
+        /**
+         * The password to the retire JS repository.
+         */
+        public static final String RETIREJS_URL_PASSWORD = "retireJsUrlPass";
         /**
          * The URL of the nexus server.
          */
@@ -1307,5 +1528,22 @@ public final class CliParser {
          * when generating the JUNIT report format.
          */
         public static final String FAIL_JUNIT_ON_CVSS = "junitFailOnCVSS";
+        /**
+         * The CLI argument to set the number of hours to wait before re-checking hosted suppressions file for updates.
+         */
+        public static final String DISABLE_HOSTED_SUPPRESSIONS = "disableHostedSuppressions";
+        /**
+         * The CLI argument to set the number of hours to wait before re-checking hosted suppressions file for updates.
+         */
+        public static final String HOSTED_SUPPRESSIONS_VALID_FOR_HOURS = "hostedSuppressionsValidForHours";
+        /**
+         * The CLI argument to set Whether the hosted suppressions file will update regardless of the `noupdate` argument.
+         */
+        public static final String HOSTED_SUPPRESSIONS_FORCEUPDATE = "hostedSuppressionsForceUpdate";
+        /**
+         * The CLI argument to set the location of a mirrored hosted suppressions
+         * file .
+         */
+        public static final String HOSTED_SUPPRESSIONS_URL = "hostedSuppressionsUrl";
     }
 }

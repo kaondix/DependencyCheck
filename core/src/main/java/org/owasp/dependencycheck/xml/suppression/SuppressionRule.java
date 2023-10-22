@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.concurrent.NotThreadSafe;
+import org.apache.commons.lang3.time.DateFormatUtils;
 import org.owasp.dependencycheck.dependency.Dependency;
 import org.owasp.dependencycheck.dependency.Vulnerability;
 import org.owasp.dependencycheck.dependency.naming.CpeIdentifier;
@@ -73,7 +74,7 @@ public class SuppressionRule {
     /**
      * The list of vulnerability name entries to suppress.
      */
-    private List<PropertyType> vulnerabilityNames = new ArrayList<>();
+    private final List<PropertyType> vulnerabilityNames = new ArrayList<>();
     /**
      * A Maven GAV to suppression.
      */
@@ -101,6 +102,29 @@ public class SuppressionRule {
      * waiting for the vulnerability fix of the dependency to be released.
      */
     private Calendar until;
+
+    /**
+     * A flag whether or not the rule matched a dependency & CPE.
+     */
+    private boolean matched = false;
+
+    /**
+     * Get the value of matched.
+     *
+     * @return the value of matched
+     */
+    public boolean isMatched() {
+        return matched;
+    }
+
+    /**
+     * Set the value of matched.
+     *
+     * @param matched new value of matched
+     */
+    public void setMatched(boolean matched) {
+        this.matched = matched;
+    }
 
     /**
      * Get the (@code{nullable}) value of until.
@@ -466,6 +490,7 @@ public class SuppressionRule {
                 for (PropertyType c : this.cpe) {
                     if (identifierMatches(c, i)) {
                         if (!isBase()) {
+                            matched = true;
                             if (this.notes != null) {
                                 i.setNotes(this.notes);
                             }
@@ -476,7 +501,7 @@ public class SuppressionRule {
                     }
                 }
             }
-            removalList.forEach((i) -> dependency.removeVulnerableSoftwareIdentifier(i));
+            removalList.forEach(dependency::removeVulnerableSoftwareIdentifier);
         }
         if (hasCve() || hasVulnerabilityName() || hasCwe() || hasCvssBelow()) {
             final Set<Vulnerability> removeVulns = new HashSet<>();
@@ -506,7 +531,6 @@ public class SuppressionRule {
                             removeVulns.add(v);
                             break;
                         }
-
                     }
                 }
                 if (!remove) {
@@ -523,18 +547,15 @@ public class SuppressionRule {
                         }
                     }
                 }
-                if (remove) {
-                    if (!isBase()) {
-                        if (this.notes != null) {
-                            v.setNotes(this.notes);
-                        }
-                        dependency.addSuppressedVulnerability(v);
+                if (remove && !isBase()) {
+                    matched = true;
+                    if (this.notes != null) {
+                        v.setNotes(this.notes);
                     }
+                    dependency.addSuppressedVulnerability(v);
                 }
             }
-            removeVulns.forEach((v) -> {
-                dependency.removeVulnerability(v);
-            });
+            removeVulns.forEach(dependency::removeVulnerability);
         }
     }
 
@@ -603,20 +624,20 @@ public class SuppressionRule {
                 try {
                     return suppressionEntry.matches(cpeId.toCpe22Uri());
                 } catch (CpeEncodingException ex) {
-                    LOGGER.debug("Unable to convert CPE to 22 URI?" + cpeId.toString());
+                    LOGGER.debug("Unable to convert CPE to 22 URI?" + cpeId);
                 }
             } else if (suppressionEntry.isCaseSensitive()) {
                 try {
                     return cpeId.toCpe22Uri().startsWith(suppressionEntry.getValue());
                 } catch (CpeEncodingException ex) {
-                    LOGGER.debug("Unable to convert CPE to 22 URI?" + cpeId.toString());
+                    LOGGER.debug("Unable to convert CPE to 22 URI?" + cpeId);
                 }
             } else {
                 final String id;
                 try {
                     id = cpeId.toCpe22Uri().toLowerCase();
                 } catch (CpeEncodingException ex) {
-                    LOGGER.debug("Unable to convert CPE to 22 URI?" + cpeId.toString());
+                    LOGGER.debug("Unable to convert CPE to 22 URI?" + cpeId);
                     return false;
                 }
                 final String check = suppressionEntry.getValue().toLowerCase();
@@ -636,7 +657,8 @@ public class SuppressionRule {
         final StringBuilder sb = new StringBuilder(64);
         sb.append("SuppressionRule{");
         if (until != null) {
-            sb.append("until=").append(until).append(',');
+            final String dt = DateFormatUtils.ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.format(until);
+            sb.append("until=").append(dt).append(',');
         }
         if (filePath != null) {
             sb.append("filePath=").append(filePath).append(',');
@@ -644,42 +666,35 @@ public class SuppressionRule {
         if (sha1 != null) {
             sb.append("sha1=").append(sha1).append(',');
         }
+        if (packageUrl != null) {
+            sb.append("packageUrl=").append(packageUrl).append(',');
+        }
         if (gav != null) {
             sb.append("gav=").append(gav).append(',');
         }
         if (cpe != null && !cpe.isEmpty()) {
             sb.append("cpe={");
-            cpe.forEach((pt) -> {
-                sb.append(pt).append(',');
-            });
+            cpe.forEach((pt) -> sb.append(pt).append(','));
             sb.append('}');
         }
         if (cwe != null && !cwe.isEmpty()) {
             sb.append("cwe={");
-            cwe.forEach((s) -> {
-                sb.append(s).append(',');
-            });
+            cwe.forEach((s) -> sb.append(s).append(','));
             sb.append('}');
         }
         if (cve != null && !cve.isEmpty()) {
             sb.append("cve={");
-            cve.forEach((s) -> {
-                sb.append(s).append(',');
-            });
+            cve.forEach((s) -> sb.append(s).append(','));
             sb.append('}');
         }
         if (vulnerabilityNames != null && !vulnerabilityNames.isEmpty()) {
             sb.append("vulnerabilityName={");
-            vulnerabilityNames.forEach((pt) -> {
-                sb.append(pt).append(',');
-            });
+            vulnerabilityNames.forEach((pt) -> sb.append(pt).append(','));
             sb.append('}');
         }
         if (cvssBelow != null && !cvssBelow.isEmpty()) {
             sb.append("cvssBelow={");
-            cvssBelow.forEach((s) -> {
-                sb.append(s).append(',');
-            });
+            cvssBelow.forEach((s) -> sb.append(s).append(','));
             sb.append('}');
         }
         sb.append('}');

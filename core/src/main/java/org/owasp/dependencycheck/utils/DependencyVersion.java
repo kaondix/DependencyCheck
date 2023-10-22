@@ -77,7 +77,9 @@ public class DependencyVersion implements Iterable<String>, Comparable<Dependenc
     public final void parseVersion(String version) {
         versionParts = new ArrayList<>();
         if (version != null) {
-            final Pattern rx = Pattern.compile("(\\d+[a-z]{1,3}$|[a-z]{1,3}[_-]?\\d+|\\d+|(release|snapshot|beta|alpha)$)", Pattern.CASE_INSENSITIVE);
+            final Pattern rx = Pattern
+                    .compile("(\\d+[a-z]{1,3}$|[a-z]{1,3}[_-]?\\d+|\\d+|(rc|release|snapshot|beta|alpha)$)",
+                            Pattern.CASE_INSENSITIVE);
             final Matcher matcher = rx.matcher(version.toLowerCase());
             while (matcher.find()) {
                 versionParts.add(matcher.group());
@@ -142,10 +144,8 @@ public class DependencyVersion implements Iterable<String>, Comparable<Dependenc
             return true;
         }
         final DependencyVersion other = (DependencyVersion) obj;
-        final int minVersionMatchLength = (this.versionParts.size() < other.versionParts.size())
-                ? this.versionParts.size() : other.versionParts.size();
-        final int maxVersionMatchLength = (this.versionParts.size() > other.versionParts.size())
-                ? this.versionParts.size() : other.versionParts.size();
+        final int minVersionMatchLength = Math.min(this.versionParts.size(), other.versionParts.size());
+        final int maxVersionMatchLength = Math.max(this.versionParts.size(), other.versionParts.size());
 
         if (minVersionMatchLength == 1 && maxVersionMatchLength >= 3) {
             return false;
@@ -211,8 +211,7 @@ public class DependencyVersion implements Iterable<String>, Comparable<Dependenc
             return false;
         }
 
-        final int max = (this.versionParts.size() < version.versionParts.size())
-                ? this.versionParts.size() : version.versionParts.size();
+        final int max = Math.min(this.versionParts.size(), version.versionParts.size());
 
         boolean ret = true;
         for (int i = 0; i < max; i++) {
@@ -239,7 +238,7 @@ public class DependencyVersion implements Iterable<String>, Comparable<Dependenc
         }
         final List<String> left = this.getVersionParts();
         final List<String> right = version.getVersionParts();
-        final int max = left.size() < right.size() ? left.size() : right.size();
+        final int max = Math.min(left.size(), right.size());
 
         for (int i = 0; i < max; i++) {
             final String lStr = left.get(i);

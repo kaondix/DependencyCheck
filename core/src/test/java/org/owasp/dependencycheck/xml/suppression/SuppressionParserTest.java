@@ -32,7 +32,8 @@ import org.owasp.dependencycheck.BaseTest;
 public class SuppressionParserTest extends BaseTest {
 
     /**
-     * Test of parseSuppressionRules method, of class SuppressionParser for the v1.0 suppressions XML Schema.
+     * Test of parseSuppressionRules method, of class SuppressionParser for the
+     * v1.0 suppression XML Schema.
      */
     @Test
     public void testParseSuppressionRulesV1dot0() throws Exception {
@@ -42,8 +43,10 @@ public class SuppressionParserTest extends BaseTest {
         List<SuppressionRule> result = instance.parseSuppressionRules(file);
         Assert.assertEquals(5, result.size());
     }
+
     /**
-     * Test of parseSuppressionRules method, of class SuppressionParser for the v1.1 suppressions XML Schema.
+     * Test of parseSuppressionRules method, of class SuppressionParser for the
+     * v1.1 suppression XML Schema.
      */
     @Test
     public void testParseSuppressionRulesV1dot1() throws Exception {
@@ -53,8 +56,10 @@ public class SuppressionParserTest extends BaseTest {
         List<SuppressionRule> result = instance.parseSuppressionRules(file);
         Assert.assertEquals(5, result.size());
     }
+
     /**
-     * Test of parseSuppressionRules method, of class SuppressionParser for the v1.2 suppressions XML Schema.
+     * Test of parseSuppressionRules method, of class SuppressionParser for the
+     * v1.2 suppression XML Schema.
      */
     @Test
     public void testParseSuppressionRulesV1dot2() throws Exception {
@@ -64,8 +69,10 @@ public class SuppressionParserTest extends BaseTest {
         List<SuppressionRule> result = instance.parseSuppressionRules(file);
         Assert.assertEquals(4, result.size());
     }
-        /**
-     * Test of parseSuppressionRules method, of class SuppressionParser for the v1.2 suppressions XML Schema.
+
+    /**
+     * Test of parseSuppressionRules method, of class SuppressionParser for the
+     * v1.2 suppression XML Schema.
      */
     @Test
     public void testParseSuppressionRulesV1dot3() throws Exception {

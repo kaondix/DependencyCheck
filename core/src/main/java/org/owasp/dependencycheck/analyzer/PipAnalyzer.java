@@ -74,7 +74,7 @@ public class PipAnalyzer extends AbstractFileTypeAnalyzer {
     /**
      * o * Matches AC_INIT variables in the output configure script.
      */
-    private static final Pattern PACKAGE_VERSION = Pattern.compile("^([^#].*?)(?:[=>]=([\\.\\*0-9]+?))?$", Pattern.MULTILINE);
+    private static final Pattern PACKAGE_VERSION = Pattern.compile("^([^#].*?)(?:[=~>]=([\\.\\*0-9]+?))?$", Pattern.MULTILINE);
 
     /**
      * The file filter used to determine which files this analyzer supports.
@@ -147,7 +147,11 @@ public class PipAnalyzer extends AbstractFileTypeAnalyzer {
                     d.setName(identifiedPackage);
                     d.setVersion(identifiedVersion);
                     try {
-                        final PackageURL purl = PackageURLBuilder.aPackageURL().withType("pypi").withName(identifiedPackage).withVersion(identifiedVersion).build();
+                        final PackageURL purl = PackageURLBuilder.aPackageURL()
+                                .withType("pypi")
+                                .withName(identifiedPackage)
+                                .withVersion(identifiedVersion)
+                                .build();
                         d.addSoftwareIdentifier(new PurlIdentifier(purl, Confidence.HIGHEST));
                     } catch (MalformedPackageURLException ex) {
                         LOGGER.debug("Unable to build package url for pypi", ex);
@@ -162,6 +166,7 @@ public class PipAnalyzer extends AbstractFileTypeAnalyzer {
                     d.setMd5sum(Checksum.getMD5Checksum(filePath));
                     d.addEvidence(EvidenceType.PRODUCT, REQUIREMENTS, "product", identifiedPackage, Confidence.HIGHEST);
                     d.addEvidence(EvidenceType.VERSION, REQUIREMENTS, "version", identifiedVersion, Confidence.HIGHEST);
+                    d.addEvidence(EvidenceType.VENDOR, REQUIREMENTS, "vendor", identifiedPackage, Confidence.HIGHEST);
                     engine.addDependency(d);
                 }
             }

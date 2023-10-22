@@ -15,7 +15,7 @@ for more information on why this task would be used.
 
 Configuration: dependency-check-update Task
 --------------------
-The following properties can be set on the dependency-check task.
+The following properties can be set on the dependency-check-update task.
 
 Property              | Description                                                             | Default Value
 ----------------------|-------------------------------------------------------------------------|------------------
@@ -24,7 +24,8 @@ proxyPort             | The Proxy Port.                                         
 proxyUsername         | Defines the proxy user name.                                            | &nbsp;
 proxyPassword         | Defines the proxy password.                                             | &nbsp;
 nonProxyHosts         | Defines the hosts that will not be proxied.                             | &nbsp;
-connectionTimeout     | The URL Connection Timeout.                                             | &nbsp;
+connectionTimeout     | The URL Connection Timeout (in milliseconds).                           | 10000
+readtimeout           | The URL Read Timeout (in milliseconds).                                 | 60000
 failOnError           | Whether the build should fail if there is an error executing the update | true
 
 Advanced Configuration
@@ -34,11 +35,17 @@ may be the cvedUrl properties, which can be used to host a mirror of the NVD wit
 
 Property             | Description                                                                                                          | Default Value
 ---------------------|----------------------------------------------------------------------------------------------------------------------|------------------
-cveUrlModified       | URL for the modified CVE JSON data feed. When mirroring the NVD you must mirror the *.json.gz and the *.meta files.  | https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-modified.json.gz
+cveUrlModified       | URL for the modified CVE JSON data feed. When mirroring the NVD you must mirror the *.json.gz and the *.meta files. Optional if your custom cveUrlBase is just a domain name change.  | https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-modified.json.gz
 cveUrlBase           | Base URL for each year's CVE JSON data feed, the %d will be replaced with the year.                                  | https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-%d.json.gz
+cveWaitTime          | The time in milliseconds to wait between downloads from the NVD.                                                     | 4000
+cveStartYear         | The first year of NVD CVE data to download from the NVD.                                                             | 2002
 dataDirectory        | Data directory that is used to store the local copy of the NVD. This should generally not be changed.                | data
 databaseDriverName   | The name of the database driver. Example: org.h2.Driver.                                                             | &nbsp;
 databaseDriverPath   | The path to the database driver JAR file; only used if the driver is not in the class path.                          | &nbsp;
 connectionString     | The connection string used to connect to the database. See using a [database server](../data/database.html).         | &nbsp;
 databaseUser         | The username used when connecting to the database.                                                                   | &nbsp;
 databasePassword     | The password used when connecting to the database.                                                                   | &nbsp;
+hostedSuppressionsEnabled | Whether the hosted suppression file will be used.                                                               | true
+hostedSuppressionsUrl | The URL to a mirrored copy of the hosted suppressions file for internet-constrained environments                    | https://jeremylong.github.io/DependencyCheck/suppressions/publishedSuppressions.xml
+hostedSuppressionsValidForHours | Sets the number of hours to wait before checking for new updates of the hosted suppressions file          | 2
+hostedSuppressionsForceUpdate | Sets whether the hosted suppressions file should update regardless of the `autoupdate` and validForHours settings | false 

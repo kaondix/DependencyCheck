@@ -19,6 +19,7 @@ package org.owasp.dependencycheck.analyzer;
 
 import java.io.File;
 import java.util.Set;
+import org.owasp.dependencycheck.data.nvd.ecosystem.Ecosystem;
 import org.owasp.dependencycheck.dependency.Dependency;
 import org.owasp.dependencycheck.dependency.EvidenceType;
 import org.owasp.dependencycheck.utils.FileUtils;
@@ -46,7 +47,11 @@ public class DependencyMergingAnalyzer extends AbstractDependencyComparingAnalyz
     /**
      * The phase that this analyzer is intended to run in.
      */
-    private static final AnalysisPhase ANALYSIS_PHASE = AnalysisPhase.POST_INFORMATION_COLLECTION;
+    private static final AnalysisPhase ANALYSIS_PHASE = AnalysisPhase.POST_INFORMATION_COLLECTION1;
+    /**
+     * Used for synchronization when merging related dependencies.
+     */
+    private static final Object DEPENDENCY_LOCK = new Object();
 
     /**
      * Returns the name of the analyzer.
@@ -120,6 +125,13 @@ public class DependencyMergingAnalyzer extends AbstractDependencyComparingAnalyz
                 mergeDependencies(nextDependency, dependency, dependenciesToRemove);
                 return true; //since we merged into the next dependency - skip forward to the next in mainIterator
             }
+        } else if ((main = getMainVirtualDependency(dependency, nextDependency)) != null) {
+            if (main == dependency) {
+                mergeDependencies(dependency, nextDependency, dependenciesToRemove);
+            } else {
+                mergeDependencies(nextDependency, dependency, dependenciesToRemove);
+                return true; //since we merged into the next dependency - skip forward to the next in mainIterator
+            }
         }
         //CSON: InnerAssignment
         return false;
@@ -137,18 +149,20 @@ public class DependencyMergingAnalyzer extends AbstractDependencyComparingAnalyz
      */
     public static void mergeDependencies(final Dependency dependency, final Dependency relatedDependency,
             final Set<Dependency> dependenciesToRemove) {
-        LOGGER.debug("Merging '{}' into '{}'", relatedDependency.getFilePath(), dependency.getFilePath());
-        dependency.addRelatedDependency(relatedDependency);
-        relatedDependency.getEvidence(EvidenceType.VENDOR).forEach((e) -> dependency.addEvidence(EvidenceType.VENDOR, e));
-        relatedDependency.getEvidence(EvidenceType.PRODUCT).forEach((e) -> dependency.addEvidence(EvidenceType.PRODUCT, e));
-        relatedDependency.getEvidence(EvidenceType.VERSION).forEach((e) -> dependency.addEvidence(EvidenceType.VERSION, e));
+        synchronized (DEPENDENCY_LOCK) {
+            LOGGER.debug("Merging '{}' into '{}'", relatedDependency.getFilePath(), dependency.getFilePath());
+            dependency.addRelatedDependency(relatedDependency);
+            relatedDependency.getEvidence(EvidenceType.VENDOR).forEach((e) -> dependency.addEvidence(EvidenceType.VENDOR, e));
+            relatedDependency.getEvidence(EvidenceType.PRODUCT).forEach((e) -> dependency.addEvidence(EvidenceType.PRODUCT, e));
+            relatedDependency.getEvidence(EvidenceType.VERSION).forEach((e) -> dependency.addEvidence(EvidenceType.VERSION, e));
 
-        relatedDependency.getRelatedDependencies().stream()
-                .peek(dependency::addRelatedDependency)
-                .forEach((d) -> relatedDependency.removeRelatedDependencies(d));
-        dependency.addAllProjectReferences(relatedDependency.getProjectReferences());
-        if (dependenciesToRemove != null) {
-            dependenciesToRemove.add(relatedDependency);
+            relatedDependency.getRelatedDependencies()
+                    .forEach(dependency::addRelatedDependency);
+            relatedDependency.clearRelatedDependencies();
+            dependency.addAllProjectReferences(relatedDependency.getProjectReferences());
+            if (dependenciesToRemove != null) {
+                dependenciesToRemove.add(relatedDependency);
+            }
         }
     }
 
@@ -191,7 +205,10 @@ public class DependencyMergingAnalyzer extends AbstractDependencyComparingAnalyz
      * analysis
      */
     protected Dependency getMainGemspecDependency(Dependency dependency1, Dependency dependency2) {
-        if (isSameRubyGem(dependency1, dependency2)) {
+        if (dependency1 != null && dependency2 != null
+                && Ecosystem.RUBY.equals(dependency1.getEcosystem())
+                && Ecosystem.RUBY.equals(dependency2.getEcosystem())
+                && isSameRubyGem(dependency1, dependency2)) {
             final File lFile = dependency1.getActualFile();
             final File left = lFile.getParentFile();
             if (left != null && left.getName().equalsIgnoreCase("specifications")) {
@@ -233,7 +250,10 @@ public class DependencyMergingAnalyzer extends AbstractDependencyComparingAnalyz
      * @return the primary swift dependency
      */
     protected Dependency getMainSwiftDependency(Dependency dependency1, Dependency dependency2) {
-        if (isSameSwiftPackage(dependency1, dependency2)) {
+        if (dependency1 != null && dependency2 != null
+                && Ecosystem.IOS.equals(dependency1.getEcosystem())
+                && Ecosystem.IOS.equals(dependency2.getEcosystem())
+                && isSameSwiftPackage(dependency1, dependency2)) {
             if (dependency1.getFileName().endsWith(".podspec")) {
                 return dependency1;
             }
@@ -251,18 +271,22 @@ public class DependencyMergingAnalyzer extends AbstractDependencyComparingAnalyz
      * @return the primary swift dependency
      */
     protected Dependency getMainAndroidDependency(Dependency dependency1, Dependency dependency2) {
-        if (dependency1.isVirtual() || dependency2.isVirtual()) {
-            return null;
-        }
-        if ("classes.jar".equals(dependency2.getActualFile().getName())
-                && "aar".equals(FileUtils.getFileExtension(dependency1.getActualFile().getName()))
-                && dependency2.getFileName().contains(dependency1.getActualFile().getName())) {
-            return dependency1;
-        }
-        if ("classes.jar".equals(dependency1.getActualFile().getName())
-                && "aar".equals(FileUtils.getFileExtension(dependency2.getActualFile().getName()))
-                && dependency1.getFileName().contains(dependency2.getActualFile().getName())) {
-            return dependency2;
+        if (!dependency1.isVirtual()
+                && !dependency2.isVirtual()
+                && Ecosystem.JAVA.equals(dependency1.getEcosystem())
+                && Ecosystem.JAVA.equals(dependency2.getEcosystem())) {
+            final String name1 = dependency1.getActualFile().getName();
+            final String name2 = dependency2.getActualFile().getName();
+            if ("classes.jar".equals(name2)
+                    && "aar".equals(FileUtils.getFileExtension(name1))
+                    && dependency2.getFileName().contains(name1)) {
+                return dependency1;
+            }
+            if ("classes.jar".equals(name1)
+                    && "aar".equals(FileUtils.getFileExtension(name2))
+                    && dependency1.getFileName().contains(name2)) {
+                return dependency2;
+            }
         }
         return null;
     }
@@ -278,16 +302,37 @@ public class DependencyMergingAnalyzer extends AbstractDependencyComparingAnalyz
     protected Dependency getMainDotnetDependency(Dependency dependency1, Dependency dependency2) {
         if (dependency1.getName() != null && dependency1.getVersion() != null
                 && dependency2.getName() != null && dependency2.getVersion() != null
-                && (AssemblyAnalyzer.DEPENDENCY_ECOSYSTEM.equals(dependency1.getEcosystem())
-                || NugetconfAnalyzer.DEPENDENCY_ECOSYSTEM.equals(dependency1.getEcosystem()))
-                && (AssemblyAnalyzer.DEPENDENCY_ECOSYSTEM.equals(dependency2.getEcosystem())
-                || NugetconfAnalyzer.DEPENDENCY_ECOSYSTEM.equals(dependency2.getEcosystem()))) {
-            if (dependency1.getName().equals(dependency2.getName()) && dependency1.getVersion().equals(dependency2.getVersion())) {
-                if (dependency2.isVirtual()) {
-                    return dependency2;
-                }
-                return dependency1;
+                && Ecosystem.DOTNET.equals(dependency1.getEcosystem())
+                && Ecosystem.DOTNET.equals(dependency2.getEcosystem())
+                && dependency1.getName().equals(dependency2.getName())
+                && dependency1.getVersion().equals(dependency2.getVersion())) {
+            if (dependency1.isVirtual()) {
+                return dependency2;
             }
+            return dependency1;
+        }
+        return null;
+    }
+
+    /**
+     * Determines which of the virtual dependencies should be considered the
+     * primary.
+     *
+     * @param dependency1 the first virtual dependency to compare
+     * @param dependency2 the second virtual dependency to compare
+     *
+     * @return the first virtual dependency (or {code null} if they are not to
+     * be considered mergeable virtual dependencies)
+     */
+    protected Dependency getMainVirtualDependency(Dependency dependency1, Dependency dependency2) {
+        if (dependency1.isVirtual() && dependency2.isVirtual()
+                && dependency1.getName() != null && dependency2.getName() != null
+                && dependency1.getVersion() != null && dependency2.getVersion() != null
+                && dependency1.getActualFilePath() != null && dependency2.getActualFilePath() != null
+                && dependency1.getName().equals(dependency2.getName())
+                && dependency1.getVersion().equals(dependency2.getVersion())
+                && dependency1.getActualFilePath().equals(dependency2.getActualFilePath())) {
+            return dependency1;
         }
         return null;
     }

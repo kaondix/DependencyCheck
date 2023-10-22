@@ -37,7 +37,7 @@ import static org.junit.Assert.assertTrue;
 public class DependencyCheckTaskIT extends BaseDBTestCase {
 
     @Rule
-    public BuildFileRule buildFileRule = new BuildFileRule();
+    public final BuildFileRule buildFileRule = new BuildFileRule();
 
     @Before
     @Override
@@ -95,15 +95,46 @@ public class DependencyCheckTaskIT extends BaseDBTestCase {
         assertTrue("DependencyCheck report was not generated", report.exists());
     }
 
+    @Test
+    public void testNestedReportFormat() throws Exception {
+        File reportHTML = new File("target/dependency-check-report.html");
+        File reportCSV = new File("target/dependency-check-report.csv");
+        if (reportCSV.exists()) {
+            if (!reportCSV.delete()) {
+                throw new Exception("Unable to delete 'target/DependencyCheck-Vulnerability.html' prior to test.");
+            }
+        }
+        if (reportHTML.exists()) {
+            if (!reportHTML.delete()) {
+                throw new Exception("Unable to delete 'target/DependencyCheck-Vulnerability.csv' prior to test.");
+            }
+        }
+        buildFileRule.executeTarget("test.formatNested");
+        assertTrue("DependencyCheck CSV report was not generated", reportCSV.exists());
+        assertTrue("DependencyCheck HTML report was not generated", reportHTML.exists());
+    }
+
+    @Test
+    public void testNestedBADReportFormat() throws Exception {
+        try {
+            buildFileRule.executeTarget("test.formatBADNested");
+            Assert.fail("Should have had a buildExceotion for a bad format attribute");
+        } catch (BuildException e) {
+            assertTrue("Message did not have BAD, unexpected exception: " + e.getMessage(), e.getMessage().contains("BAD is not a legal value for this attribute"));
+        }
+    }
+
     /**
      * Test of getFailBuildOnCVSS method, of class DependencyCheckTask.
      */
     @Test
     public void testGetFailBuildOnCVSS() {
-        Exception exception = Assert.assertThrows(BuildException.class, () -> {
-            buildFileRule.executeTarget("failCVSS");
-        });
-        Assert.assertTrue(exception.getMessage().contains("One or more dependencies were identified with vulnerabilities that have a CVSS score greater than or equal to '3.0':"));
+        Exception exception = Assert.assertThrows(BuildException.class, () -> buildFileRule.executeTarget("failCVSS"));
+
+        String expectedMessage = String.format("One or more dependencies were identified with vulnerabilities that "
+                + "have a CVSS score greater than or equal to '%.1f':", 3.0f);
+
+        Assert.assertTrue(exception.getMessage().contains(expectedMessage));
     }
 
     /**
@@ -137,7 +168,6 @@ public class DependencyCheckTaskIT extends BaseDBTestCase {
     public void testSuppressingSingle() {
         // GIVEN an ant task with a vulnerability using the legacy property
         final String antTaskName = "suppression-single";
-
         // WHEN executing the ant task
         buildFileRule.executeTarget(antTaskName);
 
@@ -154,7 +184,6 @@ public class DependencyCheckTaskIT extends BaseDBTestCase {
     public void testSuppressingMultiple() {
         // GIVEN an ant task with a vulnerability using multiple was to configure the suppression file
         final String antTaskName = "suppression-multiple";
-
         // WHEN executing the ant task
         buildFileRule.executeTarget(antTaskName);
 

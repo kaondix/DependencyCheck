@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -81,7 +80,7 @@ public class HintAnalyzer extends AbstractAnalyzer {
     /**
      * The phase that this analyzer is intended to run in.
      */
-    private static final AnalysisPhase ANALYSIS_PHASE = AnalysisPhase.PRE_IDENTIFIER_ANALYSIS;
+    private static final AnalysisPhase ANALYSIS_PHASE = AnalysisPhase.POST_INFORMATION_COLLECTION2;
 
     /**
      * Returns the name of the analyzer.
@@ -195,13 +194,11 @@ public class HintAnalyzer extends AbstractAnalyzer {
             }
         }
 
-        final Iterator<Evidence> itr = dependency.getEvidence(EvidenceType.VENDOR).iterator();
-        while (itr.hasNext()) {
-            final Evidence e = itr.next();
+        for (Evidence e : dependency.getEvidence(EvidenceType.VENDOR)) {
             for (VendorDuplicatingHintRule dhr : vendorHints) {
                 if (dhr.getValue().equalsIgnoreCase(e.getValue())) {
                     dependency.addEvidence(EvidenceType.VENDOR, new Evidence(e.getSource() + " (hint)",
-                            e.getName(), dhr.getDuplicate(), e.getConfidence()));
+                            e.getName(), dhr.getDuplicate(), e.getConfidence(), true));
                 }
             }
         }
@@ -292,15 +289,11 @@ public class HintAnalyzer extends AbstractAnalyzer {
                     file = new File(filePath);
                     if (!file.exists()) {
                         try (InputStream fromClasspath = FileUtils.getResourceAsStream(filePath)) {
-                            if (fromClasspath != null) {
-                                deleteTempFile = true;
-                                file = getSettings().getTempFile("hint", "xml");
-                                try {
-                                    org.apache.commons.io.FileUtils.copyInputStreamToFile(fromClasspath, file);
-                                } catch (IOException ex) {
-                                    throw new HintParseException("Unable to locate hints file in classpath", ex);
-                                }
-                            }
+                            deleteTempFile = true;
+                            file = getSettings().getTempFile("hint", "xml");
+                            org.apache.commons.io.FileUtils.copyInputStreamToFile(fromClasspath, file);
+                        } catch (IOException ex) {
+                            throw new HintParseException("Unable to locate hints file in classpath", ex);
                         }
                     }
                 }

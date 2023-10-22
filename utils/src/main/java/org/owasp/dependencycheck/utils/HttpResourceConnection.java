@@ -75,7 +75,16 @@ public class HttpResourceConnection implements AutoCloseable {
     /**
      * Whether or not the conn will use the defined proxy.
      */
-    private boolean usesProxy;
+    private final boolean usesProxy;
+
+    /**
+     * The settings key for the username to be used.
+     */
+    private String userKey = null;
+    /**
+     * The settings key for the password to be used.
+     */
+    private String passwordKey = null;
 
     /**
      * Constructs a new HttpResourceConnection object.
@@ -99,6 +108,22 @@ public class HttpResourceConnection implements AutoCloseable {
     }
 
     /**
+     * Constructs a new HttpResourceConnection object.
+     *
+     * @param settings the configured settings
+     * @param usesProxy control whether this conn will use the defined proxy
+     * @param userKey the settings key for the username to be used
+     * @param passwordKey the settings key for the password to be used
+     */
+    public HttpResourceConnection(Settings settings, boolean usesProxy, String userKey, String passwordKey) {
+        this.settings = settings;
+        this.connFactory = new URLConnectionFactory(settings);
+        this.usesProxy = usesProxy;
+        this.userKey = userKey;
+        this.passwordKey = passwordKey;
+    }
+
+    /**
      * Retrieves the resource identified by the given URL and returns the
      * InputStream.
      *
@@ -115,18 +140,18 @@ public class HttpResourceConnection implements AutoCloseable {
             try {
                 file = new File(url.toURI());
             } catch (URISyntaxException ex) {
-                final String msg = format("Download failed, unable to locate '%s'", url.toString());
+                final String msg = format("Download failed, unable to locate '%s'", url);
                 throw new DownloadFailedException(msg);
             }
             if (file.exists()) {
                 try {
                     return new FileInputStream(file);
                 } catch (IOException ex) {
-                    final String msg = format("Download failed, unable to rerieve '%s'", url.toString());
+                    final String msg = format("Download failed, unable to rerieve '%s'", url);
                     throw new DownloadFailedException(msg, ex);
                 }
             } else {
-                final String msg = format("Download failed, file ('%s') does not exist", url.toString());
+                final String msg = format("Download failed, file ('%s') does not exist", url);
                 throw new DownloadFailedException(msg);
             }
         } else {
@@ -139,9 +164,9 @@ public class HttpResourceConnection implements AutoCloseable {
 
             final String encoding = connection.getContentEncoding();
             try {
-                if (encoding != null && "gzip".equalsIgnoreCase(encoding)) {
+                if ("gzip".equalsIgnoreCase(encoding)) {
                     return new GZIPInputStream(connection.getInputStream());
-                } else if (encoding != null && "deflate".equalsIgnoreCase(encoding)) {
+                } else if ("deflate".equalsIgnoreCase(encoding)) {
                     return new InflaterInputStream(connection.getInputStream());
                 } else {
                     return connection.getInputStream();
@@ -149,11 +174,11 @@ public class HttpResourceConnection implements AutoCloseable {
             } catch (IOException ex) {
                 checkForCommonExceptionTypes(ex);
                 final String msg = format("Error retrieving '%s'%nConnection Timeout: %d%nEncoding: %s%n",
-                        url.toString(), connection.getConnectTimeout(), encoding);
+                        url, connection.getConnectTimeout(), encoding);
                 throw new DownloadFailedException(msg, ex);
             } catch (Exception ex) {
                 final String msg = format("Unexpected exception retrieving '%s'%nConnection Timeout: %d%nEncoding: %s%n",
-                        url.toString(), connection.getConnectTimeout(), encoding);
+                        url, connection.getConnectTimeout(), encoding);
                 throw new DownloadFailedException(msg, ex);
             }
         }
@@ -174,9 +199,13 @@ public class HttpResourceConnection implements AutoCloseable {
         try {
             LOGGER.debug("Attempting retrieval of {}", url.toString());
             conn = connFactory.createHttpURLConnection(url, this.usesProxy);
+            if (userKey != null && passwordKey != null) {
+                connFactory.addBasicAuthentication(conn, userKey, passwordKey);
+            }
             conn.setRequestProperty("Accept-Encoding", "gzip, deflate");
             conn.connect();
             int status = conn.getResponseCode();
+            final String message = conn.getResponseMessage();
             int redirectCount = 0;
             // TODO - should this get replaced by using the conn.setInstanceFollowRedirects(true);
             while ((status == HttpURLConnection.HTTP_MOVED_TEMP
@@ -189,7 +218,7 @@ public class HttpResourceConnection implements AutoCloseable {
                 } finally {
                     conn = null;
                 }
-                LOGGER.debug("Download is being redirected from {} to {}", url.toString(), location);
+                LOGGER.debug("Download is being redirected from {} to {}", url, location);
                 conn = connFactory.createHttpURLConnection(new URL(location), this.usesProxy);
                 conn.setRequestProperty("Accept-Encoding", "gzip, deflate");
                 conn.connect();
@@ -201,21 +230,21 @@ public class HttpResourceConnection implements AutoCloseable {
                 } finally {
                     conn = null;
                 }
-                throw new ResourceNotFoundException("Requested resource does not exists - received a 404");
+                throw new ResourceNotFoundException("Requested resource does not exist - received a 404");
             } else if (status == 429) {
                 try {
                     conn.disconnect();
                 } finally {
                     conn = null;
                 }
-                throw new TooManyRequestsException("Download fialed - too many connection requests");
+                throw new TooManyRequestsException("Download failed - too many connection requests");
             } else if (status != 200) {
                 try {
                     conn.disconnect();
                 } finally {
                     conn = null;
                 }
-                final String msg = format("Error retrieving %s; received response code %s.", url.toString(), status);
+                final String msg = format("Error retrieving %s; received response code %s; %s", url, status, message);
                 LOGGER.error(msg);
                 throw new DownloadFailedException(msg);
             }
@@ -234,99 +263,10 @@ public class HttpResourceConnection implements AutoCloseable {
                 LOGGER.error(msg);
                 throw new DownloadFailedException(msg, ex);
             }
-            final String msg = format("Error downloading file %s; unable to connect.", url.toString());
+            final String msg = format("Error downloading file %s; unable to connect.", url);
             throw new DownloadFailedException(msg, ex);
         }
         return conn;
-    }
-
-    /**
-     * Makes an HTTP Head request to retrieve the last modified date of the
-     * given URL. If the file:// protocol is specified, then the lastTimestamp
-     * of the file is returned.
-     *
-     * @param url the URL to retrieve the timestamp from
-     * @return an epoch timestamp
-     * @throws org.owasp.dependencycheck.utils.DownloadFailedException is thrown
-     * if an exception occurs making the HTTP request
-     * @deprecated this method is no longer used to check the last modified date
-     * of the NVD. This method will be removed in a future release.
-     */
-    @Deprecated
-    public long getLastModified(URL url) throws DownloadFailedException {
-        return getLastModified(url, false);
-    }
-
-    /**
-     * Makes an HTTP Head request to retrieve the last modified date of the
-     * given URL. If the file:// protocol is specified, then the lastTimestamp
-     * of the file is returned.
-     *
-     * @param url the URL to retrieve the timestamp from
-     * @param isRetry indicates if this is a retry - to prevent endless loop and
-     * stack overflow
-     * @return an epoch timestamp
-     * @throws DownloadFailedException is thrown if an exception occurs making
-     * the HTTP request
-     * @deprecated this method is no longer used to check the last modified date
-     * of the NVD. This method will be removed in a future release.
-     */
-    @Deprecated
-    private long getLastModified(URL url, boolean isRetry) throws DownloadFailedException {
-        final long timestamp;
-        //TODO use the obtain connection instead of this mostly duplicated code
-        if ("file".equalsIgnoreCase(url.getProtocol())) {
-            final File lastModifiedFile;
-            try {
-                lastModifiedFile = new File(url.toURI());
-            } catch (URISyntaxException ex) {
-                final String msg = format("Unable to locate '%s'", url.toString());
-                throw new DownloadFailedException(msg, ex);
-            }
-            timestamp = lastModifiedFile.lastModified();
-        } else {
-            final String httpMethod = determineHttpMethod();
-            HttpURLConnection conn = null;
-            try {
-                conn = connFactory.createHttpURLConnection(url);
-                conn.setRequestMethod(httpMethod);
-                conn.connect();
-                final int t = conn.getResponseCode();
-                if (t >= 200 && t < 300) {
-                    timestamp = conn.getLastModified();
-                } else {
-                    throw new DownloadFailedException(format("%s request returned a non-200 status code: %s", httpMethod, url));
-                }
-            } catch (URLConnectionFailureException ex) {
-                throw new DownloadFailedException(format("Error creating URL Connection for HTTP %s request: %s", httpMethod, url), ex);
-            } catch (IOException ex) {
-                checkForCommonExceptionTypes(ex);
-                LOGGER.error(format("IO Exception connecting to %s: %s", url, ex.getMessage()));
-                LOGGER.debug("Exception details", ex);
-                if (ex.getCause() != null) {
-                    LOGGER.debug("IO Exception cause: " + ex.getCause().getMessage(), ex.getCause());
-                }
-                try {
-                    //retry
-                    if (!isRetry && settings.getBoolean(Settings.KEYS.DOWNLOADER_QUICK_QUERY_TIMESTAMP)) {
-                        settings.setBoolean(Settings.KEYS.DOWNLOADER_QUICK_QUERY_TIMESTAMP, false);
-                        return getLastModified(url, true);
-                    }
-                } catch (InvalidSettingException ex1) {
-                    LOGGER.debug("invalid setting?", ex1);
-                }
-                throw new DownloadFailedException(format("Error making HTTP %s request to %s", httpMethod, url), ex);
-            } finally {
-                if (conn != null) {
-                    try {
-                        conn.disconnect();
-                    } finally {
-                        conn = null;
-                    }
-                }
-            }
-        }
-        return timestamp;
     }
 
     /**

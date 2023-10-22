@@ -137,41 +137,10 @@ public class FalsePositiveAnalyzer extends AbstractAnalyzer {
     protected void analyzeDependency(Dependency dependency, Engine engine) throws AnalysisException {
         removeJreEntries(dependency);
         removeBadMatches(dependency);
-        removeBadSpringMatches(dependency);
         removeWrongVersionMatches(dependency);
         removeSpuriousCPE(dependency);
         removeDuplicativeEntriesFromJar(dependency, engine);
         addFalseNegativeCPEs(dependency);
-    }
-
-    /**
-     * Removes inaccurate matches on springframework CPEs.
-     *
-     * @param dependency the dependency to test for and remove known inaccurate
-     * CPE matches
-     */
-    private void removeBadSpringMatches(Dependency dependency) {
-        String mustContain = null;
-        for (Identifier i : dependency.getSoftwareIdentifiers()) {
-            if (i.getValue() != null && i.getValue().startsWith("org.springframework.")) {
-                final int endPoint = i.getValue().indexOf(':', 19);
-                if (endPoint >= 0) {
-                    mustContain = i.getValue().substring(19, endPoint).toLowerCase();
-                    break;
-                }
-            }
-        }
-        if (mustContain != null) {
-            final Set<Identifier> removalSet = new HashSet<>();
-            for (Identifier i : dependency.getVulnerableSoftwareIdentifiers()) {
-                if (i.getValue() != null
-                        && i.getValue().startsWith("cpe:/a:springsource:")
-                        && !i.getValue().toLowerCase().contains(mustContain)) {
-                    removalSet.add(i);
-                }
-            }
-            removalSet.forEach((i) -> dependency.removeVulnerableSoftwareIdentifier(i));
-        }
     }
 
     /**
@@ -259,7 +228,7 @@ public class FalsePositiveAnalyzer extends AbstractAnalyzer {
             }
 
         });
-        removalSet.forEach((i) -> dependency.removeVulnerableSoftwareIdentifier(i));
+        removalSet.forEach(dependency::removeVulnerableSoftwareIdentifier);
     }
 
     /**
@@ -271,6 +240,7 @@ public class FalsePositiveAnalyzer extends AbstractAnalyzer {
      */
     protected void removeBadMatches(Dependency dependency) {
 
+        final Set<Identifier> toRemove = new HashSet<>();
         /* TODO - can we utilize the pom's groupid and artifactId to filter??? most of
          * these are due to low quality data.  Other idea would be to say any CPE
          * found based on LOW confidence evidence should have a different CPE type? (this
@@ -302,9 +272,10 @@ public class FalsePositiveAnalyzer extends AbstractAnalyzer {
                         || dependency.getFileName().toLowerCase().endsWith(".tar")
                         || dependency.getFileName().toLowerCase().endsWith(".gz")
                         || dependency.getFileName().toLowerCase().endsWith(".tgz")
+                        || dependency.getFileName().toLowerCase().endsWith(".rpm")
                         || dependency.getFileName().toLowerCase().endsWith(".ear")
                         || dependency.getFileName().toLowerCase().endsWith(".war"))) {
-                    dependency.removeVulnerableSoftwareIdentifier(i);
+                    toRemove.add(i);
                 } else if ((("jquery".equals(cpe.getVendor()) && "jquery".equals(cpe.getProduct()))
                         || ("prototypejs".equals(cpe.getVendor()) && "prototype".equals(cpe.getProduct()))
                         || ("yahoo".equals(cpe.getVendor()) && "yui".equals(cpe.getProduct())))
@@ -312,7 +283,7 @@ public class FalsePositiveAnalyzer extends AbstractAnalyzer {
                         || dependency.getFileName().toLowerCase().endsWith("pom.xml")
                         || dependency.getFileName().toLowerCase().endsWith(".dll")
                         || dependency.getFileName().toLowerCase().endsWith(".exe"))) {
-                    dependency.removeVulnerableSoftwareIdentifier(i);
+                    toRemove.add(i);
                 } else if ((("microsoft".equals(cpe.getVendor()) && "excel".equals(cpe.getProduct()))
                         || ("microsoft".equals(cpe.getVendor()) && "word".equals(cpe.getProduct()))
                         || ("microsoft".equals(cpe.getVendor()) && "visio".equals(cpe.getProduct()))
@@ -323,10 +294,10 @@ public class FalsePositiveAnalyzer extends AbstractAnalyzer {
                         || dependency.getFileName().toLowerCase().endsWith(".ear")
                         || dependency.getFileName().toLowerCase().endsWith(".war")
                         || dependency.getFileName().toLowerCase().endsWith("pom.xml"))) {
-                    dependency.removeVulnerableSoftwareIdentifier(i);
+                    toRemove.add(i);
                 } else if (("apache".equals(cpe.getVendor()) && "maven".equals(cpe.getProduct()))
                         && !dependency.getFileName().toLowerCase().matches("maven-core-[\\d.]+\\.jar")) {
-                    dependency.removeVulnerableSoftwareIdentifier(i);
+                    toRemove.add(i);
                 } else if (("m-core".equals(cpe.getVendor()) && "m-core".equals(cpe.getProduct()))) {
                     boolean found = false;
                     for (Evidence e : dependency.getEvidence(EvidenceType.PRODUCT)) {
@@ -344,14 +315,27 @@ public class FalsePositiveAnalyzer extends AbstractAnalyzer {
                         }
                     }
                     if (!found) {
-                        dependency.removeVulnerableSoftwareIdentifier(i);
+                        toRemove.add(i);
                     }
                 } else if (("jboss".equals(cpe.getVendor()) && "jboss".equals(cpe.getProduct()))
                         && !dependency.getFileName().toLowerCase().matches("jboss-?[\\d.-]+(GA)?\\.jar")) {
-                    dependency.removeVulnerableSoftwareIdentifier(i);
+                    toRemove.add(i);
+                } else if ("java-websocket_project".equals(cpe.getVendor())
+                        && "java-websocket".equals(cpe.getProduct())) {
+                    boolean found = false;
+                    for (Identifier si : dependency.getSoftwareIdentifiers()) {
+                        if (si.getValue().toLowerCase().contains("org.java-websocket/java-websocket")) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        toRemove.add(i);
+                    }
                 }
             }
         }
+        toRemove.forEach(dependency::removeVulnerableSoftwareIdentifier);
     }
 
     /**
@@ -384,7 +368,7 @@ public class FalsePositiveAnalyzer extends AbstractAnalyzer {
                         }
                     });
         }
-        identifiersToRemove.forEach((i) -> dependency.removeVulnerableSoftwareIdentifier(i));
+        identifiersToRemove.forEach(dependency::removeVulnerableSoftwareIdentifier);
     }
 
     /**
@@ -399,6 +383,7 @@ public class FalsePositiveAnalyzer extends AbstractAnalyzer {
     private void addFalseNegativeCPEs(Dependency dependency) {
         final CpeBuilder builder = new CpeBuilder();
         //TODO move this to the hint analyzer
+        final List<Identifier> identifiersToAdd = new ArrayList<>();
         dependency.getVulnerableSoftwareIdentifiers().stream()
                 .filter((i) -> (i instanceof CpeIdentifier))
                 .map(i -> (CpeIdentifier) i)
@@ -422,10 +407,10 @@ public class FalsePositiveAnalyzer extends AbstractAnalyzer {
                             final CpeIdentifier newCpeId2 = new CpeIdentifier(newCpe2, i.getConfidence());
                             final CpeIdentifier newCpeId3 = new CpeIdentifier(newCpe3, i.getConfidence());
                             final CpeIdentifier newCpeId4 = new CpeIdentifier(newCpe4, i.getConfidence());
-                            dependency.addVulnerableSoftwareIdentifier(newCpeId1);
-                            dependency.addVulnerableSoftwareIdentifier(newCpeId2);
-                            dependency.addVulnerableSoftwareIdentifier(newCpeId3);
-                            dependency.addVulnerableSoftwareIdentifier(newCpeId4);
+                            identifiersToAdd.add(newCpeId1);
+                            identifiersToAdd.add(newCpeId2);
+                            identifiersToAdd.add(newCpeId3);
+                            identifiersToAdd.add(newCpeId4);
 
                         } catch (CpeValidationException ex) {
                             LOGGER.warn("Unable to add oracle and sun CPEs", ex);
@@ -436,12 +421,13 @@ public class FalsePositiveAnalyzer extends AbstractAnalyzer {
                             final Cpe newCpe1 = builder.part(Part.APPLICATION).vendor("apache")
                                     .product("xml_security_for_java").version(cpe.getVersion()).build();
                             final CpeIdentifier newCpeId1 = new CpeIdentifier(newCpe1, i.getConfidence());
-                            dependency.addVulnerableSoftwareIdentifier(newCpeId1);
+                            identifiersToAdd.add(newCpeId1);
                         } catch (CpeValidationException ex) {
                             LOGGER.warn("Unable to add apache xml_security_for_java CPE", ex);
                         }
                     }
                 });
+        identifiersToAdd.forEach(dependency::addVulnerableSoftwareIdentifier);
     }
 
     /**

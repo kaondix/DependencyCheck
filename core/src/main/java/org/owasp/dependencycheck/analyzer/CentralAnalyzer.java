@@ -40,7 +40,7 @@ import java.net.URL;
 import java.text.MessageFormat;
 import java.util.List;
 import javax.annotation.concurrent.ThreadSafe;
-import org.apache.commons.jcs.access.exception.CacheException;
+import org.apache.commons.jcs3.access.exception.CacheException;
 import org.owasp.dependencycheck.data.cache.DataCache;
 import org.owasp.dependencycheck.data.cache.DataCacheFactory;
 
@@ -296,7 +296,7 @@ public class CentralAnalyzer extends AbstractFileTypeAnalyzer {
 
                     } finally {
                         if (pomFile != null && pomFile.exists() && !FileUtils.deleteQuietly(pomFile)) {
-                            LOGGER.debug("Failed to delete temporary pom file {}", pomFile.toString());
+                            LOGGER.debug("Failed to delete temporary pom file {}", pomFile);
                             pomFile.deleteOnExit();
                         }
                     }

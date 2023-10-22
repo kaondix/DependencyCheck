@@ -67,12 +67,18 @@ Config Group | Property          | Description                                  
 -------------|-------------------|--------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------|
 cve          | urlModified       | URL for the modified CVE JSON data feed.                                                                     | https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-modified.json.gz |
 cve          | urlBase           | Base URL for each year's CVE JSON data feed, the %d will be replaced with the year.                          | https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-%d.json.gz       |
+cve          | waitTime          | The time in milliseconds to wait between downloads from the NVD.                                             | 4000                                                                |
+cve          | startYear         | The first year of NVD CVE data to download from the NVD.                                                     | 2002                                                                |
 data         | directory         | Sets the data directory to hold SQL CVEs contents. This should generally not be changed.                     | &nbsp;                                                              |
 data         | driver            | The name of the database driver. Example: org.h2.Driver.                                                     | &nbsp;                                                              |
 data         | driverPath        | The path to the database driver JAR file; only used if the driver is not in the class path.                  | &nbsp;                                                              |
 data         | connectionString  | The connection string used to connect to the database. See using a [database server](../data/database.html). | &nbsp;                                                              |
 data         | username          | The username used when connecting to the database.                                                           | &nbsp;                                                              |
 data         | password          | The password used when connecting to the database.                                                           | &nbsp;                                                              |
+hostedSuppressions | enabled         | Whether the hosted suppressions file will be used.                                                       | true
+hostedSuppressions | forceupdate     | Sets whether hosted suppressions file will update regardless of the `autoupdate` setting.                | false
+hostedSuppressions | url             | The URL to the Retire JS repository.                                                                     | https://jeremylong.github.io/DependencyCheck/suppressions/publishedSuppressions.xml
+hostedSuppressions | validForHours   | The number of hours to wait before checking for new updates of the hosted suppressions file .            | 2
 
 #### Example
 ```groovy

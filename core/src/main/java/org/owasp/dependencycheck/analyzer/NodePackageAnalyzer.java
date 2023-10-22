@@ -33,9 +33,11 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.json.Json;
 import javax.json.JsonException;
@@ -90,6 +92,10 @@ public class NodePackageAnalyzer extends AbstractNpmAnalyzer {
      * The file name to scan.
      */
     public static final String SHRINKWRAP_JSON = "npm-shrinkwrap.json";
+    /**
+     * The name of the directory that contains node modules
+     */
+    public static final String NODE_MODULES_DIRNAME = "node_modules";
     /**
      * Filter that detects files named "package.json", "package-lock.json", or
      * "npm-shrinkwrap.json".
@@ -185,12 +191,12 @@ public class NodePackageAnalyzer extends AbstractNpmAnalyzer {
      */
     private boolean isNodeAuditEnabled(Engine engine) {
         for (Analyzer a : engine.getAnalyzers()) {
-            if (a instanceof NodeAuditAnalyzer) {
+            if (a instanceof NodeAuditAnalyzer || a instanceof YarnAuditAnalyzer || a instanceof PnpmAuditAnalyzer) {
                 if (a.isEnabled()) {
                     try {
-                        ((NodeAuditAnalyzer) a).prepareFileTypeAnalyzer(engine);
+                        ((AbstractNpmAnalyzer) a).prepareFileTypeAnalyzer(engine);
                     } catch (InitializationException ex) {
-                        LOGGER.debug("Error initializing the NodeAuditAnalyzer");
+                        LOGGER.debug("Error initializing the {}", a.getName());
                     }
                 }
                 return a.isEnabled();
@@ -207,21 +213,21 @@ public class NodePackageAnalyzer extends AbstractNpmAnalyzer {
      * <code>true</code>
      */
     private boolean noLockFileExists(File dependencyFile) {
-        //TODO if we support yarn we need to add the check for the yarn.yml file
         final File lock = new File(dependencyFile.getParentFile(), "package-lock.json");
         final File shrinkwrap = new File(dependencyFile.getParentFile(), "npm-shrinkwrap.json");
-        return !(lock.isFile() || shrinkwrap.isFile());
+        final File yarnLock = new File(dependencyFile.getParentFile(), "yarn.lock");
+        return !(lock.isFile() || shrinkwrap.isFile() || yarnLock.isFile());
     }
 
     @Override
     protected void analyzeDependency(Dependency dependency, Engine engine) throws AnalysisException {
-        if (isNodeAuditEnabled(engine)
-                && !(PACKAGE_LOCK_JSON.equals(dependency.getFileName()) || SHRINKWRAP_JSON.equals(dependency.getFileName()))) {
-            engine.removeDependency(dependency);
-        }
         final File dependencyFile = dependency.getActualFile();
         if (!dependencyFile.isFile() || dependencyFile.length() == 0 || !shouldProcess(dependencyFile)) {
             return;
+        }
+        if (isNodeAuditEnabled(engine)
+                && !(PACKAGE_LOCK_JSON.equals(dependency.getFileName()) || SHRINKWRAP_JSON.equals(dependency.getFileName()))) {
+            engine.removeDependency(dependency);
         }
         if (noLockFileExists(dependency.getActualFile())) {
             LOGGER.warn("No lock file exists - this will result in false negatives; please run `npm install --package-lock`");
@@ -242,7 +248,7 @@ public class NodePackageAnalyzer extends AbstractNpmAnalyzer {
         final File nodeModules = new File(baseDir, "node_modules");
         if (!nodeModules.isDirectory()) {
             LOGGER.warn("Analyzing `{}` - however, the node_modules directory does not exist. "
-                    + "Please run `npm install` prior to running dependency-check", dependencyFile.toString());
+                    + "Please run `npm install` prior to running dependency-check", dependencyFile);
             return;
         }
 
@@ -269,21 +275,22 @@ public class NodePackageAnalyzer extends AbstractNpmAnalyzer {
         }
     }
 
-
     /**
-     * should process the dependency ?
-     * Will return true if you need to skip it . (e.g. dependency can't be read, or if npm audit doesn't handle it)
+     * should process the dependency ? Will return true if you need to skip it .
+     * (e.g. dependency can't be read, or if npm audit doesn't handle it)
+     *
      * @param name the name of the dependency
      * @param version the version of the dependency
      * @param optional is the dependency optional ?
      * @param fileExist is the package.json available for this file ?
      * @return should you skip this dependency ?
      */
-    public static boolean shouldSkipDependency(String name, String version, boolean optional, boolean fileExist){
+    public static boolean shouldSkipDependency(String name, String version, boolean optional, boolean fileExist) {
         // some package manager can handle alias, yarn for example, but npm doesn't support it
-        if(version.startsWith("npm:")){
+        if (Objects.nonNull(version) && version.startsWith("npm:")) {
             //TODO make this an error that gets logged
-            LOGGER.warn("dependency skipped: package.json contain an alias for {} => {} npm audit doesn't support aliases", name, version.replace("npm:", ""));
+            LOGGER.warn("dependency skipped: package.json contain an alias for {} => {} npm audit doesn't "
+                    + "support aliases", name, version.replace("npm:", ""));
             return true;
         }
 
@@ -294,23 +301,35 @@ public class NodePackageAnalyzer extends AbstractNpmAnalyzer {
 
         // this seems to produce crash sometimes, I need to tests
         // using a local node_module is not supported by npm audit, it crash
-        if(version.startsWith("file:")){
-            LOGGER.warn("dependency skipped: package.json contain an local node_module for {} seems to be located {} npm audit doesn't support locally referenced modules", name, version.replace("file:", ""));
+        if (Objects.nonNull(version) && (version.startsWith("file:") || version.matches("^[.~]{0,2}/.*"))) {
+            LOGGER.warn("dependency skipped: package.json contain an local node_module for {} seems to be "
+                    + "located {} npm audit doesn't support locally referenced modules",
+                    name, version);
             return true;
         }
+
+        // Don't include package with empty name
+        if ("".equals(name)) {
+            LOGGER.debug("Empty dependency of package-lock v2+ removed");
+            return true;
+        }
+
         return false;
     }
 
     /**
-     * @see NodePackageAnalyzer#shouldSkipDependency(java.lang.String, java.lang.String, boolean, boolean)
-     * @param name
-     * @param version
-     * @return
+     * Checks if the given dependency should be skipped.
+     *
+     * @see NodePackageAnalyzer#shouldSkipDependency(java.lang.String,
+     * java.lang.String, boolean, boolean)
+     * @param name the name of the dependency to test
+     * @param version the version of the dependency to test
+     * @return <code>true</code> if the dependency should be skipped; otherwise
+     * <code>false</code>
      */
     public static boolean shouldSkipDependency(String name, String version) {
         return shouldSkipDependency(name, version, false, true);
     }
-
 
     /**
      * Process the dependencies in the lock file by first parsing its
@@ -326,27 +345,63 @@ public class NodePackageAnalyzer extends AbstractNpmAnalyzer {
      */
     private void processDependencies(JsonObject json, File baseDir, File rootFile,
             String parentPackage, Engine engine) throws AnalysisException {
-        if (json.containsKey("dependencies")) {
-            final JsonObject deps = json.getJsonObject("dependencies");
-            for (Map.Entry<String, JsonValue> entry : deps.entrySet()) {
-                final String name = entry.getKey();
-                String version;
-                boolean optional = false;
+          final boolean skipDev = getSettings().getBoolean(Settings.KEYS.ANALYZER_NODE_PACKAGE_SKIPDEV, false);
+          final JsonObject deps;
+          final File modulesRoot = new File(rootFile.getParentFile(), "node_modules");
+          final int lockJsonVersion = json.containsKey("lockfileVersion") ? json.getInt("lockfileVersion") : 1;
+          if (lockJsonVersion >= 2) {
+            deps = json.getJsonObject("packages");
+          } else if (json.containsKey("dependencies")) {
+            deps = json.getJsonObject("dependencies");
+          } else {
+            deps = null;
+          }
 
-                final File base = Paths.get(baseDir.getPath(), "node_modules", name).toFile();
+          if (deps != null) {
+            for (Map.Entry<String, JsonValue> entry : deps.entrySet()) {
+                final String pathName = entry.getKey();
+                String name = pathName;
+                File base;
+
+                final int indexOfNodeModule = name.lastIndexOf(NODE_MODULES_DIRNAME + "/");
+                if (indexOfNodeModule >= 0) {
+                    name = name.substring(indexOfNodeModule + NODE_MODULES_DIRNAME.length() + 1);
+                    base = Paths.get(baseDir.getPath(), pathName).toFile();
+                } else {
+                    base = Paths.get(baseDir.getPath(), "node_modules", name).toFile();
+                    if (!base.isDirectory()) {
+                        final File test = new File(modulesRoot, name);
+                        if (test.isDirectory()) {
+                            base = test;
+                        }
+                    }
+                }
+
+                final String version;
+                boolean optional = false;
+                boolean isDev = false;
+
                 final File f = new File(base, PACKAGE_JSON);
-                Dependency[] dependencies = null;
                 JsonObject jo = null;
 
-                if(entry.getValue() instanceof JsonObject){
+                if (entry.getValue() instanceof JsonObject) {
                     jo = (JsonObject) entry.getValue();
-                    version = jo.getString("version");
+
+                    // Ignore/skip linked entries (as they don't have "version" and
+                    // later logic will crash)
+                    if (jo.getBoolean("link", false)) {
+                        LOGGER.warn("Skipping `" + name + "` because it is a link dependency");
+                        continue;
+                    }
+
+                    version = jo.getString("version", "");
                     optional = jo.getBoolean("optional", false);
+                    isDev = jo.getBoolean("dev", false);
                 } else {
                     version = ((JsonString) entry.getValue()).getString();
                 }
 
-                if(shouldSkipDependency(name, version, optional, f.exists())){
+                if ((isDev && skipDev) || shouldSkipDependency(name, version, optional, f.exists())) {
                     continue;
                 }
 
@@ -355,26 +410,35 @@ public class NodePackageAnalyzer extends AbstractNpmAnalyzer {
                     processDependencies(jo, base, rootFile, subPackageName, engine);
                 }
 
-                final Dependency child;
-                if (f.exists()) {
-                    //TOOD - we should use the integrity value instead of calculating the SHA1/MD5
-                    child = new Dependency(f);
-                    child.setEcosystem(DEPENDENCY_ECOSYSTEM);
+                String ref = "";
+                final int slash = parentPackage.indexOf("/");
+                if (slash > 0) {
+                    ref = parentPackage.substring(slash + 1);
+                }
+                final Dependency child = new Dependency(new File(rootFile + "?" + ref + "/" + name + ":" + version), true);
+                child.addProjectReference(parentPackage);
+                child.setEcosystem(DEPENDENCY_ECOSYSTEM);
 
+                if (f.exists()) {
+                    try {
+                        //TODO - we should use the integrity value instead of calculating the SHA1/MD5
+                        child.setMd5sum(Checksum.getMD5Checksum(f));
+                        child.setSha1sum(Checksum.getSHA1Checksum(f));
+                        child.setSha256sum(Checksum.getSHA256Checksum(f));
+                    } catch (IOException | NoSuchAlgorithmException ex) {
+                        LOGGER.debug("Error setting hashes:" + ex.getMessage(), ex);
+                    }
                     try (JsonReader jr = Json.createReader(FileUtils.openInputStream(f))) {
                         final JsonObject childJson = jr.readObject();
                         gatherEvidence(childJson, child);
-
                     } catch (JsonException e) {
                         LOGGER.warn("Failed to parse package.json file from dependency.", e);
                     } catch (IOException e) {
                         throw new AnalysisException("Problem occurred while reading dependency file.", e);
                     }
                 } else {
-                    LOGGER.warn("Unable to find node module: {}", f.toString());
-                    child = new Dependency(rootFile, true);
-                    child.setEcosystem(DEPENDENCY_ECOSYSTEM);
-                    //TOOD - we should use the integrity value instead of calculating the SHA1/MD5
+                    LOGGER.warn("Unable to find node module: {}", f);
+                    //TODO - we should use the integrity value instead of calculating the SHA1/MD5
                     child.setSha1sum(Checksum.getSHA1Checksum(String.format("%s:%s", name, version)));
                     child.setSha256sum(Checksum.getSHA256Checksum(String.format("%s:%s", name, version)));
                     child.setMd5sum(Checksum.getMD5Checksum(String.format("%s:%s", name, version)));
@@ -394,9 +458,6 @@ public class NodePackageAnalyzer extends AbstractNpmAnalyzer {
                         LOGGER.debug("Unable to build package url for `" + packagePath + "`", ex);
                     }
                 }
-
-                child.addProjectReference(parentPackage);
-                child.setEcosystem(DEPENDENCY_ECOSYSTEM);
 
                 final Dependency existing = findDependency(engine, name, version);
                 if (existing != null) {

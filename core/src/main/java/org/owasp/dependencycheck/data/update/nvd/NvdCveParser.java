@@ -20,10 +20,14 @@ package org.owasp.dependencycheck.data.update.nvd;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.module.blackbird.BlackbirdModule;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -32,15 +36,17 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipException;
+
 import org.owasp.dependencycheck.data.nvdcve.CveDB;
+import org.owasp.dependencycheck.data.update.exception.CorruptedDatastreamException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.owasp.dependencycheck.data.nvd.json.DefCveItem;
 import org.owasp.dependencycheck.data.nvd.ecosystem.CveEcosystemMapper;
-import org.owasp.dependencycheck.data.nvd.json.CpeMatchStreamCollector;
-import org.owasp.dependencycheck.data.nvd.json.NodeFlatteningCollector;
 import org.owasp.dependencycheck.data.update.exception.UpdateException;
 import org.owasp.dependencycheck.utils.Settings;
+import org.owasp.dependencycheck.utils.Utils;
 
 /**
  * Parser and processor of NVD CVE JSON data feeds.
@@ -58,10 +64,9 @@ public final class NvdCveParser {
      */
     private final CveDB cveDB;
     /**
-     * The filter for 2.3 CPEs in the CVEs - we don't import unless we get a
-     * match.
+     * A reference to the ODC settings.
      */
-    private final String cpeStartsWithFilter;
+    private final Settings settings;
 
     /**
      * Creates a new NVD CVE JSON Parser.
@@ -70,7 +75,7 @@ public final class NvdCveParser {
      * @param db a reference to the database
      */
     public NvdCveParser(Settings settings, CveDB db) {
-        this.cpeStartsWithFilter = settings.getString(Settings.KEYS.CVE_CPE_STARTS_WITH_FILTER, "cpe:2.3:a:");
+        this.settings = settings;
         this.cveDB = db;
     }
 
@@ -79,39 +84,49 @@ public final class NvdCveParser {
      *
      * @param file the NVD JSON file to parse
      * @throws UpdateException thrown if the file could not be read
+     * @throws CorruptedDatastreamException thrown if the file was found to be a
+     * corrupted download (ZipException or premature EOF)
      */
-    public void parse(File file) throws UpdateException {
+    public void parse(File file) throws UpdateException, CorruptedDatastreamException {
         LOGGER.debug("Parsing " + file.getName());
 
-        final ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        objectMapper.registerModule(new AfterburnerModule());
+        final Module module;
+        if (Utils.getJavaVersion() <= 8) {
+            module = new AfterburnerModule();
+        } else {
+            module = new BlackbirdModule();
+        }
+        final ObjectMapper objectMapper = JsonMapper.builder()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .addModule(module)
+                .build();
 
         final ObjectReader objectReader = objectMapper.readerFor(DefCveItem.class);
 
         try (InputStream fin = new FileInputStream(file);
                 InputStream in = new GZIPInputStream(fin);
                 InputStreamReader isr = new InputStreamReader(in, UTF_8);
-                JsonParser parser = objectReader.getFactory().createParser(in)) {
+                JsonParser parser = objectReader.getFactory().createParser(isr)) {
 
-            CveEcosystemMapper mapper = new CveEcosystemMapper();
+            final CveEcosystemMapper mapper = new CveEcosystemMapper();
             init(parser);
             while (parser.nextToken() == JsonToken.START_OBJECT) {
                 final DefCveItem cve = objectReader.readValue(parser);
-                if (testCveCpeStartWithFilter(cve)) {
-                    cveDB.updateVulnerability(cve, mapper.getEcosystem(cve));
-                }
+                cveDB.updateVulnerability(cve, mapper.getEcosystem(cve));
             }
         } catch (FileNotFoundException ex) {
             LOGGER.error(ex.getMessage());
-            throw new UpdateException("Unable to find the NVD CPE file, `" + file + "`, to parse", ex);
+            throw new UpdateException("Unable to find the NVD CVE file, `" + file + "`, to parse", ex);
+        } catch (ZipException | EOFException ex) {
+            throw new CorruptedDatastreamException("Error parsing NVD CVE file", ex);
         } catch (IOException ex) {
             LOGGER.error("Error reading NVD JSON data: {}", file);
-            LOGGER.debug("Error extracting the NVD JSON data from: " + file.toString(), ex);
-            throw new UpdateException("Unable to find the NVD CPE file to parse", ex);
+            LOGGER.debug("Error extracting the NVD JSON data from: " + file, ex);
+            throw new UpdateException("Unable to find the NVD CVE file to parse", ex);
         }
     }
 
-    protected void init(JsonParser parser) throws IOException {
+    void init(JsonParser parser) throws IOException {
         JsonToken nextToken = parser.nextToken();
         if (nextToken != JsonToken.START_OBJECT) {
             throw new IOException("Expected " + JsonToken.START_OBJECT + ", got " + nextToken);
@@ -131,21 +146,5 @@ public final class NvdCveParser {
                 }
             }
         } while (true);
-    }
-
-    /**
-     * Tests the CVE's CPE entries against the starts with filter. In general
-     * this limits the CVEs imported to just application level vulnerabilities.
-     *
-     * @param cve the CVE entry to examine
-     * @return <code>true</code> if the CVE affects CPEs identified by the
-     * configured CPE Starts with filter
-     */
-    protected boolean testCveCpeStartWithFilter(final DefCveItem cve) {
-        //cycle through to see if this is a CPE we care about (use the CPE filters
-        return cve.getConfigurations().getNodes().stream()
-                .collect(NodeFlatteningCollector.getInstance())
-                .collect(CpeMatchStreamCollector.getInstance())
-                .anyMatch(cpe -> cpe.getCpe23Uri().startsWith(cpeStartsWithFilter));
     }
 }

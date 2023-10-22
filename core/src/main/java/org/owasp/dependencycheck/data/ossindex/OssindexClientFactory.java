@@ -82,6 +82,9 @@ public final class OssindexClientFactory {
             config.setAuthConfiguration(auth);
         }
 
+        final int batchSize = settings.getInt(Settings.KEYS.ANALYZER_OSSINDEX_BATCH_SIZE, OssindexClientConfiguration.DEFAULT_BATCH_SIZE);
+        config.setBatchSize(batchSize);
+
         // proxy likely does not need to be configured here as we are using the
         // URLConnectionFactory#createHttpURLConnection() which automatically configures
         // the proxy on the connection.
@@ -98,7 +101,7 @@ public final class OssindexClientFactory {
                     cache.setBaseDir(cacheDir.toPath());
                     cache.setExpireAfter(Duration.standardHours(24));
                     config.setCacheConfiguration(cache);
-                    LOGGER.debug("OSS Index Cache: " + cache.toString());
+                    LOGGER.debug("OSS Index Cache: " + cache);
                 } else {
                     LOGGER.warn("Unable to use a cache for the OSS Index");
                 }

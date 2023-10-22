@@ -18,6 +18,7 @@
 package org.owasp.dependencycheck.data.nvd.json;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -37,6 +38,9 @@ import javax.annotation.concurrent.ThreadSafe;
 @ThreadSafe
 public final class CpeMatchStreamCollector implements Collector<DefNode, ArrayList<DefCpeMatch>, Stream<DefCpeMatch>> {
 
+    /**
+     * The singleton instance.
+     */
     private static final CpeMatchStreamCollector INSTANCE;
 
     static {
@@ -70,7 +74,7 @@ public final class CpeMatchStreamCollector implements Collector<DefNode, ArrayLi
 
     @Override
     public Function<ArrayList<DefCpeMatch>, Stream<DefCpeMatch>> finisher() {
-        return (m) -> m.stream();
+        return Collection::stream;
     }
 
     @Override

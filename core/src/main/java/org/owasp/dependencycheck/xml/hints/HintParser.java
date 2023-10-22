@@ -20,7 +20,6 @@ package org.owasp.dependencycheck.xml.hints;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -148,12 +147,12 @@ public class HintParser {
                 InputStream schemaStream13 = FileUtils.getResourceAsStream(HINT_SCHEMA_1_3);
                 InputStream schemaStream12 = FileUtils.getResourceAsStream(HINT_SCHEMA_1_2);
                 InputStream schemaStream11 = FileUtils.getResourceAsStream(HINT_SCHEMA_1_1)) {
-            
+
             final BOMInputStream bomStream = new BOMInputStream(inputStream);
             final ByteOrderMark bom = bomStream.getBOM();
             final String defaultEncoding = StandardCharsets.UTF_8.name();
             final String charsetName = bom == null ? defaultEncoding : bom.getCharsetName();
-            
+
             final HintHandler handler = new HintHandler();
             final SAXParser saxParser = XmlUtils.buildSecureSaxParser(schemaStream14, schemaStream13, schemaStream12, schemaStream11);
             final XMLReader xmlReader = saxParser.getXMLReader();
@@ -165,7 +164,7 @@ public class HintParser {
                 this.hintRules = handler.getHintRules();
                 this.vendorDuplicatingHintRules = handler.getVendorDuplicatingHintRules();
             }
-        } catch (ParserConfigurationException | FileNotFoundException ex) {
+        } catch (ParserConfigurationException | IOException ex) {
             LOGGER.debug("", ex);
             throw new HintParseException(ex);
         } catch (SAXException ex) {
@@ -175,9 +174,6 @@ public class HintParser {
                 LOGGER.debug("", ex);
                 throw new HintParseException(ex);
             }
-        } catch (IOException ex) {
-            LOGGER.debug("", ex);
-            throw new HintParseException(ex);
         }
     }
 }

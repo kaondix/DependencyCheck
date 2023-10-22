@@ -21,13 +21,28 @@ import com.github.packageurl.MalformedPackageURLException;
 import com.github.packageurl.PackageURL;
 import com.github.packageurl.PackageURL.StandardTypes;
 import com.github.packageurl.PackageURLBuilder;
+import org.semver4j.Semver;
+import org.semver4j.SemverException;
 import org.owasp.dependencycheck.Engine;
+import org.owasp.dependencycheck.data.nodeaudit.Advisory;
+import org.owasp.dependencycheck.data.nodeaudit.NodeAuditSearch;
 import org.owasp.dependencycheck.dependency.Confidence;
 import org.owasp.dependencycheck.dependency.Dependency;
+import org.owasp.dependencycheck.dependency.Reference;
+import org.owasp.dependencycheck.dependency.Vulnerability;
+import org.owasp.dependencycheck.dependency.VulnerableSoftware;
+import org.owasp.dependencycheck.dependency.VulnerableSoftwareBuilder;
+import org.owasp.dependencycheck.exception.InitializationException;
+import org.owasp.dependencycheck.utils.InvalidSettingException;
+import org.owasp.dependencycheck.utils.Settings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.concurrent.ThreadSafe;
 import javax.json.Json;
@@ -37,14 +52,18 @@ import javax.json.JsonObjectBuilder;
 import javax.json.JsonString;
 import javax.json.JsonValue;
 import javax.json.JsonValue.ValueType;
+import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.lang3.StringUtils;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.analyzer.exception.UnexpectedAnalysisException;
+import org.owasp.dependencycheck.data.nvd.ecosystem.Ecosystem;
 import org.owasp.dependencycheck.dependency.EvidenceType;
 import org.owasp.dependencycheck.dependency.naming.GenericIdentifier;
 import org.owasp.dependencycheck.dependency.naming.Identifier;
 import org.owasp.dependencycheck.dependency.naming.PurlIdentifier;
 import org.owasp.dependencycheck.utils.Checksum;
+import us.springett.parsers.cpe.exceptions.CpeValidationException;
+import us.springett.parsers.cpe.values.Part;
 
 /**
  * An abstract NPM analyzer that contains common methods for concrete
@@ -64,11 +83,16 @@ public abstract class AbstractNpmAnalyzer extends AbstractFileTypeAnalyzer {
      * A descriptor for the type of dependencies processed or added by this
      * analyzer.
      */
-    public static final String NPM_DEPENDENCY_ECOSYSTEM = "npm";
+    public static final String NPM_DEPENDENCY_ECOSYSTEM = Ecosystem.NODEJS;
     /**
      * The file name to scan.
      */
     private static final String PACKAGE_JSON = "package.json";
+
+    /**
+     * The Node Audit Searcher.
+     */
+    private NodeAuditSearch searcher;
 
     /**
      * Determines if the file can be analyzed by the analyzer.
@@ -100,7 +124,7 @@ public abstract class AbstractNpmAnalyzer extends AbstractFileTypeAnalyzer {
      * @throws AnalysisException thrown if the canonical path cannot be obtained
      * from the given file
      */
-    protected boolean shouldProcess(File pathname) throws AnalysisException {
+    public static boolean shouldProcess(File pathname) throws AnalysisException {
         try {
             // Do not scan the node_modules (or bower_components) directory
             final String canonicalPath = pathname.getCanonicalPath();
@@ -374,5 +398,160 @@ public abstract class AbstractNpmAnalyzer extends AbstractFileTypeAnalyzer {
                 dependency.setLicense(json.getJsonObject("license").getString("type"));
             }
         }
+    }
+
+    /**
+     * Initializes the analyzer once before any analysis is performed.
+     *
+     * @param engine a reference to the dependency-check engine
+     * @throws InitializationException if there's an error during initialization
+     */
+    @Override
+    protected void prepareFileTypeAnalyzer(Engine engine) throws InitializationException {
+        if (!isEnabled() || !getFilesMatched()) {
+            this.setEnabled(false);
+            return;
+        }
+        if (searcher == null) {
+            LOGGER.debug("Initializing {}", getName());
+            try {
+                searcher = new NodeAuditSearch(getSettings());
+            } catch (MalformedURLException ex) {
+                setEnabled(false);
+                throw new InitializationException("The configured URL to NPM Audit API is malformed", ex);
+            }
+            try {
+                final Settings settings = engine.getSettings();
+                final boolean nodeEnabled = settings.getBoolean(Settings.KEYS.ANALYZER_NODE_PACKAGE_ENABLED);
+                if (!nodeEnabled) {
+                    LOGGER.warn("The Node Package Analyzer has been disabled; the resulting report will only "
+                            + "contain the known vulnerable dependency - not a bill of materials for the node project.");
+                }
+            } catch (InvalidSettingException ex) {
+                throw new InitializationException("Unable to read configuration settings", ex);
+            }
+        }
+    }
+
+    /**
+     * Processes the advisories creating the appropriate dependency objects and
+     * adding the resulting vulnerabilities.
+     *
+     * @param advisories a collection of advisories from npm
+     * @param engine a reference to the analysis engine
+     * @param dependency a reference to the package-lock.json dependency
+     * @param dependencyMap a collection of module/version pairs obtained from
+     * the package-lock file - used in case the advisories do not include a
+     * version number
+     * @throws CpeValidationException thrown when a CPE cannot be created
+     */
+    protected void processResults(final List<Advisory> advisories, Engine engine,
+            Dependency dependency, MultiValuedMap<String, String> dependencyMap)
+            throws CpeValidationException {
+        for (Advisory advisory : advisories) {
+            //Create a new vulnerability out of the advisory returned by nsp.
+            final Vulnerability vuln = new Vulnerability();
+            vuln.setDescription(advisory.getOverview());
+            vuln.setName(String.valueOf(advisory.getGhsaId()));
+            vuln.setUnscoredSeverity(advisory.getSeverity());
+            vuln.setCvssV3(advisory.getCvssV3());
+            vuln.setSource(Vulnerability.Source.NPM);
+            for (String cwe : advisory.getCwes()) {
+                vuln.addCwe(cwe);
+            }
+            if (advisory.getReferences() != null) {
+                final String[] references = advisory.getReferences().split("\\n");
+                for (String reference : references) {
+                    if (reference.length() > 3) {
+                        String url = reference.substring(2);
+                        try {
+                            new URL(url);
+                        } catch (MalformedURLException ignored) {
+                            // reference is not a format-valid URL, so null it to make the reference be used as plaintext
+                            url = null;
+                        }
+                        vuln.addReference("NPM Advisory reference: ", url == null ? reference : url, url);
+                    }
+                }
+            }
+
+            //Create a single vulnerable software object - these do not use CPEs unlike the NVD.
+            final VulnerableSoftwareBuilder builder = new VulnerableSoftwareBuilder();
+            builder.part(Part.APPLICATION).product(advisory.getModuleName().replace(" ", "_"))
+                    .version(advisory.getVulnerableVersions().replace(" ", ""));
+            final VulnerableSoftware vs = builder.build();
+            vuln.addVulnerableSoftware(vs);
+
+            String version = advisory.getVersion();
+            if (version == null && dependencyMap.containsKey(advisory.getModuleName())) {
+                version = determineVersionFromMap(advisory.getVulnerableVersions(), dependencyMap.get(advisory.getModuleName()));
+            }
+            final Dependency existing = findDependency(engine, advisory.getModuleName(), version);
+            if (existing == null) {
+                final Dependency nodeModule = createDependency(dependency, advisory.getModuleName(), version, "transitive");
+                nodeModule.addVulnerability(vuln);
+                engine.addDependency(nodeModule);
+            } else {
+                replaceOrAddVulnerability(existing, vuln);
+            }
+        }
+    }
+
+    /**
+     * Evaluates if the vulnerability is already present; if it is the
+     * vulnerability is not added.
+     *
+     * @param dependency a reference to the dependency being analyzed
+     * @param vuln the vulnerability to add
+     */
+    protected void replaceOrAddVulnerability(Dependency dependency, Vulnerability vuln) {
+        boolean found = false;
+        for (Vulnerability existing : dependency.getVulnerabilities()) {
+            for (Reference ref : existing.getReferences()) {
+                if (ref.getName() != null
+                        && vuln.getSource().toString().equals("NPM")
+                        && ref.getName().equals("https://nodesecurity.io/advisories/" + vuln.getName())) {
+                    found = true;
+                }
+            }
+        }
+        if (!found) {
+            dependency.addVulnerability(vuln);
+        }
+    }
+
+    /**
+     * Returns the node audit search utility.
+     *
+     * @return the node audit search utility
+     */
+    protected NodeAuditSearch getSearcher() {
+        return searcher;
+    }
+
+    /**
+     * Give an NPM version range and a collection of versions, this method
+     * attempts to select a specific version from the collection that is in the
+     * range.
+     *
+     * @param versionRange the version range to evaluate
+     * @param availableVersions the collection of possible versions to select
+     * @return the selected range from the versionRange
+     */
+    public static String determineVersionFromMap(String versionRange, Collection<String> availableVersions) {
+        if (availableVersions.size() == 1) {
+            return availableVersions.iterator().next();
+        }
+        for (String v : availableVersions) {
+            try {
+                final Semver version = new Semver(v);
+                if (version.satisfies(versionRange)) {
+                    return v;
+                }
+            } catch (SemverException ex) {
+                LOGGER.debug("invalid semver: " + v);
+            }
+        }
+        return availableVersions.iterator().next();
     }
 }

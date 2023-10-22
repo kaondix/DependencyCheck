@@ -41,6 +41,7 @@ import org.owasp.dependencycheck.reporting.ReportGenerator.Format;
 import org.owasp.dependencycheck.utils.Settings;
 import org.owasp.dependencycheck.utils.SeverityUtil;
 import org.slf4j.impl.StaticLoggerBinder;
+//CSOFF: MethodCount
 
 /**
  * An Ant task definition to execute dependency-check during an Ant build.
@@ -49,6 +50,11 @@ import org.slf4j.impl.StaticLoggerBinder;
  */
 @NotThreadSafe
 public class Check extends Update {
+
+    /**
+     * System specific new line character.
+     */
+    private static final String NEW_LINE = System.getProperty("line.separator", "\n").intern();
 
     /**
      * Whether the ruby gemspec analyzer should be enabled.
@@ -63,9 +69,22 @@ public class Check extends Update {
      */
     private Boolean nodeAuditAnalyzerEnabled;
     /**
+     * Whether or not the Yarn Audit Analyzer is enabled.
+     */
+    private Boolean yarnAuditAnalyzerEnabled;
+    /**
+     * Whether or not the Pnpm Audit Analyzer is enabled.
+     */
+    private Boolean pnpmAuditAnalyzerEnabled;
+    /**
      * Sets whether or not the Node Audit Analyzer should use a local cache.
      */
     private Boolean nodeAuditAnalyzerUseCache;
+    /**
+     * Sets whether or not the Node Package Analyzer should skip dev
+     * dependencies.
+     */
+    private Boolean nodePackageSkipDevDependencies;
     /**
      * Sets whether or not the Node Audit Analyzer should use a local cache.
      */
@@ -79,6 +98,14 @@ public class Check extends Update {
      */
     private String retireJsUrl;
     /**
+     * The user to download URL to the RetireJS JSON data.
+     */
+    private String retireJsUrlUser;
+    /**
+     * The password to download URL to the RetireJS JSON data.
+     */
+    private String retireJsUrlPassword;
+    /**
      * Whether or not the RetireJS Analyzer will be updated regardless of the
      * `autoupdate` settings. Defaults to false.
      */
@@ -88,7 +115,7 @@ public class Check extends Update {
      * to exclude files that contain matching content..
      */
     @SuppressWarnings("CanBeFinal")
-    private List<String> retirejsFilters = new ArrayList<>();
+    private final List<String> retirejsFilters = new ArrayList<>();
     /**
      * Whether or not the RetireJS Analyzer filters non-vulnerable JS files from
      * the report; default is false.
@@ -161,7 +188,18 @@ public class Check extends Update {
      * Sets the path to `go`.
      */
     private String pathToGo;
-
+    /**
+     * Sets whether the Dart analyzer is enabled. Default is true.
+     */
+    private Boolean dartAnalyzerEnabled;
+    /**
+     * The path to `yarn`.
+     */
+    private String pathToYarn;
+    /**
+     * The path to `pnpm`.
+     */
+    private String pathToPnpm;
     /**
      * Additional ZIP File extensions to add analyze. This should be a
      * comma-separated list of file extensions to treat like ZIP files.
@@ -199,13 +237,13 @@ public class Check extends Update {
      */
     private Boolean autoUpdate;
     /**
-     * The report format to be generated (HTML, XML, JUNIT, CSV, JSON, ALL).
-     * Default is HTML.
+     * The report format to be generated (HTML, XML, JUNIT, CSV, JSON, SARIF,
+     * JENKINS, ALL). Default is HTML.
      */
     private String reportFormat = "HTML";
     /**
-     * The report format to be generated (HTML, XML, JUNIT, CSV, JSON, ALL).
-     * Default is HTML.
+     * The report format to be generated (HTML, XML, JUNIT, CSV, JSON, SARIF,
+     * JENKINS, ALL). Default is HTML.
      */
     private final List<String> reportFormats = new ArrayList<>();
     /**
@@ -245,6 +283,14 @@ public class Check extends Update {
      */
     private Boolean archiveAnalyzerEnabled;
     /**
+     * Whether or not the Known Exploited Vulnerability Analyzer is enabled.
+     */
+    private Boolean knownExploitedEnabled;
+    /**
+     * The URL to the known exploited vulnerabilities JSON datafeed.
+     */
+    private String knownExploitedUrl;
+    /**
      * Whether or not the .NET Nuspec Analyzer is enabled.
      */
     private Boolean nuspecAnalyzerEnabled;
@@ -253,14 +299,26 @@ public class Check extends Update {
      */
     private Boolean nugetconfAnalyzerEnabled;
     /**
+     * Whether or not the Libman Analyzer is enabled.
+     */
+    private Boolean libmanAnalyzerEnabled;
+    /**
      * Whether or not the PHP Composer Analyzer is enabled.
      */
     private Boolean composerAnalyzerEnabled;
+    /**
+     * Whether or not the Perl CPAN File Analyzer is enabled.
+     */
+    private Boolean cpanfileAnalyzerEnabled;
 
     /**
      * Whether or not the .NET Assembly Analyzer is enabled.
      */
     private Boolean assemblyAnalyzerEnabled;
+    /**
+     * Whether or not the MS Build Assembly Analyzer is enabled.
+     */
+    private Boolean msbuildAnalyzerEnabled;
     /**
      * Whether the autoconf analyzer should be enabled.
      */
@@ -269,6 +327,18 @@ public class Check extends Update {
      * Whether the pip analyzer should be enabled.
      */
     private Boolean pipAnalyzerEnabled;
+    /**
+     * Whether the Maven install.json analyzer should be enabled.
+     */
+    private Boolean mavenInstallAnalyzerEnabled;
+    /**
+     * Whether the pipfile analyzer should be enabled.
+     */
+    private Boolean pipfileAnalyzerEnabled;
+    /**
+     * Whether the Poetry analyzer should be enabled.
+     */
+    private Boolean poetryAnalyzerEnabled;
     /**
      * Sets the path for the mix_audit binary.
      */
@@ -291,6 +361,10 @@ public class Check extends Update {
      * Whether or not the Swift package Analyzer is enabled.
      */
     private Boolean swiftPackageManagerAnalyzerEnabled;
+    /**
+     * Whether or not the Swift package Analyzer is enabled.
+     */
+    private Boolean swiftPackageResolvedAnalyzerEnabled;
 
     /**
      * Whether or not the Sonatype OSS Index analyzer is enabled.
@@ -312,6 +386,12 @@ public class Check extends Update {
      * The password to use for the Sonatype OSS Index service.
      */
     private String ossindexAnalyzerPassword;
+    /**
+     * Whether we should only warn about Sonatype OSS Index remote errors
+     * instead of failing completely.
+     */
+    private Boolean ossIndexAnalyzerWarnOnlyOnRemoteErrors;
+
     /**
      * Whether or not the Artifactory Analyzer is enabled.
      */
@@ -374,6 +454,17 @@ public class Check extends Update {
      */
     public void addConfiguredSuppressionFile(final SuppressionFile suppressionFile) {
         suppressionFiles.add(suppressionFile.getPath());
+    }
+
+    /**
+     * Add a report format.
+     * <p>
+     * This is called by Ant with the configured {@link ReportFormat}.
+     *
+     * @param reportFormat the reportFormat to add.
+     */
+    public void addConfiguredReportFormat(final ReportFormat reportFormat) {
+        reportFormats.add(reportFormat.getFormat());
     }
 
     /**
@@ -695,12 +786,48 @@ public class Check extends Update {
     }
 
     /**
-     * Sets whether or not the analyzer is enabled.
+     * Sets whether the analyzer is enabled.
      *
      * @param archiveAnalyzerEnabled the value of the new setting
      */
     public void setArchiveAnalyzerEnabled(Boolean archiveAnalyzerEnabled) {
         this.archiveAnalyzerEnabled = archiveAnalyzerEnabled;
+    }
+
+    /**
+     * Returns whether the analyzer is enabled.
+     *
+     * @return true if the analyzer is enabled
+     */
+    public Boolean isKnownExploitedEnabled() {
+        return knownExploitedEnabled;
+    }
+
+    /**
+     * Sets whether the analyzer is enabled.
+     *
+     * @param knownExploitedEnabled the value of the new setting
+     */
+    public void setKnownExploitedEnabled(Boolean knownExploitedEnabled) {
+        this.knownExploitedEnabled = knownExploitedEnabled;
+    }
+
+    /**
+     * Returns the knownExploitedUrl.
+     *
+     * @return the knownExploitedUrl
+     */
+    public String getKnownExploitedUrl() {
+        return knownExploitedUrl;
+    }
+
+    /**
+     * Sets the the knownExploitedUrl.
+     *
+     * @param knownExploitedUrl the URL
+     */
+    public void setKnownExploitedUrl(String knownExploitedUrl) {
+        this.knownExploitedUrl = knownExploitedUrl;
     }
 
     /**
@@ -726,6 +853,24 @@ public class Check extends Update {
      *
      * @return true if the analyzer is enabled
      */
+    public Boolean isMSBuildAnalyzerEnabled() {
+        return msbuildAnalyzerEnabled;
+    }
+
+    /**
+     * Sets whether or not the analyzer is enabled.
+     *
+     * @param msbuildAnalyzerEnabled the value of the new setting
+     */
+    public void setMSBuildAnalyzerEnabled(Boolean msbuildAnalyzerEnabled) {
+        this.msbuildAnalyzerEnabled = msbuildAnalyzerEnabled;
+    }
+
+    /**
+     * Returns whether or not the analyzer is enabled.
+     *
+     * @return true if the analyzer is enabled
+     */
     public Boolean isNuspecAnalyzerEnabled() {
         return nuspecAnalyzerEnabled;
     }
@@ -737,7 +882,7 @@ public class Check extends Update {
      */
     public Boolean isNugetconfAnalyzerEnabled() {
         return nugetconfAnalyzerEnabled;
-    }
+    }    
 
     /**
      * Sets whether or not the analyzer is enabled.
@@ -758,6 +903,24 @@ public class Check extends Update {
     }
 
     /**
+     * Returns whether or not the analyzer is enabled.
+     *
+     * @return true if the analyzer is enabled
+     */
+    public Boolean isLibmanAnalyzerEnabled() {
+        return libmanAnalyzerEnabled;
+    }
+
+    /**
+     * Sets whether or not the analyzer is enabled.
+     *
+     * @param libmanAnalyzerEnabled the value of the new setting
+     */
+    public void setLibmanAnalyzerEnabled(Boolean libmanAnalyzerEnabled) {
+        this.libmanAnalyzerEnabled = libmanAnalyzerEnabled;
+    }
+
+    /**
      * Get the value of composerAnalyzerEnabled.
      *
      * @return the value of composerAnalyzerEnabled
@@ -773,6 +936,24 @@ public class Check extends Update {
      */
     public void setComposerAnalyzerEnabled(Boolean composerAnalyzerEnabled) {
         this.composerAnalyzerEnabled = composerAnalyzerEnabled;
+    }
+
+    /**
+     * Get the value of cpanfileAnalyzerEnabled.
+     *
+     * @return the value of cpanfileAnalyzerEnabled
+     */
+    public Boolean isCpanfileAnalyzerEnabled() {
+        return cpanfileAnalyzerEnabled;
+    }
+
+    /**
+     * Set the value of cpanfileAnalyzerEnabled.
+     *
+     * @param cpanfileAnalyzerEnabled new value of cpanfileAnalyzerEnabled
+     */
+    public void setCpanfileAnalyzerEnabled(Boolean cpanfileAnalyzerEnabled) {
+        this.cpanfileAnalyzerEnabled = cpanfileAnalyzerEnabled;
     }
 
     /**
@@ -809,6 +990,42 @@ public class Check extends Update {
      */
     public void setPipAnalyzerEnabled(Boolean pipAnalyzerEnabled) {
         this.pipAnalyzerEnabled = pipAnalyzerEnabled;
+    }
+
+    /**
+     * Get the value of pipfileAnalyzerEnabled.
+     *
+     * @return the value of pipfileAnalyzerEnabled
+     */
+    public Boolean isPipfileAnalyzerEnabled() {
+        return pipfileAnalyzerEnabled;
+    }
+
+    /**
+     * Set the value of pipfileAnalyzerEnabled.
+     *
+     * @param pipfileAnalyzerEnabled new value of pipfileAnalyzerEnabled
+     */
+    public void setPipfileAnalyzerEnabled(Boolean pipfileAnalyzerEnabled) {
+        this.pipfileAnalyzerEnabled = pipfileAnalyzerEnabled;
+    }
+
+    /**
+     * Get the value of poetryAnalyzerEnabled.
+     *
+     * @return the value of poetryAnalyzerEnabled
+     */
+    public Boolean isPoetryAnalyzerEnabled() {
+        return poetryAnalyzerEnabled;
+    }
+
+    /**
+     * Set the value of poetryAnalyzerEnabled.
+     *
+     * @param poetryAnalyzerEnabled new value of poetryAnalyzerEnabled
+     */
+    public void setPoetryAnalyzerEnabled(Boolean poetryAnalyzerEnabled) {
+        this.poetryAnalyzerEnabled = poetryAnalyzerEnabled;
     }
 
     /**
@@ -908,6 +1125,25 @@ public class Check extends Update {
     }
 
     /**
+     * Returns whether or not the Swift package resolved Analyzer is enabled.
+     *
+     * @return whether or not the Swift package resolved Analyzer is enabled
+     */
+    public Boolean isSwiftPackageResolvedAnalyzerEnabled() {
+        return swiftPackageResolvedAnalyzerEnabled;
+    }
+
+    /**
+     * Sets the enabled state of the swift package manager analyzer.
+     *
+     * @param swiftPackageResolvedAnalyzerEnabled the enabled state of the swift
+     * package resolved analyzer
+     */
+    public void setSwiftPackageResolvedAnalyzerEnabled(Boolean swiftPackageResolvedAnalyzerEnabled) {
+        this.swiftPackageResolvedAnalyzerEnabled = swiftPackageResolvedAnalyzerEnabled;
+    }
+
+    /**
      * Get the value of opensslAnalyzerEnabled.
      *
      * @return the value of opensslAnalyzerEnabled
@@ -962,6 +1198,42 @@ public class Check extends Update {
     }
 
     /**
+     * Get the value of yarnAuditAnalyzerEnabled.
+     *
+     * @return the value of yarnAuditAnalyzerEnabled
+     */
+    public Boolean isYarnAuditAnalyzerEnabled() {
+        return yarnAuditAnalyzerEnabled;
+    }
+
+    /**
+     * Set the value of yarnAuditAnalyzerEnabled.
+     *
+     * @param yarnAuditAnalyzerEnabled new value of yarnAuditAnalyzerEnabled
+     */
+    public void setYarnAuditAnalyzerEnabled(Boolean yarnAuditAnalyzerEnabled) {
+        this.yarnAuditAnalyzerEnabled = yarnAuditAnalyzerEnabled;
+    }
+
+    /**
+     * Get the value of pnpmAuditAnalyzerEnabled.
+     *
+     * @return the value of pnpmAuditAnalyzerEnabled
+     */
+    public Boolean isPnpmAuditAnalyzerEnabled() {
+        return pnpmAuditAnalyzerEnabled;
+    }
+
+    /**
+     * Set the value of pnpmAuditAnalyzerEnabled.
+     *
+     * @param pnpmAuditAnalyzerEnabled new value of pnpmAuditAnalyzerEnabled
+     */
+    public void setPnpmAuditAnalyzerEnabled(Boolean pnpmAuditAnalyzerEnabled) {
+        this.pnpmAuditAnalyzerEnabled = pnpmAuditAnalyzerEnabled;
+    }
+
+    /**
      * Get the value of nodeAuditAnalyzerUseCache.
      *
      * @return the value of nodeAuditAnalyzerUseCache
@@ -980,6 +1252,25 @@ public class Check extends Update {
     }
 
     /**
+     * Get the value of nodePackageSkipDevDependencies.
+     *
+     * @return the value of nodePackageSkipDevDependencies
+     */
+    public Boolean isNodePackageAnalyzerSkipDevDependencies() {
+        return nodePackageSkipDevDependencies;
+    }
+
+    /**
+     * Set the value of nodePackageSkipDevDependencies.
+     *
+     * @param nodePackageSkipDevDependencies new value of
+     * nodePackageSkipDevDependencies
+     */
+    public void setNodePackageSkipDevDependencies(Boolean nodePackageSkipDevDependencies) {
+        this.nodePackageSkipDevDependencies = nodePackageSkipDevDependencies;
+    }
+
+    /**
      * Get the value of nodeAuditSkipDevDependencies.
      *
      * @return the value of nodeAuditSkipDevDependencies
@@ -992,7 +1283,7 @@ public class Check extends Update {
      * Set the value of nodeAuditSkipDevDependencies.
      *
      * @param nodeAuditSkipDevDependencies new value of
- nodeAuditSkipDevDependencies
+     * nodeAuditSkipDevDependencies
      */
     public void setNodeAuditSkipDevDependencies(Boolean nodeAuditSkipDevDependencies) {
         this.nodeAuditSkipDevDependencies = nodeAuditSkipDevDependencies;
@@ -1032,6 +1323,42 @@ public class Check extends Update {
      */
     public void setRetireJsUrl(String retireJsUrl) {
         this.retireJsUrl = retireJsUrl;
+    }
+
+    /**
+     * Get the value of User Retire JS repository URL.
+     *
+     * @return the value of retireJsUrlUser
+     */
+    public String getRetireJsUrlUser() {
+        return retireJsUrlUser;
+    }
+
+    /**
+     * Set the value of the User Retire JS repository URL.
+     *
+     * @param retireJsUrlUser new value of retireJsUrlUser
+     */
+    public void setRetireJsUrlUser(String retireJsUrlUser) {
+        this.retireJsUrlUser = retireJsUrlUser;
+    }
+
+    /**
+     * Get the value of Password Retire JS repository URL.
+     *
+     * @return the value of retireJsUrlPassword
+     */
+    public String getRetireJsUrlPassword() {
+        return retireJsUrlPassword;
+    }
+
+    /**
+     * Set the value of the Password Retire JS repository URL.
+     *
+     * @param retireJsUrlPassword new value of retireJsUrlPassword
+     */
+    public void setRetireJsUrlPassword(String retireJsUrlPassword) {
+        this.retireJsUrlPassword = retireJsUrlPassword;
     }
 
     /**
@@ -1160,8 +1487,7 @@ public class Check extends Update {
     /**
      * Set the value of mixAuditAnalyzerEnabled.
      *
-     * @param mixAuditAnalyzerEnabled new value of
-     * mixAuditAnalyzerEnabled
+     * @param mixAuditAnalyzerEnabled new value of mixAuditAnalyzerEnabled
      */
     public void setMixAuditAnalyzerEnabled(Boolean mixAuditAnalyzerEnabled) {
         this.mixAuditAnalyzerEnabled = mixAuditAnalyzerEnabled;
@@ -1255,6 +1581,60 @@ public class Check extends Update {
      */
     public void setGolangModEnabled(Boolean golangModEnabled) {
         this.golangModEnabled = golangModEnabled;
+    }
+
+    /**
+     * Get the value of dartAnalyzerEnabled.
+     *
+     * @return the value of dartAnalyzerEnabled
+     */
+    public Boolean isDartAnalyzerEnabled() {
+        return dartAnalyzerEnabled;
+    }
+
+    /**
+     * Set the value of dartAnalyzerEnabled.
+     *
+     * @param dartAnalyzerEnabled new value of dartAnalyzerEnabled
+     */
+    public void setDartAnalyzerEnabled(Boolean dartAnalyzerEnabled) {
+        this.dartAnalyzerEnabled = dartAnalyzerEnabled;
+    }
+
+    /**
+     * Get the value of pathToYarn.
+     *
+     * @return the value of pathToYarn
+     */
+    public String getPathToYarn() {
+        return pathToYarn;
+    }
+
+    /**
+     * Set the value of pathToYarn.
+     *
+     * @param pathToYarn new value of pathToYarn
+     */
+    public void setPathToYarn(String pathToYarn) {
+        this.pathToYarn = pathToYarn;
+    }
+
+    /**
+     * Get the value of pathToPnpm.
+     *
+     * @return the value of pathToPnpm
+     */
+    public String getPathToPnpm() {
+        return pathToPnpm;
+    }
+
+    /**
+     * Set the value of pathToPnpm.
+     *
+     * @param pathToPnpm new value of pathToPnpm
+     */
+    public void setPathToPnpm(String pathToPnpm) {
+        this.pathToPnpm = pathToPnpm;
     }
 
     /**
@@ -1474,6 +1854,25 @@ public class Check extends Update {
     }
 
     /**
+     * Get value of {@link #ossIndexAnalyzerWarnOnlyOnRemoteErrors}.
+     *
+     * @return the value of ossIndexWarnOnlyOnRemoteErrors
+     */
+    public Boolean getOssIndexWarnOnlyOnRemoteErrors() {
+        return ossIndexAnalyzerWarnOnlyOnRemoteErrors;
+    }
+
+    /**
+     * Set value of {@link #ossIndexAnalyzerWarnOnlyOnRemoteErrors}.
+     *
+     * @param ossIndexWarnOnlyOnRemoteErrors the value of
+     * ossIndexWarnOnlyOnRemoteErrors
+     */
+    public void setOssIndexWarnOnlyOnRemoteErrors(Boolean ossIndexWarnOnlyOnRemoteErrors) {
+        this.ossIndexAnalyzerWarnOnlyOnRemoteErrors = ossIndexWarnOnlyOnRemoteErrors;
+    }
+
+    /**
      * Get the value of cmakeAnalyzerEnabled.
      *
      * @return the value of cmakeAnalyzerEnabled
@@ -1625,7 +2024,7 @@ public class Check extends Update {
     //see note on `dealWithReferences()` for information on this suppression
     @SuppressWarnings("squid:RedundantThrowsDeclarationCheck")
     @Override
-    public void execute() throws BuildException {
+    protected void executeWithContextClassloader() throws BuildException {
         dealWithReferences();
         validateConfiguration();
         populateSettings();
@@ -1640,16 +2039,16 @@ public class Check extends Update {
                 }
             }
             final ExceptionCollection exceptions = callExecuteAnalysis(engine);
-
-            for (String format : getReportFormats()) {
-                engine.writeReports(getProjectName(), new File(reportOutputDirectory), format, exceptions);
-            }
-
-            if (this.failBuildOnCVSS <= 10) {
-                checkForFailure(engine.getDependencies());
-            }
-            if (this.showSummary) {
-                DependencyCheckScanAgent.showSummary(engine.getDependencies());
+            if (exceptions == null || !exceptions.isFatal()) {
+                for (String format : getReportFormats()) {
+                    engine.writeReports(getProjectName(), new File(reportOutputDirectory), format, exceptions);
+                }
+                if (this.failBuildOnCVSS <= 10) {
+                    checkForFailure(engine.getDependencies());
+                }
+                if (this.showSummary) {
+                    DependencyCheckScanAgent.showSummary(engine.getDependencies());
+                }
             }
         } catch (DatabaseException ex) {
             final String msg = "Unable to connect to the dependency-check database; analysis has stopped";
@@ -1743,34 +2142,51 @@ public class Check extends Update {
         getSettings().setStringIfNotEmpty(Settings.KEYS.ANALYZER_ARTIFACTORY_BEARER_TOKEN, artifactoryAnalyzerBearerToken);
 
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_SWIFT_PACKAGE_MANAGER_ENABLED, swiftPackageManagerAnalyzerEnabled);
+        getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_SWIFT_PACKAGE_RESOLVED_ENABLED, swiftPackageResolvedAnalyzerEnabled);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_COCOAPODS_ENABLED, cocoapodsAnalyzerEnabled);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_BUNDLE_AUDIT_ENABLED, bundleAuditAnalyzerEnabled);
         getSettings().setStringIfNotNull(Settings.KEYS.ANALYZER_BUNDLE_AUDIT_PATH, bundleAuditPath);
         getSettings().setStringIfNotNull(Settings.KEYS.ANALYZER_BUNDLE_AUDIT_WORKING_DIRECTORY, bundleAuditWorkingDirectory);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_AUTOCONF_ENABLED, autoconfAnalyzerEnabled);
+        getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_MAVEN_INSTALL_ENABLED, mavenInstallAnalyzerEnabled);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_PIP_ENABLED, pipAnalyzerEnabled);
+        getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_PIPFILE_ENABLED, pipfileAnalyzerEnabled);
+        getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_POETRY_ENABLED, poetryAnalyzerEnabled);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_COMPOSER_LOCK_ENABLED, composerAnalyzerEnabled);
+        getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_CPANFILE_ENABLED, cpanfileAnalyzerEnabled);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_NODE_PACKAGE_ENABLED, nodeAnalyzerEnabled);
+        getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_NODE_PACKAGE_SKIPDEV, nodePackageSkipDevDependencies);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_NODE_AUDIT_ENABLED, nodeAuditAnalyzerEnabled);
+        getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_YARN_AUDIT_ENABLED, yarnAuditAnalyzerEnabled);
+        getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_PNPM_AUDIT_ENABLED, pnpmAuditAnalyzerEnabled);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_NODE_AUDIT_USE_CACHE, nodeAuditAnalyzerUseCache);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_NODE_AUDIT_SKIPDEV, nodeAuditSkipDevDependencies);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_RETIREJS_ENABLED, retireJsAnalyzerEnabled);
         getSettings().setStringIfNotNull(Settings.KEYS.ANALYZER_RETIREJS_REPO_JS_URL, retireJsUrl);
+        getSettings().setStringIfNotNull(Settings.KEYS.ANALYZER_RETIREJS_REPO_JS_USER, retireJsUrlUser);
+        getSettings().setStringIfNotNull(Settings.KEYS.ANALYZER_RETIREJS_REPO_JS_PASSWORD, retireJsUrlPassword);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_RETIREJS_FORCEUPDATE, retireJsAnalyzerForceUpdate);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_RETIREJS_FILTER_NON_VULNERABLE, retirejsFilterNonVulnerable);
         getSettings().setArrayIfNotEmpty(Settings.KEYS.ANALYZER_RETIREJS_FILTERS, retirejsFilters);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_GOLANG_DEP_ENABLED, golangDepEnabled);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_GOLANG_MOD_ENABLED, golangModEnabled);
+        getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_DART_ENABLED, dartAnalyzerEnabled);
         getSettings().setStringIfNotNull(Settings.KEYS.ANALYZER_GOLANG_PATH, pathToGo);
+        getSettings().setStringIfNotNull(Settings.KEYS.ANALYZER_YARN_PATH, pathToYarn);
+        getSettings().setStringIfNotNull(Settings.KEYS.ANALYZER_PNPM_PATH, pathToPnpm);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_MIX_AUDIT_ENABLED, mixAuditAnalyzerEnabled);
         getSettings().setStringIfNotNull(Settings.KEYS.ANALYZER_MIX_AUDIT_PATH, mixAuditPath);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_NUSPEC_ENABLED, nuspecAnalyzerEnabled);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_NUGETCONF_ENABLED, nugetconfAnalyzerEnabled);
+        getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_LIBMAN_ENABLED, libmanAnalyzerEnabled);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_CENTRAL_ENABLED, centralAnalyzerEnabled);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_CENTRAL_USE_CACHE, centralAnalyzerUseCache);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_NEXUS_ENABLED, nexusAnalyzerEnabled);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_ARCHIVE_ENABLED, archiveAnalyzerEnabled);
+        getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_KNOWN_EXPLOITED_ENABLED, knownExploitedEnabled);
+        getSettings().setStringIfNotEmpty(Settings.KEYS.KEV_URL, knownExploitedUrl);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_ASSEMBLY_ENABLED, assemblyAnalyzerEnabled);
+        getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_MSBUILD_PROJECT_ENABLED, msbuildAnalyzerEnabled);
         getSettings().setStringIfNotEmpty(Settings.KEYS.ANALYZER_NEXUS_URL, nexusUrl);
         getSettings().setStringIfNotEmpty(Settings.KEYS.ANALYZER_NEXUS_USER, nexusUser);
         getSettings().setStringIfNotEmpty(Settings.KEYS.ANALYZER_NEXUS_PASSWORD, nexusPassword);
@@ -1782,6 +2198,7 @@ public class Check extends Update {
         getSettings().setStringIfNotEmpty(Settings.KEYS.ANALYZER_OSSINDEX_USER, ossindexAnalyzerUsername);
         getSettings().setStringIfNotEmpty(Settings.KEYS.ANALYZER_OSSINDEX_PASSWORD, ossindexAnalyzerPassword);
         getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_OSSINDEX_USE_CACHE, ossindexAnalyzerUseCache);
+        getSettings().setBooleanIfNotNull(Settings.KEYS.ANALYZER_OSSINDEX_WARN_ONLY_ON_REMOTE_ERRORS, ossIndexAnalyzerWarnOnlyOnRemoteErrors);
         getSettings().setFloat(Settings.KEYS.JUNIT_FAIL_ON_CVSS, junitFailOnCVSS);
     }
 
@@ -1798,11 +2215,16 @@ public class Check extends Update {
     private void checkForFailure(Dependency[] dependencies) throws BuildException {
         final StringBuilder ids = new StringBuilder();
         for (Dependency d : dependencies) {
+            boolean addName = true;
             for (Vulnerability v : d.getVulnerabilities()) {
                 if ((v.getCvssV2() != null && v.getCvssV2().getScore() >= failBuildOnCVSS)
                         || (v.getCvssV3() != null && v.getCvssV3().getBaseScore() >= failBuildOnCVSS)
-                        || (v.getUnscoredSeverity() != null && SeverityUtil.estimateCvssV2(v.getUnscoredSeverity()) >= failBuildOnCVSS)) {
-                    if (ids.length() == 0) {
+                        || (v.getUnscoredSeverity() != null && SeverityUtil.estimateCvssV2(v.getUnscoredSeverity()) >= failBuildOnCVSS)
+                        //safety net to fail on any if for some reason the above misses on 0
+                        || (failBuildOnCVSS <= 0.0f)) {
+                    if (addName) {
+                        addName = false;
+                        ids.append(NEW_LINE).append(d.getFileName()).append(": ");
                         ids.append(v.getName());
                     } else {
                         ids.append(", ").append(v.getName());
@@ -1815,7 +2237,7 @@ public class Check extends Update {
             if (showSummary) {
                 msg = String.format("%n%nDependency-Check Failure:%n"
                         + "One or more dependencies were identified with vulnerabilities that have a CVSS score greater than or equal to '%.1f': %s%n"
-                        + "See the dependency-check report for more details.%n%n", failBuildOnCVSS, ids.toString());
+                        + "See the dependency-check report for more details.%n%n", failBuildOnCVSS, ids);
             } else {
                 msg = String.format("%n%nDependency-Check Failure:%n"
                         + "One or more dependencies were identified with vulnerabilities.%n%n"
@@ -1827,7 +2249,7 @@ public class Check extends Update {
 
     /**
      * An enumeration of supported report formats: "ALL", "HTML", "XML", "CSV",
-     * "JSON", "JUNIT", etc..
+     * "JSON", "JUNIT", "SARIF", 'JENkINS', etc..
      */
     public static class ReportFormats extends EnumeratedAttribute {
 
@@ -1847,4 +2269,38 @@ public class Check extends Update {
             return values;
         }
     }
+
+    /**
+     * A class for Ant to represent the
+     * {@code <reportFormat format="<format>"/>} nested element to define
+     * multiple report formats for the ant-task.
+     */
+    public static class ReportFormat {
+
+        /**
+         * The format of this ReportFormat.
+         */
+        private ReportFormats format;
+
+        /**
+         * Gets the format as a String.
+         *
+         * @return the String representing a report format
+         */
+        public String getFormat() {
+            return this.format.getValue();
+        }
+
+        /**
+         * Sets the format.
+         *
+         * @param format the String value for one of the {@link ReportFormats}
+         * @throws BuildException When the offered String is not one of the
+         * valid values of the {@link ReportFormats} EnumeratedAttribute
+         */
+        public void setFormat(final String format) {
+            this.format = (ReportFormats) EnumeratedAttribute.getInstance(ReportFormats.class, format);
+        }
+    }
 }
+//CSON: MethodCount

@@ -37,7 +37,7 @@ import org.xml.sax.SAXException;
  * @author colezlaw
  */
 @ThreadSafe
-public class XPathNuspecParser implements NuspecParser {
+public class XPathNuspecParser {
 
     /**
      * Gets the string value of a node or null if it's not present
@@ -61,7 +61,6 @@ public class XPathNuspecParser implements NuspecParser {
      * @return the populated bean
      * @throws NuspecParseException when an exception occurs
      */
-    @Override
     public NugetPackage parse(InputStream stream) throws NuspecParseException {
         try {
             final DocumentBuilder db = XmlUtils.buildSecureDocumentBuilder();
@@ -83,6 +82,7 @@ public class XPathNuspecParser implements NuspecParser {
             nuspec.setOwners(getOrNull((Node) xpath.evaluate("/package/metadata/owners", d, XPathConstants.NODE)));
             nuspec.setLicenseUrl(getOrNull((Node) xpath.evaluate("/package/metadata/licenseUrl", d, XPathConstants.NODE)));
             nuspec.setTitle(getOrNull((Node) xpath.evaluate("/package/metadata/title", d, XPathConstants.NODE)));
+            nuspec.setDescription(xpath.evaluate("/package/metadata/description", d));
             return nuspec;
         } catch (ParserConfigurationException | SAXException | IOException | XPathExpressionException | NuspecParseException e) {
             throw new NuspecParseException("Unable to parse nuspec", e);

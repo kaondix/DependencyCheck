@@ -45,8 +45,9 @@
         #if($applicationVersion)"version":"$enc.json($applicationVersion)",#end
         "reportDate": "$enc.json($scanDateXML)",
         "credits": {
-            "NVD": "This report contains data retrieved from the National Vulnerability Database: http://nvd.nist.gov",
-            "NPM": "This report may contain data retrieved from the NPM Public Advisories: https://www.npmjs.com/advisories",
+            "NVD": "This report contains data retrieved from the National Vulnerability Database: https://nvd.nist.gov",
+            "CISA": "This report may contain data retrieved from the CISA Known Exploited Vulnerability Catalog: https://www.cisa.gov/known-exploited-vulnerabilities-catalog",
+            "NPM": "This report may contain data retrieved from the Github Advisory Database (via NPM Audit API): https://github.com/advisories/",
             "RETIREJS": "This report may contain data retrieved from the RetireJS community: https://retirejs.github.io/retire.js/",
             "OSSINDEX": "This report may contain data retrieved from the Sonatype OSS Index: https://ossindex.sonatype.org"
         }
@@ -66,6 +67,14 @@
             #foreach($ref in $dependency.projectReferences)
                 #if($foreach.count > 1),#end
                 "$enc.json($ref)"
+            #end
+            ]
+            #end
+            #if ($dependency.includedBy.size()>0)
+            ,"includedBy": [
+            #foreach($ref in $dependency.includedBy)
+                #if($foreach.count > 1),#end
+                { "reference":"$enc.json($ref.getReference())"#if($ref.getType()),"type":"$enc.json($ref.getType())"#end }
             #end
             ]
             #end
@@ -174,6 +183,18 @@
             #foreach($vuln in $dependency.getVulnerabilities(true))#if($foreach.count > 1),#end {
                 "source": "$enc.json($vuln.getSource().name())",
                 "name": "$enc.json($vuln.name)",
+                #if($vuln.getKnownExploitedVulnerability())
+                "knownExploitedVulnerability": {
+                    "VendorProject": "#if($vuln.getKnownExploitedVulnerability().getVendorProject())$enc.json($vuln.getKnownExploitedVulnerability().getVendorProject())#end",
+                    "Product": "#if($vuln.getKnownExploitedVulnerability().getProduct())$enc.json($vuln.getKnownExploitedVulnerability().getProduct())#end",
+                    "Name": "#if($vuln.getKnownExploitedVulnerability().getVulnerabilityName())$enc.json($vuln.getKnownExploitedVulnerability().getVulnerabilityName())#end",
+                    "DateAdded": "#if($vuln.getKnownExploitedVulnerability().getDateAdded())$enc.json($vuln.getKnownExploitedVulnerability().getDateAdded())#end",
+                    "Description": "#if($vuln.getKnownExploitedVulnerability().getShortDescription())$enc.json($vuln.getKnownExploitedVulnerability().getShortDescription())#end",
+                    "RequiredAction": "#if($vuln.getKnownExploitedVulnerability().getRequiredAction())$enc.json($vuln.getKnownExploitedVulnerability().getRequiredAction())#end",
+                    "DueDate": "#if($vuln.getKnownExploitedVulnerability().getDueDate())$enc.json($vuln.getKnownExploitedVulnerability().getDueDate())#end",
+                    "Notes": "#if($vuln.getKnownExploitedVulnerability().getNotes())$enc.json($vuln.getKnownExploitedVulnerability().getNotes())#end"
+                },
+                #end
                 #if($vuln.UnscoredSeverity)"unscored": "true", "severity" : "#if($vuln.unscoredSeverity.equals("0.0"))Unknown#else$enc.json($vuln.unscoredSeverity)#end",
 #elseif($vuln.cvssV3 && $vuln.cvssV3.baseSeverity)
                     "severity" : "$enc.json($vuln.cvssV3.baseSeverity)",
@@ -182,28 +203,39 @@
 #end
 #if($vuln.cvssV2)
                     "cvssv2": {
-                        "score": $vuln.cvssV2.score,
-                        "accessVector": "$enc.json($vuln.cvssV2.accessVector)",
-                        "accessComplexity": "$enc.json($vuln.cvssV2.accessComplexity)",
-                        "authenticationr": "$enc.json($vuln.cvssV2.authentication)",
-                        "confidentialImpact": "$enc.json($vuln.cvssV2.confidentialityImpact)",
-                        "integrityImpact": "$enc.json($vuln.cvssV2.integrityImpact)",
-                        "availabilityImpact": "$enc.json($vuln.cvssV2.availabilityImpact)",
-                        "severity": "$enc.json($vuln.cvssV2.severity)"
+                        "score": $vuln.cvssV2.score
+                        ,"accessVector": "$enc.json($vuln.cvssV2.accessVector)"
+                        ,"accessComplexity": "$enc.json($vuln.cvssV2.accessComplexity)"
+                        ,"authenticationr": "$enc.json($vuln.cvssV2.authentication)"
+                        ,"confidentialImpact": "$enc.json($vuln.cvssV2.confidentialityImpact)"
+                        ,"integrityImpact": "$enc.json($vuln.cvssV2.integrityImpact)"
+                        ,"availabilityImpact": "$enc.json($vuln.cvssV2.availabilityImpact)"
+                        ,"severity": "$enc.json($vuln.cvssV2.severity)"
+#if($vuln.cvssV2.version),"version": "$enc.json($vuln.cvssV2.version)"#end
+#if($vuln.cvssV2.exploitabilityScore),"exploitabilityScore": "$enc.json($vuln.cvssV2.exploitabilityScore)"#end
+#if($vuln.cvssV2.impactScore),"impactScore": "$enc.json($vuln.cvssV2.impactScore)"#end
+#if($vuln.cvssV2.acInsufInfo),"acInsufInfo": "$enc.json($vuln.cvssV2.acInsufInfo)"#end
+#if($vuln.cvssV2.obtainAllPrivilege),"obtainAllPrivilege": "$enc.json($vuln.cvssV2.obtainAllPrivilege)"#end
+#if($vuln.cvssV2.obtainUserPrivilege),"obtainUserPrivilege": "$enc.json($vuln.cvssV2.obtainUserPrivilege)"#end
+#if($vuln.cvssV2.obtainOtherPrivilege),"obtainOtherPrivilege": "$enc.json($vuln.cvssV2.obtainOtherPrivilege)"#end
+#if($vuln.cvssV2.userInteractionRequired),"userInteractionRequired": "$enc.json($vuln.cvssV2.userInteractionRequired)"#end
                     },
 #end
 #if($vuln.cvssV3)
                     "cvssv3": {
-                        "baseScore": $vuln.cvssV3.baseScore,
-                        "attackVector": "$enc.json($vuln.cvssV3.attackVector)",
-                        "attackComplexity": "$enc.json($vuln.cvssV3.attackComplexity)",
-                        "privilegesRequired": "$enc.json($vuln.cvssV3.privilegesRequired)",
-                        "userInteraction": "$enc.json($vuln.cvssV3.userInteraction)",
-                        "scope": "$enc.json($vuln.cvssV3.scope)",
-                        "confidentialityImpact": "$enc.json($vuln.cvssV3.confidentialityImpact)",
-                        "integrityImpact": "$enc.json($vuln.cvssV3.integrityImpact)",
-                        "availabilityImpact": "$enc.json($vuln.cvssV3.availabilityImpact)",
-                        "baseSeverity": "$enc.json($vuln.cvssV3.baseSeverity)"
+                        "baseScore": $vuln.cvssV3.baseScore
+                        ,"attackVector": "$enc.json($vuln.cvssV3.attackVector)"
+                        ,"attackComplexity": "$enc.json($vuln.cvssV3.attackComplexity)"
+                        ,"privilegesRequired": "$enc.json($vuln.cvssV3.privilegesRequired)"
+                        ,"userInteraction": "$enc.json($vuln.cvssV3.userInteraction)"
+                        ,"scope": "$enc.json($vuln.cvssV3.scope)"
+                        ,"confidentialityImpact": "$enc.json($vuln.cvssV3.confidentialityImpact)"
+                        ,"integrityImpact": "$enc.json($vuln.cvssV3.integrityImpact)"
+                        ,"availabilityImpact": "$enc.json($vuln.cvssV3.availabilityImpact)"
+                        ,"baseSeverity": "$enc.json($vuln.cvssV3.baseSeverity)"
+#if($vuln.cvssV3.exploitabilityScore),"exploitabilityScore": "$enc.json($vuln.cvssV3.exploitabilityScore)"#end
+#if($vuln.cvssV3.impactScore),"impactScore": "$enc.json($vuln.cvssV3.impactScore)"#end
+#if($vuln.cvssV3.version),"version": "$enc.json($vuln.cvssV3.version)"#end
                     },
 #end
 #if (!$vuln.cwe.cwes.isEmpty())
@@ -226,7 +258,7 @@
                     }#end
                 ],
                 "vulnerableSoftware": [
-                    #foreach($vs in $vuln.getVulnerableSoftware())
+                    #foreach($vs in $vuln.getVulnerableSoftware(true))
                         #if($foreach.count > 1),#end {
                         "software": { 
                             "id":"$enc.json($vs.toCpe23FS())"
@@ -248,28 +280,39 @@
                 "name": "$enc.json($vuln.name)",
 #if($vuln.cvssV2)
                     "cvssv2": {
-                        "score": $vuln.cvssV2.score,
-                        "accessVector": "$enc.json($vuln.cvssV2.accessVector)",
-                        "accessComplexity": "$enc.json($vuln.cvssV2.accessComplexity)",
-                        "authenticationr": "$enc.json($vuln.cvssV2.authentication)",
-                        "confidentialImpact": "$enc.json($vuln.cvssV2.confidentialityImpact)",
-                        "integrityImpact": "$enc.json($vuln.cvssV2.integrityImpact)",
-                        "availabilityImpact": "$enc.json($vuln.cvssV2.availabilityImpact)",
-                        "severity": "$enc.json($vuln.cvssV2.severity)"
+                        "score": $vuln.cvssV2.score
+                        ,"accessVector": "$enc.json($vuln.cvssV2.accessVector)"
+                        ,"accessComplexity": "$enc.json($vuln.cvssV2.accessComplexity)"
+                        ,"authenticationr": "$enc.json($vuln.cvssV2.authentication)"
+                        ,"confidentialImpact": "$enc.json($vuln.cvssV2.confidentialityImpact)"
+                        ,"integrityImpact": "$enc.json($vuln.cvssV2.integrityImpact)"
+                        ,"availabilityImpact": "$enc.json($vuln.cvssV2.availabilityImpact)"
+                        ,"severity": "$enc.json($vuln.cvssV2.severity)"
+#if($vuln.cvssV2.version),"version": "$enc.json($vuln.cvssV2.version)"#end
+#if($vuln.cvssV2.exploitabilityScore),"exploitabilityScore": "$enc.json($vuln.cvssV2.exploitabilityScore)"#end
+#if($vuln.cvssV2.impactScore),"impactScore": "$enc.json($vuln.cvssV2.impactScore)"#end
+#if($vuln.cvssV2.acInsufInfo),"acInsufInfo": "$enc.json($vuln.cvssV2.acInsufInfo)"#end
+#if($vuln.cvssV2.obtainAllPrivilege),"obtainAllPrivilege": "$enc.json($vuln.cvssV2.obtainAllPrivilege)"#end
+#if($vuln.cvssV2.obtainUserPrivilege),"obtainUserPrivilege": "$enc.json($vuln.cvssV2.obtainUserPrivilege)"#end
+#if($vuln.cvssV2.obtainOtherPrivilege),"obtainOtherPrivilege": "$enc.json($vuln.cvssV2.obtainOtherPrivilege)"#end
+#if($vuln.cvssV2.userInteractionRequired),"userInteractionRequired": "$enc.json($vuln.cvssV2.userInteractionRequired)"#end
                     },
 #end
 #if($vuln.cvssV3)
                     "cvssv3": {
-                        "baseScore": $vuln.cvssV3.baseScore,
-                        "attackVector": "$enc.json($vuln.cvssV3.attackVector)",
-                        "attackComplexity": "$enc.json($vuln.cvssV3.attackComplexity)",
-                        "privilegesRequired": "$enc.json($vuln.cvssV3.privilegesRequired)",
-                        "userInteraction": "$enc.json($vuln.cvssV3.userInteraction)",
-                        "scope": "$enc.json($vuln.cvssV3.scope)",
-                        "confidentialityImpact": "$enc.json($vuln.cvssV3.confidentialityImpact)",
-                        "integrityImpact": "$enc.json($vuln.cvssV3.integrityImpact)",
-                        "availabilityImpact": "$enc.json($vuln.cvssV3.availabilityImpact)",
-                        "baseSeverity": "$enc.json($vuln.cvssV3.baseSeverity)"
+                        "baseScore": $vuln.cvssV3.baseScore
+                        ,"attackVector": "$enc.json($vuln.cvssV3.attackVector)"
+                        ,"attackComplexity": "$enc.json($vuln.cvssV3.attackComplexity)"
+                        ,"privilegesRequired": "$enc.json($vuln.cvssV3.privilegesRequired)"
+                        ,"userInteraction": "$enc.json($vuln.cvssV3.userInteraction)"
+                        ,"scope": "$enc.json($vuln.cvssV3.scope)"
+                        ,"confidentialityImpact": "$enc.json($vuln.cvssV3.confidentialityImpact)"
+                        ,"integrityImpact": "$enc.json($vuln.cvssV3.integrityImpact)"
+                        ,"availabilityImpact": "$enc.json($vuln.cvssV3.availabilityImpact)"
+                        ,"baseSeverity": "$enc.json($vuln.cvssV3.baseSeverity)"
+#if($vuln.cvssV3.exploitabilityScore),"exploitabilityScore": "$enc.json($vuln.cvssV3.exploitabilityScore)"#end
+#if($vuln.cvssV3.impactScore),"impactScore": "$enc.json($vuln.cvssV3.impactScore)"#end
+#if($vuln.cvssV3.version),"version": "$enc.json($vuln.cvssV3.version)"#end
                     },
 #end
 #if (!$vuln.cwes.isEmpty())
@@ -292,7 +335,7 @@
                     }#end
                 ],
                 "vulnerableSoftware": [
-                    #foreach($vs in $vuln.getVulnerableSoftware())
+                    #foreach($vs in $vuln.getVulnerableSoftware(true))
                         #if($foreach.count > 1),#end {
                         "software": { 
                             "id":"$enc.json($vs.toCpe23FS())"

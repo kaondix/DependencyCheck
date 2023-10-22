@@ -17,11 +17,14 @@
  */
 package org.owasp.dependencycheck.taskdefs;
 
+import java.util.Optional;
+
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.data.nvdcve.DatabaseException;
 import org.owasp.dependencycheck.data.update.exception.UpdateException;
+import org.owasp.dependencycheck.utils.CveUrlParser;
 import org.owasp.dependencycheck.utils.Settings;
 import org.slf4j.impl.StaticLoggerBinder;
 
@@ -62,6 +65,10 @@ public class Update extends Purge {
      */
     private String connectionTimeout;
     /**
+     * The Read Timeout.
+     */
+    private String readTimeout;
+    /**
      * The database driver name; such as org.h2.Driver.
      */
     private String databaseDriverName;
@@ -90,9 +97,30 @@ public class Update extends Purge {
      */
     private String cveUrlBase;
     /**
+     * The wait time in milliseconds between downloads from the NVD.
+     */
+    private String cveWaitTime;
+    /**
      * The number of hours to wait before re-checking for updates.
      */
     private Integer cveValidForHours;
+    /**
+     * The number of hours to wait before re-checking hosted suppressions file for updates.
+     */
+    private Integer hostedSuppressionsValidForHours;
+    /**
+     * Whether the hosted suppressions file will be updated regardless of the `autoupdate` settings. Defaults to false.
+     */
+    private Boolean hostedSuppressionsForceUpdate;
+    /**
+     * Whether the hosted suppressions file will be used. Defaults to true.
+     */
+    private Boolean hostedSuppressionsEnabled;
+
+    /**
+     * Specify the first year of NVD CVE data to download; default is 2002.
+     */
+    private Integer cveStartYear;
 
     /**
      * Construct a new UpdateTask.
@@ -210,6 +238,24 @@ public class Update extends Purge {
      */
     public void setConnectionTimeout(String connectionTimeout) {
         this.connectionTimeout = connectionTimeout;
+    }
+
+    /**
+     * Get the value of readTimeout.
+     *
+     * @return the value of readTimeout
+     */
+    public String getReadTimeout() {
+        return readTimeout;
+    }
+
+    /**
+     * Set the value of readTimeout.
+     *
+     * @param readTimeout new value of readTimeout
+     */
+    public void setReadTimeout(String readTimeout) {
+        this.readTimeout = readTimeout;
     }
 
     /**
@@ -339,6 +385,24 @@ public class Update extends Purge {
     }
 
     /**
+     * Get the value of cveUrlBase.
+     *
+     * @return the value of cveUrlBase
+     */
+    public String getCveWaitTime() {
+        return cveWaitTime;
+    }
+
+    /**
+     * Set the value of cveWaitTime.
+     *
+     * @param cveWaitTime new value of cveWaitTime
+     */
+    public void setCveWaitTime(String cveWaitTime) {
+        this.cveWaitTime = cveWaitTime;
+    }
+
+    /**
      * Get the value of cveValidForHours.
      *
      * @return the value of cveValidForHours
@@ -357,6 +421,82 @@ public class Update extends Purge {
     }
 
     /**
+     * Get the value of cveStartYear.
+     *
+     * @return the value of cveStartYear
+     */
+    public Integer getCveStartYear() {
+        return cveStartYear;
+    }
+
+    /**
+     * Set the value of cveStartYear.
+     *
+     * @param cveStartYear new value of cveStartYear
+     */
+    public void setCveStartYear(Integer cveStartYear) {
+        if (cveStartYear != null && cveStartYear < 2002) {
+            log("Invalid Configuration: cveStartYear must be 2002 or greater", Project.MSG_ERR);
+            this.cveStartYear = 2002;
+        } else {
+            this.cveStartYear = cveStartYear;
+        }
+    }
+
+    /**
+     * Get the value of hostedSuppressionsValidForHours.
+     *
+     * @return the value of hostedSuppressionsValidForHours
+     */
+    public Integer getHostedSuppressionsValidForHours() {
+        return hostedSuppressionsValidForHours;
+    }
+
+    /**
+     * Set the value of hostedSuppressionsValidForHours.
+     *
+     * @param hostedSuppressionsValidForHours new value of hostedSuppressionsValidForHours
+     */
+    public void setHostedSuppressionsValidForHours(final Integer hostedSuppressionsValidForHours) {
+        this.hostedSuppressionsValidForHours = hostedSuppressionsValidForHours;
+    }
+
+    /**
+     * Get the value of hostedSuppressionsForceUpdate.
+     *
+     * @return the value of hostedSuppressionsForceUpdate
+     */
+    public Boolean isHostedSuppressionsForceUpdate() {
+        return hostedSuppressionsForceUpdate;
+    }
+
+    /**
+     * Set the value of hostedSuppressionsForceUpdate.
+     *
+     * @param hostedSuppressionsForceUpdate new value of hostedSuppressionsForceUpdate
+     */
+    public void setHostedSuppressionsForceUpdate(final Boolean hostedSuppressionsForceUpdate) {
+        this.hostedSuppressionsForceUpdate = hostedSuppressionsForceUpdate;
+    }
+
+    /**
+     * Get the value of hostedSuppressionsEnabled.
+     *
+     * @return the value of hostedSuppressionsEnabled
+     */
+    public Boolean isHostedSuppressionsEnabled() {
+        return hostedSuppressionsEnabled;
+    }
+    /**
+     * Set the value of hostedSuppressionsEnabled.
+     *
+     * @param hostedSuppressionsEnabled new value of hostedSuppressionsEnabled
+     */
+    public void setHostedSuppressionsEnabled(Boolean hostedSuppressionsEnabled) {
+        this.hostedSuppressionsEnabled = hostedSuppressionsEnabled;
+    }
+
+    /**
      * Executes the update by initializing the settings, downloads the NVD XML
      * data, and then processes the data storing it in the local database.
      *
@@ -366,7 +506,7 @@ public class Update extends Purge {
     //see note on `Check.dealWithReferences()` for information on this suppression
     @SuppressWarnings("squid:RedundantThrowsDeclarationCheck")
     @Override
-    public void execute() throws BuildException {
+    protected void executeWithContextClassloader() throws BuildException {
         populateSettings();
         try (Engine engine = new Engine(Update.class.getClassLoader(), getSettings())) {
             engine.doUpdates();
@@ -404,13 +544,23 @@ public class Update extends Purge {
         getSettings().setStringIfNotEmpty(Settings.KEYS.PROXY_PASSWORD, proxyPassword);
         getSettings().setStringIfNotEmpty(Settings.KEYS.PROXY_NON_PROXY_HOSTS, nonProxyHosts);
         getSettings().setStringIfNotEmpty(Settings.KEYS.CONNECTION_TIMEOUT, connectionTimeout);
+        getSettings().setStringIfNotEmpty(Settings.KEYS.CONNECTION_READ_TIMEOUT, readTimeout);
         getSettings().setStringIfNotEmpty(Settings.KEYS.DB_DRIVER_NAME, databaseDriverName);
         getSettings().setStringIfNotEmpty(Settings.KEYS.DB_DRIVER_PATH, databaseDriverPath);
         getSettings().setStringIfNotEmpty(Settings.KEYS.DB_CONNECTION_STRING, connectionString);
         getSettings().setStringIfNotEmpty(Settings.KEYS.DB_USER, databaseUser);
         getSettings().setStringIfNotEmpty(Settings.KEYS.DB_PASSWORD, databasePassword);
-        getSettings().setStringIfNotEmpty(Settings.KEYS.CVE_MODIFIED_JSON, cveUrlModified);
+
+        final String cveModifiedJson = Optional.ofNullable(cveUrlModified)
+                .filter(url -> !url.isEmpty())
+                .orElseGet(this::getDefaultCveUrlModified);
+        getSettings().setStringIfNotEmpty(Settings.KEYS.CVE_MODIFIED_JSON, cveModifiedJson);
         getSettings().setStringIfNotEmpty(Settings.KEYS.CVE_BASE_JSON, cveUrlBase);
+        getSettings().setStringIfNotEmpty(Settings.KEYS.CVE_DOWNLOAD_WAIT_TIME, cveWaitTime);
+        getSettings().setIntIfNotNull(Settings.KEYS.CVE_START_YEAR, cveStartYear);
+        getSettings().setIntIfNotNull(Settings.KEYS.HOSTED_SUPPRESSIONS_VALID_FOR_HOURS, hostedSuppressionsValidForHours);
+        getSettings().setBooleanIfNotNull(Settings.KEYS.HOSTED_SUPPRESSIONS_FORCEUPDATE, hostedSuppressionsForceUpdate);
+        getSettings().setBooleanIfNotNull(Settings.KEYS.HOSTED_SUPPRESSIONS_ENABLED, hostedSuppressionsEnabled);
         if (cveValidForHours != null) {
             if (cveValidForHours >= 0) {
                 getSettings().setInt(Settings.KEYS.CVE_CHECK_VALID_FOR_HOURS, cveValidForHours);
@@ -418,5 +568,10 @@ public class Update extends Purge {
                 throw new BuildException("Invalid setting: `cpeValidForHours` must be 0 or greater");
             }
         }
+    }
+
+    private String getDefaultCveUrlModified() {
+        return CveUrlParser.newInstance(getSettings())
+                .getDefaultCveUrlModified(cveUrlBase);
     }
 }

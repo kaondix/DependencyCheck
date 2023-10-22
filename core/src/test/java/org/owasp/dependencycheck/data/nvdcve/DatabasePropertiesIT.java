@@ -40,6 +40,7 @@ public class DatabasePropertiesIT extends BaseDBTestCase {
     public void setUp() throws Exception {
         super.setUp();
         cveDb = new CveDB(getSettings());
+        cveDb.open();
     }
 
     @After
@@ -96,9 +97,10 @@ public class DatabasePropertiesIT extends BaseDBTestCase {
         String key = "version";
         DatabaseProperties instance = cveDb.getDatabaseProperties();
         String result = instance.getProperty(key);
-        double version = Double.parseDouble(result);
-        assertTrue(version >= 2.8);
-        assertTrue(version <= 10);
+        
+        int major = Integer.parseInt(result.substring(0, result.indexOf('.')));
+       
+        assertTrue(major >= 5);
     }
 
     /**

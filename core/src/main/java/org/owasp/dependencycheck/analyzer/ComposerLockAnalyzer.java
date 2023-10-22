@@ -53,7 +53,7 @@ public class ComposerLockAnalyzer extends AbstractFileTypeAnalyzer {
      * A descriptor for the type of dependencies processed or added by this
      * analyzer.
      */
-    public static final String DEPENDENCY_ECOSYSTEM = Ecosystem.PYTHON;
+    public static final String DEPENDENCY_ECOSYSTEM = Ecosystem.PHP;
 
     /**
      * The logger.
@@ -122,7 +122,7 @@ public class ComposerLockAnalyzer extends AbstractFileTypeAnalyzer {
                     d.addSoftwareIdentifier(new PurlIdentifier(purl, Confidence.HIGHEST));
                 } catch (MalformedPackageURLException ex) {
                     LOGGER.debug("Unable to build package url for composer", ex);
-                    d.addSoftwareIdentifier(new GenericIdentifier("cocoapods:" + dep.getGroup() + "/" + dep.getProject()
+                    d.addSoftwareIdentifier(new GenericIdentifier("composer:" + dep.getGroup() + "/" + dep.getProject()
                             + "@" + dep.getVersion(), Confidence.HIGHEST));
                 }
                 d.setPackagePath(String.format("%s:%s", dep.getProject(), dep.getVersion()));

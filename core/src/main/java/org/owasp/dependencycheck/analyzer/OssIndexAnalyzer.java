@@ -50,8 +50,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import java.net.SocketTimeoutException;
 
 import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
@@ -87,11 +90,6 @@ public class OssIndexAnalyzer extends AbstractAnalyzer {
     private static Map<PackageUrl, ComponentReport> reports;
 
     /**
-     * Flag to indicate if fetching reports failed.
-     */
-    private static boolean failed = false;
-
-    /**
      * Lock to protect fetching state.
      */
     private static final Object FETCH_MUTIX = new Object();
@@ -125,7 +123,6 @@ public class OssIndexAnalyzer extends AbstractAnalyzer {
     protected void closeAnalyzer() throws Exception {
         synchronized (FETCH_MUTIX) {
             reports = null;
-            failed = false;
         }
     }
 
@@ -133,27 +130,64 @@ public class OssIndexAnalyzer extends AbstractAnalyzer {
     protected void analyzeDependency(final Dependency dependency, final Engine engine) throws AnalysisException {
         // batch request component-reports for all dependencies
         synchronized (FETCH_MUTIX) {
-            if (!failed && reports == null) {
+            if (reports == null) {
                 try {
+                    requestDelay();
                     reports = requestReports(engine.getDependencies());
                 } catch (TransportException ex) {
-                    failed = true;
-                    if (ex.getMessage() != null && ex.getMessage().endsWith("401")) {
-                        throw new AnalysisException("Invalid credentails provided for OSS Index", ex);
+                    final String message = ex.getMessage();
+                    final boolean warnOnly = getSettings().getBoolean(Settings.KEYS.ANALYZER_OSSINDEX_WARN_ONLY_ON_REMOTE_ERRORS, false);
+                    this.setEnabled(false);
+                    if (StringUtils.endsWith(message, "401")) {
+                        LOG.error("Invalid credentials for the OSS Index, disabling the analyzer");
+                        throw new AnalysisException("Invalid credentials provided for OSS Index", ex);
+                    } else if (StringUtils.endsWith(message, "403")) {
+                        LOG.error("OSS Index access forbidden, disabling the analyzer");
+                        throw new AnalysisException("OSS Index access forbidden", ex);
+                    } else if (StringUtils.endsWith(message, "429")) {
+                        if (warnOnly) {
+                            LOG.warn("OSS Index rate limit exceeded, disabling the analyzer", ex);
+                        } else {
+                            throw new AnalysisException("OSS Index rate limit exceeded, disabling the analyzer", ex);
+                        }
+                    } else if (warnOnly) {
+                        LOG.warn("Error requesting component reports, disabling the analyzer", ex);
+                    } else {
+                        LOG.debug("Error requesting component reports, disabling the analyzer", ex);
+                        throw new AnalysisException("Failed to request component-reports", ex);
                     }
-                    LOG.debug("Error requesting component reports", ex);
-                    throw new AnalysisException("Failed to request component-reports", ex);
+                } catch (SocketTimeoutException e) {
+                    final boolean warnOnly = getSettings().getBoolean(Settings.KEYS.ANALYZER_OSSINDEX_WARN_ONLY_ON_REMOTE_ERRORS, false);
+                    this.setEnabled(false);
+                    if (warnOnly) {
+                        LOG.warn("OSS Index socket timeout, disabling the analyzer", e);
+                    } else {
+                        LOG.debug("OSS Index socket timeout", e);
+                        throw new AnalysisException("Failed to establish socket to OSS Index", e);
+                    }
                 } catch (Exception e) {
                     LOG.debug("Error requesting component reports", e);
-                    failed = true;
                     throw new AnalysisException("Failed to request component-reports", e);
                 }
             }
+
+            // skip enrichment if we failed to fetch reports
+            if (reports != null) {
+                enrich(dependency);
+            }
         }
 
-        // skip enrichment if we failed to fetch reports
-        if (!failed) {
-            enrich(dependency);
+    }
+
+    /**
+     * Delays each request (thread) by the configured amount of seconds, if the
+     * configuration is present.
+     */
+    private void requestDelay() throws InterruptedException {
+        final int delay = getSettings().getInt(Settings.KEYS.ANALYZER_OSSINDEX_REQUEST_DELAY, 0);
+        if (delay > 0) {
+            LOG.debug("Request delay: " + delay);
+            TimeUnit.SECONDS.sleep(delay);
         }
     }
 
@@ -184,21 +218,24 @@ public class OssIndexAnalyzer extends AbstractAnalyzer {
         LOG.debug("Requesting component-reports for {} dependencies", dependencies.length);
         // create requests for each dependency which has a PURL identifier
         final List<PackageUrl> packages = new ArrayList<>();
-        Arrays.stream(dependencies).forEach(dependency -> {
-            dependency.getSoftwareIdentifiers().stream()
-                    .filter(id -> id instanceof PurlIdentifier)
-                    .map(id -> parsePackageUrl(id.getValue()))
-                    .filter(id -> id != null && StringUtils.isNotBlank(id.getVersion()))
-                    .forEach(id -> packages.add(id));
-        });
+        Arrays.stream(dependencies).forEach(dependency -> dependency.getSoftwareIdentifiers().stream()
+                .filter(id -> id instanceof PurlIdentifier)
+                .map(id -> parsePackageUrl(id.getValue()))
+                .filter(id -> id != null && StringUtils.isNotBlank(id.getVersion()))
+                .forEach(packages::add));
         // only attempt if we have been able to collect some packages
         if (!packages.isEmpty()) {
-            try (OssindexClient client = OssindexClientFactory.create(getSettings())) {
+            try (OssindexClient client = newOssIndexClient()) {
+                LOG.debug("OSS Index Analyzer submitting: " + packages);
                 return client.requestComponentReports(packages);
             }
         }
         LOG.warn("Unable to determine Package-URL identifiers for {} dependencies", dependencies.length);
         return Collections.emptyMap();
+    }
+
+    OssindexClient newOssIndexClient() {
+        return OssindexClientFactory.create(getSettings());
     }
 
     /**
@@ -207,7 +244,7 @@ public class OssIndexAnalyzer extends AbstractAnalyzer {
      *
      * @param dependency the dependency to enrich
      */
-    private void enrich(final Dependency dependency) {
+    void enrich(final Dependency dependency) {
         LOG.debug("Enrich dependency: {}", dependency);
 
         for (Identifier id : dependency.getSoftwareIdentifiers()) {
@@ -284,37 +321,27 @@ public class OssIndexAnalyzer extends AbstractAnalyzer {
         final float cvssScore = source.getCvssScore() != null ? source.getCvssScore() : -1;
 
         if (source.getCvssVector() != null) {
-            // convert cvss details
-            final CvssVector cvssVector = CvssVectorFactory.create(source.getCvssVector());
-
-            final Map<String, String> metrics = cvssVector.getMetrics();
-            if (cvssVector instanceof Cvss2Vector) {
-                result.setCvssV2(new CvssV2(
-                        cvssScore,
-                        metrics.get(Cvss2Vector.ACCESS_VECTOR),
-                        metrics.get(Cvss2Vector.ACCESS_COMPLEXITY),
-                        metrics.get(Cvss2Vector.AUTHENTICATION),
-                        metrics.get(Cvss2Vector.CONFIDENTIALITY_IMPACT),
-                        metrics.get(Cvss2Vector.INTEGRITY_IMPACT),
-                        metrics.get(Cvss2Vector.AVAILABILITY_IMPACT),
-                        Cvss2Severity.of(cvssScore).name()
-                ));
-            } else if (cvssVector instanceof Cvss3Vector) {
-                result.setCvssV3(new CvssV3(
-                        metrics.get(Cvss3Vector.ATTACK_VECTOR),
-                        metrics.get(Cvss3Vector.ATTACK_COMPLEXITY),
-                        metrics.get(Cvss3Vector.PRIVILEGES_REQUIRED),
-                        metrics.get(Cvss3Vector.USER_INTERACTION),
-                        metrics.get(Cvss3Vector.SCOPE),
-                        metrics.get(Cvss3Vector.CONFIDENTIALITY_IMPACT),
-                        metrics.get(Cvss3Vector.INTEGRITY_IMPACT),
-                        metrics.get(Cvss3Vector.AVAILABILITY_IMPACT),
-                        cvssScore,
-                        Cvss3Severity.of(cvssScore).name()
-                ));
+            if (source.getCvssVector().startsWith("CVSS:3")) {
+                result.setCvssV3(new CvssV3(source.getCvssVector(), cvssScore));
             } else {
-                LOG.warn("Unsupported CVSS vector: {}", cvssVector);
-                result.setUnscoredSeverity(Float.toString(cvssScore));
+                // convert cvss details
+                final CvssVector cvssVector = CvssVectorFactory.create(source.getCvssVector());
+                final Map<String, String> metrics = cvssVector.getMetrics();
+                if (cvssVector instanceof Cvss2Vector) {
+                    result.setCvssV2(new CvssV2(
+                            cvssScore,
+                            metrics.get(Cvss2Vector.ACCESS_VECTOR),
+                            metrics.get(Cvss2Vector.ACCESS_COMPLEXITY),
+                            metrics.get(Cvss2Vector.AUTHENTICATION),
+                            metrics.get(Cvss2Vector.CONFIDENTIALITY_IMPACT),
+                            metrics.get(Cvss2Vector.INTEGRITY_IMPACT),
+                            metrics.get(Cvss2Vector.AVAILABILITY_IMPACT),
+                            Cvss2Severity.of(cvssScore).name()
+                    ));
+                } else {
+                    LOG.warn("Unsupported CVSS vector: {}", cvssVector);
+                    result.setUnscoredSeverity(Float.toString(cvssScore));
+                }
             }
         } else {
             LOG.debug("OSS has no vector for {}", result.getName());
@@ -322,6 +349,10 @@ public class OssIndexAnalyzer extends AbstractAnalyzer {
         }
         // generate a reference to the vulnerability details on OSS Index
         result.addReference(REFERENCE_TYPE, source.getTitle(), source.getReference().toString());
+
+        // generate references to other references reported by OSS Index
+        source.getExternalReferences().forEach(externalReference
+                -> result.addReference("OSSIndex", externalReference.toString(), externalReference.toString()));
 
         // attach vulnerable software details as best we can
         final PackageUrl purl = report.getCoordinates();

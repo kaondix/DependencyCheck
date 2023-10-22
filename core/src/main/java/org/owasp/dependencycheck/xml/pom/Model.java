@@ -23,8 +23,7 @@ import java.util.List;
 import java.util.Properties;
 import javax.annotation.concurrent.ThreadSafe;
 
-import org.apache.commons.text.StringSubstitutor;
-import org.apache.commons.text.lookup.StringLookup;
+import org.owasp.dependencycheck.utils.InterpolationUtil;
 
 /**
  * A simple pojo to hold data related to a Maven POM file.
@@ -83,6 +82,10 @@ public class Model implements Serializable {
      * The list of licenses.
      */
     private final List<License> licenses = new ArrayList<>();
+    /**
+     * The list of developers.
+     */
+    private final List<Developer> developers = new ArrayList<>();
     /**
      * The project URL.
      */
@@ -287,6 +290,24 @@ public class Model implements Serializable {
     }
 
     /**
+     * Returns the list of developers.
+     *
+     * @return the list of developers
+     */
+    public List<Developer> getDevelopers() {
+        return developers;
+    }
+
+    /**
+     * Adds a new developer to the list of developers.
+     *
+     * @param developer the developer to add
+     */
+    public void addDeveloper(Developer developer) {
+        developers.add(developer);
+    }
+
+    /**
      * Get the value of projectURL.
      *
      * @return the value of projectURL
@@ -313,98 +334,37 @@ public class Model implements Serializable {
         if (properties == null) {
             return;
         }
-        this.groupId = interpolateString(this.groupId, properties);
-        if (groupId == null && properties.containsKey("groupId")) {
-            this.groupId = properties.getProperty("groupId");
-        }
-        this.artifactId = interpolateString(this.artifactId, properties);
-        if (artifactId == null && properties.containsKey("artifactId")) {
-            this.artifactId = properties.getProperty("artifactId");
-        }
-        this.version = interpolateString(this.version, properties);
-        if (version == null && properties.containsKey("version")) {
-            this.version = properties.getProperty("version");
-        }
-        this.description = interpolateString(this.description, properties);
+        this.description = InterpolationUtil.interpolate(this.description, properties);
         for (License l : this.getLicenses()) {
-            l.setName(interpolateString(l.getName(), properties));
-            l.setUrl(interpolateString(l.getUrl(), properties));
+            l.setName(InterpolationUtil.interpolate(l.getName(), properties));
+            l.setUrl(InterpolationUtil.interpolate(l.getUrl(), properties));
         }
-        this.name = interpolateString(this.name, properties);
-        this.projectURL = interpolateString(this.projectURL, properties);
-        this.organization = interpolateString(this.organization, properties);
-        this.parentGroupId = interpolateString(this.parentGroupId, properties);
-        this.parentArtifactId = interpolateString(this.parentArtifactId, properties);
-        this.parentVersion = interpolateString(this.parentVersion, properties);
+        this.name = InterpolationUtil.interpolate(this.name, properties);
+        this.projectURL = InterpolationUtil.interpolate(this.projectURL, properties);
+        this.organization = InterpolationUtil.interpolate(this.organization, properties);
+        this.parentGroupId = InterpolationUtil.interpolate(this.parentGroupId, properties);
+        this.parentArtifactId = InterpolationUtil.interpolate(this.parentArtifactId, properties);
+        this.parentVersion = InterpolationUtil.interpolate(this.parentVersion, properties);
     }
 
     /**
-     * <p>
-     * A utility function that will interpolate strings based on values given in
-     * the properties file. It will also interpolate the strings contained
-     * within the properties file so that properties can reference other
-     * properties.</p>
-     * <p>
-     * <b>Note:</b> if there is no property found the reference will be removed.
-     * In other words, if the interpolated string will be replaced with an empty
-     * string.
-     * </p>
-     * <p>
-     * Example:</p>
-     * <code>
-     * Properties p = new Properties();
-     * p.setProperty("key", "value");
-     * String s = interpolateString("'${key}' and '${nothing}'", p);
-     * System.out.println(s);
-     * </code>
-     * <p>
-     * Will result in:</p>
-     * <code>
-     * 'value' and ''
-     * </code>
+     * Replaces the group/artifact/version obtained from the `pom.xml` which may
+     * contain variable references with the interpolated values of the
+     * <a href="https://maven.apache.org/shared/maven-archiver/#pom-properties-content>pom.properties</a>
+     * content (when present). Validates that at least the documented properties
+     * for the G/A/V coordinates are all present. If not it will leave the model
+     * unmodified as the property-source was apparently not a valid
+     * pom.properties file for the `pom.xml`.
      *
-     * @param text the string that contains references to properties.
-     * @param properties a collection of properties that may be referenced
-     * within the text.
-     * @return the interpolated text.
+     * @param pomProperties A properties object that holds the properties from a
+     * pom.properties file.
      */
-    public static String interpolateString(String text, Properties properties) {
-        if (null == text || null == properties) {
-            return text;
+    public void setGAVFromPomDotProperties(Properties pomProperties) {
+        if (!pomProperties.containsKey("groupId") || !pomProperties.containsKey("artifactId") || !pomProperties.containsKey("version")) {
+            return;
         }
-        final StringSubstitutor substitutor = new StringSubstitutor(new PropertyLookup(properties));
-        return substitutor.replace(text);
-    }
-
-    /**
-     * Utility class that can provide values from a Properties object to a
-     * StringSubstitutor.
-     */
-    private static class PropertyLookup implements StringLookup {
-
-        /**
-         * Reference to the properties to lookup.
-         */
-        private final Properties props;
-
-        /**
-         * Constructs a new property lookup.
-         *
-         * @param props the properties to wrap.
-         */
-        PropertyLookup(Properties props) {
-            this.props = props;
-        }
-
-        /**
-         * Looks up the given property.
-         *
-         * @param key the key to the property
-         * @return the value of the property specified by the key
-         */
-        @Override
-        public String lookup(String key) {
-            return props.getProperty(key);
-        }
+        this.groupId = pomProperties.getProperty("groupId");
+        this.artifactId = pomProperties.getProperty("artifactId");
+        this.version = pomProperties.getProperty("version");
     }
 }

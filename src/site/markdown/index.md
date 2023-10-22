@@ -1,16 +1,14 @@
 About
 ====================
-OWASP dependency-check is an open source solution the OWASP Top 10 2013 entry:
-[A9 - Using Components with Known Vulnerabilities](https://www.owasp.org/index.php/Top_10_2013-A9-Using_Components_with_Known_Vulnerabilities).
-Dependency-check can currently be used to scan Java and .NET applications to 
-identify the use of known vulnerable components. Experimental analyzers for 
-Python, Ruby, PHP (composer), and Node.js applications; these are experimental
-due to the possible false positive and false negative rates. To use the experimental
+OWASP dependency-check is an open source solution to the OWASP Top 10 2021 entry:
+[A06:2021 – Vulnerable and Outdated Components](https://owasp.org/Top10/A06_2021-Vulnerable_and_Outdated_Components/).
+Dependency-check can currently be used to scan software to identify the use of 
+known vulnerable components. For a full list of supported languages/technologies
+please see the [File Type Analyzer](analyzers/index.html)
+page). Note that some of the analyzers are experimental and may produce more false 
+positive and false negative rates. To use the experimental
 analyzers they must be specifically enabled via the appropriate _experimental_
-configuration. In addition, dependency-check has experimental analyzers that can 
-be used to scan some C/C++ source code, including OpenSSL source code and projects
-that use [Autoconf](https://www.gnu.org/software/autoconf/) or
-[CMake](http://www.cmake.org/overview/).
+configuration.
 
 The problem with using known vulnerable components was covered in a paper by
 Jeff Williams and Arshan Dabirsiaghi titled, "[The Unfortunate Reality of
@@ -24,7 +22,6 @@ More information about dependency-check can be found here:
 
 * [How does dependency-check work](general/internals.html)
 * [How to read the report](general/thereport.html)
-* [The OWASP dependency-check mailing list](./mail-lists.html)
 
 OWASP dependency-check's core analysis engine can be used as:
 
@@ -37,7 +34,6 @@ OWASP dependency-check's core analysis engine can be used as:
 
 For help with dependency-check the following resource can be used:
 
-- Post to the [google group](https://groups.google.com/forum/#!forum/dependency-check): 
-[subscribe](mailto:dependency-check+subscribe@googlegroups.com), 
-[post](mailto:dependency-check@googlegroups.com), 
 - Open a [github issue](https://github.com/jeremylong/DependencyCheck/issues)
+
+<div style="display: flex;align-items:center;">Sponsor Development of dependency-check:&nbsp;<iframe src="https://github.com/sponsors/jeremylong/button" title="Sponsor jeremylong" height="35" width="116" style="border: 0;"></iframe></div>

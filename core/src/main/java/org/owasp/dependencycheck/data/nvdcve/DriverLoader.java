@@ -54,7 +54,9 @@ public final class DriverLoader {
      */
     public static void cleanup(Driver driver) {
         try {
+            LOGGER.debug("Begin deregister driver");
             DriverManager.deregisterDriver(driver);
+            LOGGER.debug("End deregister driver");
         } catch (SQLException ex) {
             LOGGER.debug("An error occurred unloading the database driver", ex);
         } catch (Throwable unexpected) {
@@ -126,12 +128,8 @@ public final class DriverLoader {
                 }
             }
         }
-        final URLClassLoader loader = AccessController.doPrivileged(new PrivilegedAction<URLClassLoader>() {
-            @Override
-            public URLClassLoader run() {
-                return new URLClassLoader(urls.toArray(new URL[0]), parent);
-            }
-        });
+        final URLClassLoader loader = AccessController.doPrivileged((PrivilegedAction<URLClassLoader>) () ->
+                new URLClassLoader(urls.toArray(new URL[0]), parent));
 
         return load(className, loader);
     }

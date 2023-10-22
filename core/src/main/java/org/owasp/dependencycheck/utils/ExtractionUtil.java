@@ -17,7 +17,6 @@
  */
 package org.owasp.dependencycheck.utils;
 
-import com.google.common.io.ByteStreams;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -34,6 +33,7 @@ import javax.annotation.concurrent.ThreadSafe;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
+import org.apache.commons.io.IOUtils;
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.analyzer.exception.ArchiveExtractionException;
@@ -120,7 +120,7 @@ public final class ExtractionUtil {
                             throw new ExtractionException(msg);
                         }
                         try (FileOutputStream fos = new FileOutputStream(file)) {
-                            ByteStreams.copy(zis, fos);
+                            IOUtils.copy(zis, fos);
                         } catch (FileNotFoundException ex) {
                             LOGGER.debug("", ex);
                             final String msg = String.format("Unable to find file '%s'.", file.getName());
@@ -177,10 +177,11 @@ public final class ExtractionUtil {
                 } else {
                     final File file = new File(extractTo, entry.getName());
                     if (!file.getCanonicalPath().startsWith(destPath)) {
+                        LOGGER.debug("ZipSlip detected\n-Destination: " + destPath + "\n-Path: " + file);
                         throw new ExtractionException("Archive contains a file that would be extracted outside of the target directory.");
                     }
                     try (FileOutputStream fos = new FileOutputStream(file)) {
-                        ByteStreams.copy(zis, fos);
+                        IOUtils.copy(zis, fos);
                     } catch (FileNotFoundException ex) {
                         LOGGER.debug("", ex);
                         final String msg = String.format("Unable to find file '%s'.", file.getName());
@@ -283,6 +284,7 @@ public final class ExtractionUtil {
             if (filter.accept(file.getParentFile(), file.getName())) {
                 final String destPath = destination.getCanonicalPath();
                 if (!file.getCanonicalPath().startsWith(destPath)) {
+                    LOGGER.debug("ZipSlip detected\n-Destination: " + destPath + "\n-Path: " + file);
                     final String msg = String.format(
                             "Archive contains a file (%s) that would be extracted outside of the target directory.",
                             file.getAbsolutePath());
@@ -292,7 +294,7 @@ public final class ExtractionUtil {
                 createParentFile(file);
 
                 try (FileOutputStream fos = new FileOutputStream(file)) {
-                    ByteStreams.copy(input, fos);
+                    IOUtils.copy(input, fos);
                 } catch (FileNotFoundException ex) {
                     LOGGER.debug("", ex);
                     final String msg = String.format("Unable to find file '%s'.", file.getName());
@@ -336,7 +338,7 @@ public final class ExtractionUtil {
         final String originalPath = file.getPath();
         final File gzip = new File(originalPath + ".gz");
         if (gzip.isFile() && !gzip.delete()) {
-            LOGGER.debug("Failed to delete initial temporary file when extracting 'gz' {}", gzip.toString());
+            LOGGER.debug("Failed to delete initial temporary file when extracting 'gz' {}", gzip);
             gzip.deleteOnExit();
         }
         if (!file.renameTo(gzip)) {
@@ -346,10 +348,10 @@ public final class ExtractionUtil {
         try (FileInputStream fis = new FileInputStream(gzip);
                 GZIPInputStream cin = new GZIPInputStream(fis);
                 FileOutputStream out = new FileOutputStream(newFile)) {
-            ByteStreams.copy(cin, out);
+            IOUtils.copy(cin, out);
         } finally {
             if (gzip.isFile() && !org.apache.commons.io.FileUtils.deleteQuietly(gzip)) {
-                LOGGER.debug("Failed to delete temporary file when extracting 'gz' {}", gzip.toString());
+                LOGGER.debug("Failed to delete temporary file when extracting 'gz' {}", gzip);
                 gzip.deleteOnExit();
             }
         }
@@ -367,7 +369,7 @@ public final class ExtractionUtil {
         final String originalPath = file.getPath();
         final File zip = new File(originalPath + ".zip");
         if (zip.isFile() && !zip.delete()) {
-            LOGGER.debug("Failed to delete initial temporary file when extracting 'zip' {}", zip.toString());
+            LOGGER.debug("Failed to delete initial temporary file when extracting 'zip' {}", zip);
             zip.deleteOnExit();
         }
         if (!file.renameTo(zip)) {
@@ -378,10 +380,10 @@ public final class ExtractionUtil {
                 ZipInputStream cin = new ZipInputStream(fis);
                 FileOutputStream out = new FileOutputStream(newFile)) {
             cin.getNextEntry();
-            ByteStreams.copy(cin, out);
+            IOUtils.copy(cin, out);
         } finally {
             if (zip.isFile() && !org.apache.commons.io.FileUtils.deleteQuietly(zip)) {
-                LOGGER.debug("Failed to delete temporary file when extracting 'zip' {}", zip.toString());
+                LOGGER.debug("Failed to delete temporary file when extracting 'zip' {}", zip);
                 zip.deleteOnExit();
             }
         }

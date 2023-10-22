@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
-import org.apache.commons.jcs.access.exception.CacheException;
+import org.apache.commons.jcs3.access.exception.CacheException;
 
 import static org.owasp.dependencycheck.analyzer.NodeAuditAnalyzer.DEFAULT_URL;
 
@@ -147,12 +147,12 @@ public class NodeAuditSearch {
      */
     private List<Advisory> submitPackage(JsonObject packageJson, String key, int count) throws SearchException, IOException {
         try {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("----------------------------------------");
-                LOGGER.debug("----------------------------------------");
-                LOGGER.debug(packageJson.toString());
-                LOGGER.debug("----------------------------------------");
-                LOGGER.debug("----------------------------------------");
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("----------------------------------------");
+                LOGGER.trace("Node Audit Payload:");
+                LOGGER.trace(packageJson.toString());
+                LOGGER.trace("----------------------------------------");
+                LOGGER.trace("----------------------------------------");
             }
             final byte[] packageDatabytes = packageJson.toString().getBytes(StandardCharsets.UTF_8);
             final URLConnectionFactory factory = new URLConnectionFactory(settings);

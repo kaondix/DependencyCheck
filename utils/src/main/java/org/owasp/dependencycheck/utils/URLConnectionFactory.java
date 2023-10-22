@@ -112,7 +112,11 @@ public final class URLConnectionFactory {
                 conn = (HttpURLConnection) url.openConnection();
             }
             final int connectionTimeout = settings.getInt(Settings.KEYS.CONNECTION_TIMEOUT, 10000);
+            // set a conservative long default timeout to compensate for MITM-proxies that return the (final) bytes only
+            // after all security checks passed
+            final int readTimeout = settings.getInt(Settings.KEYS.CONNECTION_READ_TIMEOUT, 60_000);
             conn.setConnectTimeout(connectionTimeout);
+            conn.setReadTimeout(readTimeout);
             conn.setInstanceFollowRedirects(true);
         } catch (IOException ex) {
             if (conn != null) {
@@ -147,15 +151,35 @@ public final class URLConnectionFactory {
                 LOGGER.debug("Adding user info as basic authorization");
             }
             conn.addRequestProperty("Authorization", basicAuth);
-        } else if (StringUtils.isNotEmpty(settings.getString(Settings.KEYS.CVE_USER)) && StringUtils.isNotEmpty(settings.getString(Settings.KEYS.CVE_PASSWORD))) {
-            final String user = settings.getString(Settings.KEYS.CVE_USER);
-            final String password = settings.getString(Settings.KEYS.CVE_PASSWORD);
-            final String userColonPassword = user + ":" + password;
-            final String basicAuth = "Basic " + Base64.getEncoder().encodeToString(userColonPassword.getBytes(UTF_8));
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Adding user/pw from settings.xml as basic authorization");
+        }
+    }
+
+    /**
+     * Adds a basic authentication header if the values in the settings are not
+     * null.
+     *
+     * @param conn the connection to add the basic auth header
+     * @param userKey the settings key for the username
+     * @param passwordKey the settings key for the password
+     */
+    public void addBasicAuthentication(HttpURLConnection conn, String userKey, String passwordKey) {
+        if (StringUtils.isNotEmpty(settings.getString(userKey))
+                && StringUtils.isNotEmpty(settings.getString(passwordKey))) {
+            final String user = settings.getString(userKey);
+            final String password = settings.getString(passwordKey);
+
+            if (user.isEmpty() || password.isEmpty()) {
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Skip authentication as user and/or password is empty");
+                }
+            } else {
+                final String userColonPassword = user + ":" + password;
+                final String basicAuth = "Basic " + Base64.getEncoder().encodeToString(userColonPassword.getBytes(UTF_8));
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Adding user/password from settings.xml as basic authorization");
+                }
+                conn.addRequestProperty("Authorization", basicAuth);
             }
-            conn.addRequestProperty("Authorization", basicAuth);
         }
     }
 
@@ -181,15 +205,15 @@ public final class URLConnectionFactory {
                     final String nonProxyHostPrefix = nonProxyHost.substring(0, pos);
                     final String nonProxyHostSuffix = nonProxyHost.substring(pos + 1);
                     // prefix*
-                    if (!StringUtils.isEmpty(nonProxyHostPrefix) && host.startsWith(nonProxyHostPrefix) && StringUtils.isEmpty(nonProxyHostSuffix)) {
+                    if (!StringUtils.isBlank(nonProxyHostPrefix) && host.startsWith(nonProxyHostPrefix) && StringUtils.isBlank(nonProxyHostSuffix)) {
                         return true;
                     }
                     // *suffix
-                    if (StringUtils.isEmpty(nonProxyHostPrefix) && !StringUtils.isEmpty(nonProxyHostSuffix) && host.endsWith(nonProxyHostSuffix)) {
+                    if (StringUtils.isBlank(nonProxyHostPrefix) && !StringUtils.isBlank(nonProxyHostSuffix) && host.endsWith(nonProxyHostSuffix)) {
                         return true;
                     }
                     // prefix*suffix
-                    if (!StringUtils.isEmpty(nonProxyHostPrefix) && host.startsWith(nonProxyHostPrefix) && !StringUtils.isEmpty(nonProxyHostSuffix)
+                    if (!StringUtils.isBlank(nonProxyHostPrefix) && host.startsWith(nonProxyHostPrefix) && !StringUtils.isBlank(nonProxyHostSuffix)
                             && host.endsWith(nonProxyHostSuffix)) {
                         return true;
                     }

@@ -91,6 +91,8 @@ public class UpdateMojo extends BaseDependencyCheckMojo {
                 throw new MojoExecutionException(msg, ex);
             }
             getLog().error(msg);
+        } finally {
+            getSettings().cleanup();
         }
     }
 
@@ -127,6 +129,20 @@ public class UpdateMojo extends BaseDependencyCheckMojo {
      */
     @Override
     protected ExceptionCollection scanDependencies(Engine engine) throws MojoExecutionException {
+        throw new UnsupportedOperationException("Operation not supported");
+    }
+
+    /**
+     * Throws an exception if called. The purge mojo does not scan dependencies.
+     *
+     * @param engine the engine used to scan
+     * @param exCollection the collection of exceptions that might have occurred
+     * previously
+     * @return a collection of exceptions
+     * @throws MojoExecutionException thrown if there is an exception
+     */
+    @Override
+    protected ExceptionCollection scanPlugins(final Engine engine, final ExceptionCollection exCollection) throws MojoExecutionException {
         throw new UnsupportedOperationException("Operation not supported");
     }
 }

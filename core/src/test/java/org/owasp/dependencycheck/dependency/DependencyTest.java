@@ -155,7 +155,7 @@ public class DependencyTest extends BaseTest {
     }
 
     /**
-     * Test of getSha1sum method, of class Dependency.
+     * Test of getSha256sum method, of class Dependency.
      */
     @Test
     public void testGetSha256sum() {
@@ -178,10 +178,10 @@ public class DependencyTest extends BaseTest {
     }
 
     /**
-     * Test of setSha1sum method, of class Dependency.
+     * Test of setSha256sum method, of class Dependency.
      */
     @Test
-    public void testSetSha256um() {
+    public void testSetSha256sum() {
         String sha256sum = "test";
         Dependency instance = new Dependency();
         instance.setSha256sum(sha256sum);
@@ -189,7 +189,7 @@ public class DependencyTest extends BaseTest {
     }
 
     /**
-     * Test of getIdentifiers method, of class Dependency.
+     * Test of getSoftwareIdentifiers method, of class Dependency.
      */
     @Test
     public void testGetSoftwareIdentifiers() {
@@ -200,7 +200,7 @@ public class DependencyTest extends BaseTest {
     }
 
     /**
-     * Test of setIdentifiers method, of class Dependency.
+     * Test of addSoftwareIdentifiers method, of class Dependency.
      */
     @Test
     public void testAddSoftwareIdentifiers() {
@@ -211,10 +211,10 @@ public class DependencyTest extends BaseTest {
     }
 
     /**
-     * Test of addIdentifier method, of class Dependency.
+     * Test of addVulnerableSoftwareIdentifier method, of class Dependency.
      */
     @Test
-    public void testAddVulnerableSoftwareIIdentifier() throws Exception {
+    public void testAddVulnerableSoftwareIdentifier() throws Exception {
         CpeBuilder builder = new CpeBuilder();
         Cpe cpe = builder.part(Part.APPLICATION).vendor("apache").product("struts").version("2.1.2").build();
         CpeIdentifier id = new CpeIdentifier(cpe, Confidence.HIGHEST);
@@ -251,7 +251,7 @@ public class DependencyTest extends BaseTest {
         MavenArtifact mavenArtifact = new MavenArtifact("group", "artifact", "version", "url");
         instance.addAsEvidence("pom", mavenArtifact, Confidence.HIGH);
         assertTrue(instance.contains(EvidenceType.VENDOR, Confidence.HIGH));
-        assertEquals(3, instance.size());
+        assertEquals(4, instance.size());
         assertFalse(instance.getSoftwareIdentifiers().isEmpty());
     }
 
@@ -277,21 +277,17 @@ public class DependencyTest extends BaseTest {
         MavenArtifact mavenArtifact = new MavenArtifact("group", "artifact", "version", null);
         instance.addAsEvidence("pom", mavenArtifact, Confidence.HIGH);
         assertTrue(instance.getEvidence(EvidenceType.VENDOR).stream().anyMatch(e -> e.getConfidence() == Confidence.HIGH));
-        assertTrue(instance.size() == 3);
+        assertTrue(instance.size() == 4);
         assertFalse(instance.getSoftwareIdentifiers().isEmpty());
 
-        instance.getSoftwareIdentifiers().forEach((i) -> {
-            assertNull(i.getUrl());
-        });
+        instance.getSoftwareIdentifiers().forEach((i) -> assertNull(i.getUrl()));
 
         mavenArtifact = new MavenArtifact("group", "artifact", "version", "url");
         instance.addAsEvidence("pom", mavenArtifact, Confidence.HIGH);
         assertTrue(instance.getEvidence(EvidenceType.VENDOR).stream().anyMatch(e -> e.getConfidence() == Confidence.HIGH));
-        assertTrue(instance.size() == 3);
+        assertTrue(instance.size() == 4);
         assertFalse(instance.getSoftwareIdentifiers().isEmpty());
 
-        instance.getSoftwareIdentifiers().forEach((i) -> {
-            assertNotNull(i.getUrl());
-        });
+        instance.getSoftwareIdentifiers().forEach((i) -> assertNotNull(i.getUrl()));
     }
 }

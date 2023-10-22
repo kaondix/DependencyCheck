@@ -17,20 +17,30 @@
  */
 package org.owasp.dependencycheck.data.update;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
-import java.util.Calendar;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 import javax.annotation.concurrent.ThreadSafe;
+import org.apache.commons.io.FileUtils;
 
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.data.nvd.json.MetaProperties;
@@ -43,6 +53,7 @@ import static org.owasp.dependencycheck.data.nvdcve.DatabaseProperties.MODIFIED;
 import org.owasp.dependencycheck.data.update.exception.InvalidDataException;
 import org.owasp.dependencycheck.data.update.exception.UpdateException;
 import org.owasp.dependencycheck.data.update.nvd.DownloadTask;
+import org.owasp.dependencycheck.data.update.nvd.NvdCache;
 import org.owasp.dependencycheck.data.update.nvd.NvdCveInfo;
 import org.owasp.dependencycheck.data.update.nvd.ProcessTask;
 import org.owasp.dependencycheck.utils.DateUtil;
@@ -127,6 +138,14 @@ public class NvdCveUpdater implements CachedWebDataSource {
                 }
                 //all dates in the db are now stored in seconds as opposed to previously milliseconds.
                 dbProperties.save(DatabaseProperties.LAST_CHECKED, Long.toString(System.currentTimeMillis() / 1000));
+                if (updatesMade) {
+                    cveDb.persistEcosystemCache();
+                }
+                final int updateCount = cveDb.updateEcosystemCache();
+                LOGGER.debug("Corrected the ecosystem for {} ecoSystemCache entries", updateCount);
+                if (updatesMade || updateCount > 0) {
+                    cveDb.cleanupDatabase();
+                }
             }
         } catch (UpdateException ex) {
             if (ex.getCause() != null && ex.getCause() instanceof DownloadFailedException) {
@@ -170,12 +189,8 @@ public class NvdCveUpdater implements CachedWebDataSource {
      */
     protected void initializeExecutorServices() {
         final int downloadPoolSize;
-        final int max = settings.getInt(Settings.KEYS.MAX_DOWNLOAD_THREAD_POOL_SIZE, 3);
-        if (DOWNLOAD_THREAD_POOL_SIZE > max) {
-            downloadPoolSize = max;
-        } else {
-            downloadPoolSize = DOWNLOAD_THREAD_POOL_SIZE;
-        }
+        final int max = settings.getInt(Settings.KEYS.MAX_DOWNLOAD_THREAD_POOL_SIZE, 1);
+        downloadPoolSize = Math.min(DOWNLOAD_THREAD_POOL_SIZE, max);
         downloadExecutorService = Executors.newFixedThreadPool(downloadPoolSize);
         processingExecutorService = Executors.newFixedThreadPool(PROCESSING_THREAD_POOL_SIZE);
         LOGGER.debug("#download   threads: {}", downloadPoolSize);
@@ -304,9 +319,11 @@ public class NvdCveUpdater implements CachedWebDataSource {
             final Future<ProcessTask> task;
             try {
                 task = modified.get();
-                final ProcessTask last = task.get();
-                if (last.getException() != null) {
-                    throw last.getException();
+                if (task != null) {
+                    final ProcessTask last = task.get();
+                    if (last.getException() != null) {
+                        throw last.getException();
+                    }
                 }
             } catch (InterruptedException ex) {
                 LOGGER.debug("Thread was interrupted during download", ex);
@@ -318,11 +335,6 @@ public class NvdCveUpdater implements CachedWebDataSource {
             }
         }
 
-        try {
-            cveDb.cleanupDatabase();
-        } catch (DatabaseException ex) {
-            throw new UpdateException(ex.getMessage(), ex.getCause());
-        }
     }
 
     /**
@@ -333,23 +345,84 @@ public class NvdCveUpdater implements CachedWebDataSource {
      * @throws UpdateException thrown if the meta file could not be downloaded
      */
     protected final MetaProperties getMetaFile(String url) throws UpdateException {
+        try {
+            final long waitTime = settings.getInt(Settings.KEYS.CVE_DOWNLOAD_WAIT_TIME, 4000);
+            MetaProperties retVal = doMetaDownload(url, false);
+
+            final int downloadAttempts = 4;
+            for (int x = 2; retVal == null && x <= downloadAttempts; x++) {
+                Thread.sleep(waitTime * (x / 2));
+                retVal = doMetaDownload(url, x == downloadAttempts);
+            }
+            return retVal;
+        } catch (InterruptedException ex) {
+            Thread.interrupted();
+            throw new UpdateException("Download interupted", ex);
+        }
+    }
+
+    /**
+     * Downloads the NVD CVE Meta file properties.
+     *
+     * @param url the URL to the NVD CVE JSON file
+     * @param throwErrors if <code>true</code> and an error occurs, the error
+     * will be thrown; otherwise the error will be suppressed
+     * @return the meta file properties
+     * @throws UpdateException thrown if the meta file could not be downloaded
+     */
+    private MetaProperties doMetaDownload(String url, boolean throwErrors) throws UpdateException {
         final String metaUrl = url.substring(0, url.length() - 7) + "meta";
+        final NvdCache cache = new NvdCache(settings);
         try {
             final URL u = new URL(metaUrl);
-            final Downloader d = new Downloader(settings);
-            final String content = d.fetchContent(u, true);
-            return new MetaProperties(content);
+            final File tmp = settings.getTempFile("nvd", "meta");
+            if (cache.notInCache(u, tmp)) {
+                final Downloader d = new Downloader(settings);
+                final String content = d.fetchContent(u, true, Settings.KEYS.CVE_USER, Settings.KEYS.CVE_PASSWORD);
+                try (FileOutputStream fos = new FileOutputStream(tmp);
+                        OutputStreamWriter osw = new OutputStreamWriter(fos, StandardCharsets.UTF_8);
+                        BufferedWriter writer = new BufferedWriter(osw)) {
+                    writer.write(content);
+                }
+                cache.storeInCache(u, tmp);
+                FileUtils.deleteQuietly(tmp);
+                return new MetaProperties(content);
+            } else {
+                final String content;
+                try (FileInputStream fis = new FileInputStream(tmp);
+                        InputStreamReader isr = new InputStreamReader(fis, StandardCharsets.UTF_8);
+                        BufferedReader reader = new BufferedReader(isr)) {
+                    content = reader.lines().collect(Collectors.joining("\n"));
+                }
+                FileUtils.deleteQuietly(tmp);
+                return new MetaProperties(content);
+            }
         } catch (MalformedURLException ex) {
-            throw new UpdateException("Meta file url is invalid: " + metaUrl, ex);
+            if (throwErrors) {
+                throw new UpdateException("Meta file url is invalid: " + metaUrl, ex);
+            }
         } catch (InvalidDataException ex) {
-            throw new UpdateException("Meta file content is invalid: " + metaUrl, ex);
+            if (throwErrors) {
+                throw new UpdateException("Meta file content is invalid: " + metaUrl, ex);
+            }
         } catch (DownloadFailedException ex) {
-            throw new UpdateException("Unable to download meta file: " + metaUrl, ex);
+            if (throwErrors) {
+                throw new UpdateException("Unable to download meta file: " + metaUrl, ex);
+            }
         } catch (TooManyRequestsException ex) {
-            throw new UpdateException("Unable to download meta file: " + metaUrl + "; received 429 -- too many requests", ex);
+            if (throwErrors) {
+                throw new UpdateException("Unable to download meta file: " + metaUrl + "; received 429 -- too many requests", ex);
+            }
         } catch (ResourceNotFoundException ex) {
-            throw new UpdateException("Unable to download meta file: " + metaUrl + "; received 404 -- resource not found", ex);
+            if (throwErrors) {
+                throw new UpdateException("Unable to download meta file: " + metaUrl + "; received 404 -- resource not found", ex);
+            }
+        } catch (IOException ex) {
+            if (throwErrors) {
+                throw new RuntimeException(ex);
+            }
         }
+        return null;
     }
 
     /**
@@ -368,7 +441,12 @@ public class NvdCveUpdater implements CachedWebDataSource {
         if (dbProperties != null && !dbProperties.isEmpty()) {
             try {
                 final int startYear = settings.getInt(Settings.KEYS.CVE_START_YEAR, 2002);
-                final int endYear = Calendar.getInstance().get(Calendar.YEAR);
+                // for establishing the current year use the timezone where the new year starts first
+                // as from that moment on CNAs might start assigning CVEs with the new year depending
+                // on the CNA's timezone
+                final ZonedDateTime today = ZonedDateTime.now().withZoneSameInstant(ZoneOffset.ofHours(14));
+                final int endYear = today.getYear();
+                final int dayOfEndYear = today.getDayOfYear();
                 boolean needsFullUpdate = false;
                 for (int y = startYear; y <= endYear; y++) {
                     final long val = Long.parseLong(dbProperties.getProperty(DatabaseProperties.LAST_UPDATED_BASE + y, "0"));
@@ -387,15 +465,39 @@ public class NvdCveUpdater implements CachedWebDataSource {
                 if (!needsFullUpdate && lastUpdated == modified.getLastModifiedDate()) {
                     return updates;
                 } else {
+                    final String baseUrl = settings.getString(Settings.KEYS.CVE_BASE_JSON);
                     final NvdCveInfo item = new NvdCveInfo(MODIFIED, url, modified.getLastModifiedDate());
                     updates.add(item);
-                    if (needsFullUpdate || !DateUtil.withinDateRange(lastUpdated, now, days)) {
-                        final int start = settings.getInt(Settings.KEYS.CVE_START_YEAR);
-                        final int end = Calendar.getInstance().get(Calendar.YEAR);
-                        final String baseUrl = settings.getString(Settings.KEYS.CVE_BASE_JSON);
-                        for (int i = start; i <= end; i++) {
+                    if (needsFullUpdate) {
+                        // no need to download each one, just use the modified timestamp
+                        for (int i = startYear; i < endYear; i++) {
+                            url = String.format(baseUrl, i);
+                            final NvdCveInfo entry = new NvdCveInfo(Integer.toString(i), url, modified.getLastModifiedDate());
+                            updates.add(entry);
+                        }
+                        // for endyear check metadata availability to determine inclusion when still in grace period
+                        if (dayOfEndYear < settings.getInt(Settings.KEYS.NVD_NEW_YEAR_GRACE_PERIOD, 10)) {
+                            try {
+                                url = String.format(baseUrl, endYear);
+                                final MetaProperties meta = getMetaFile(url);
+                            } catch (UpdateException ue) {
+                                if (ue.getCause() instanceof ResourceNotFoundException) {
+                                    LOGGER.warn("NVD Data for {} has not been published yet.", endYear);
+                                } else {
+                                    throw ue;
+                                }
+                            }
+                        } else {
+                            url = String.format(baseUrl, endYear);
+                            final NvdCveInfo entry = new NvdCveInfo(Integer.toString(endYear), url, modified.getLastModifiedDate());
+                            updates.add(entry);
+                        }
+                    } else if (!DateUtil.withinDateRange(lastUpdated, now, days)) {
+                        final long waitTime = settings.getInt(Settings.KEYS.CVE_DOWNLOAD_WAIT_TIME, 4000);
+                        for (int i = startYear; i <= endYear; i++) {
                             try {
                                 url = String.format(baseUrl, i);
+                                Thread.sleep(waitTime);
                                 final MetaProperties meta = getMetaFile(url);
                                 final long currentTimestamp = getPropertyInSeconds(DatabaseProperties.LAST_UPDATED_BASE + i);
 
@@ -404,17 +506,16 @@ public class NvdCveUpdater implements CachedWebDataSource {
                                     updates.add(entry);
                                 }
                             } catch (UpdateException ex) {
-                                final Calendar date = Calendar.getInstance();
-                                final int year = date.get(Calendar.YEAR);
-                                final int month = date.get(Calendar.MONTH);
-                                final int day = date.get(Calendar.DATE);
                                 final int grace = settings.getInt(Settings.KEYS.NVD_NEW_YEAR_GRACE_PERIOD, 10);
-                                if (ex.getMessage().contains("Unable to download meta file")
-                                        && i == year && month == 0 && day < grace) {
-                                    LOGGER.warn("NVD Data for {} has not been published yet.", year);
+                                if (ex.getCause() instanceof ResourceNotFoundException
+                                        && i == endYear && dayOfEndYear < grace) {
+                                    LOGGER.warn("NVD Data for {} has not been published yet.", endYear);
                                 } else {
                                     throw ex;
                                 }
+                            } catch (InterruptedException ex) {
+                                Thread.interrupted();
+                                throw new UpdateException("The download of the meta file was interupted: " + url, ex);
                             }
                         }
                     }
@@ -422,8 +523,6 @@ public class NvdCveUpdater implements CachedWebDataSource {
             } catch (NumberFormatException ex) {
                 LOGGER.warn("An invalid schema version or timestamp exists in the data.properties file.");
                 LOGGER.debug("", ex);
-            } catch (InvalidSettingException ex) {
-                throw new UpdateException("The NVD CVE start year property is set to an invalid value", ex);
             }
         }
         return updates;

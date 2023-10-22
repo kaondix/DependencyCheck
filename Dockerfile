@@ -1,16 +1,16 @@
-FROM golang:1.14-alpine AS go
+FROM golang:1.17.1-alpine AS go
 
-FROM azul/zulu-openjdk-alpine:14 AS jlink
+FROM azul/zulu-openjdk-alpine:17 AS jlink
 
-RUN $JAVA_HOME/bin/jlink --compress=2 --module-path /opt/java/openjdk/jmods --add-modules java.base,java.compiler,java.datatransfer,jdk.crypto.ec,java.desktop,java.instrument,java.logging,java.management,java.naming,java.rmi,java.scripting,java.security.sasl,java.sql,java.transaction.xa,java.xml,jdk.unsupported --output /jlinked
+RUN "$JAVA_HOME/bin/jlink" --compress=2 --module-path /opt/java/openjdk/jmods --add-modules java.base,java.compiler,java.datatransfer,jdk.crypto.ec,java.desktop,java.instrument,java.logging,java.management,java.naming,java.rmi,java.scripting,java.security.sasl,java.sql,java.transaction.xa,java.xml,jdk.unsupported --output /jlinked
 
-FROM mcr.microsoft.com/dotnet/core/runtime:3.1-alpine
-
-MAINTAINER Jeremy Long <jeremy.long@owasp.org>
+FROM mcr.microsoft.com/dotnet/runtime:6.0-alpine3.16
 
 ARG VERSION
-ARG POSTGRES_DRIVER_VERSION=42.2.6
-ARG MYSQL_DRIVER_VERSION=8.0.17
+ARG POSTGRES_DRIVER_VERSION=42.2.19
+ARG MYSQL_DRIVER_VERSION=8.0.23
+ARG UID=1000
+ARG GID=1000
 
 ENV user=dependencycheck
 ENV JAVA_HOME=/opt/jdk
@@ -23,9 +23,13 @@ ADD cli/target/dependency-check-${VERSION}-release.zip /
 
 RUN apk update                                                                                       && \
     apk add --no-cache --virtual .build-deps curl tar                                                && \
-    apk add --no-cache git ruby ruby-rdoc                                                            && \
+    apk add --no-cache git ruby ruby-rdoc npm                                                        && \
     gem install bundle-audit                                                                         && \
     bundle audit update                                                                              && \
+    mkdir /opt/yarn                                                                                  && \
+    curl -Ls https://yarnpkg.com/latest.tar.gz | tar -xz --strip-components=1 --directory /opt/yarn  && \
+    ln -s /opt/yarn/bin/yarn /usr/bin/yarn                                                           && \
+    npm install -g pnpm                                                                              && \
     unzip dependency-check-${VERSION}-release.zip -d /usr/share/                                     && \
     rm dependency-check-${VERSION}-release.zip                                                       && \
     cd /usr/share/dependency-check/plugins                                                           && \
@@ -33,16 +37,18 @@ RUN apk update                                                                  
     curl -Ls "https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-${MYSQL_DRIVER_VERSION}.tar.gz" \
         | tar -xz --directory "/usr/share/dependency-check/plugins" --strip-components=1 --no-same-owner \
             "mysql-connector-java-${MYSQL_DRIVER_VERSION}/mysql-connector-java-${MYSQL_DRIVER_VERSION}.jar" && \
-    addgroup -S ${user} && adduser -S -G ${user} ${user}                                             && \
+    addgroup -S -g ${GID} ${user} && adduser -S -D -u ${UID} -G ${user} ${user}                      && \
     mkdir /usr/share/dependency-check/data                                                           && \
-    chown -R ${user}:${user} /usr/share/dependency-check                                             && \
+    chown -R ${user}:0 /usr/share/dependency-check                                                   && \
+    chmod -R g=u /usr/share/dependency-check                                                         && \
     mkdir /report                                                                                    && \
-    chown -R ${user}:${user} /report                                                                 && \
+    chown -R ${user}:0 /report                                                                       && \
+    chmod -R g=u /report                                                                             && \
     apk del .build-deps
 
 ### remove any suid sgid - we don't need them
-RUN for i in `find / -perm +6000 -type f`; do chmod a-s $i; done
-USER ${user}
+RUN find / -perm +6000 -type f -exec chmod a-s {} \;
+USER ${UID}
 
 VOLUME ["/src", "/report"]
 

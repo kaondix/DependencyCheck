@@ -20,7 +20,6 @@ package org.owasp.dependencycheck.xml.suppression;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -35,8 +34,6 @@ import org.apache.commons.io.input.BOMInputStream;
 
 import org.owasp.dependencycheck.utils.FileUtils;
 import org.owasp.dependencycheck.utils.XmlUtils;
-import org.owasp.dependencycheck.xml.XmlInputStream;
-import org.owasp.dependencycheck.xml.pom.PomProjectInputStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,13 +98,14 @@ public class SuppressionParser {
      * @throws SuppressionParseException thrown if the XML cannot be parsed
      * @throws SAXException thrown if the XML cannot be parsed
      */
-    public List<SuppressionRule> parseSuppressionRules(InputStream inputStream) throws SuppressionParseException, SAXException {
+    public List<SuppressionRule> parseSuppressionRules(InputStream inputStream)
+            throws SuppressionParseException, SAXException {
         try (
                 InputStream schemaStream13 = FileUtils.getResourceAsStream(SUPPRESSION_SCHEMA_1_3);
                 InputStream schemaStream12 = FileUtils.getResourceAsStream(SUPPRESSION_SCHEMA_1_2);
                 InputStream schemaStream11 = FileUtils.getResourceAsStream(SUPPRESSION_SCHEMA_1_1);
-                InputStream schemaStream10 = FileUtils.getResourceAsStream(SUPPRESSION_SCHEMA_1_0);) {
-            
+                InputStream schemaStream10 = FileUtils.getResourceAsStream(SUPPRESSION_SCHEMA_1_0)) {
+
             final BOMInputStream bomStream = new BOMInputStream(inputStream);
             final ByteOrderMark bom = bomStream.getBOM();
             final String defaultEncoding = StandardCharsets.UTF_8.name();
@@ -124,7 +122,7 @@ public class SuppressionParser {
                 xmlReader.parse(in);
                 return handler.getSuppressionRules();
             }
-        } catch (ParserConfigurationException | FileNotFoundException ex) {
+        } catch (ParserConfigurationException | IOException ex) {
             LOGGER.debug("", ex);
             throw new SuppressionParseException(ex);
         } catch (SAXException ex) {
@@ -134,9 +132,6 @@ public class SuppressionParser {
                 LOGGER.debug("", ex);
                 throw new SuppressionParseException(ex);
             }
-        } catch (IOException ex) {
-            LOGGER.debug("", ex);
-            throw new SuppressionParseException(ex);
         }
     }
 

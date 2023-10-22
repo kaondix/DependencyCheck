@@ -17,7 +17,7 @@
  */
 package org.owasp.dependencycheck.data.cache;
 
-import org.apache.commons.jcs.access.CacheAccess;
+import org.apache.commons.jcs3.access.CacheAccess;
 
 /**
  * A generic wrapper for the Java Caching System (JCS).
@@ -31,7 +31,7 @@ public class DataCache<T> {
     /**
      * A reference to the JCS cache.
      */
-    private CacheAccess<String, T> cache;
+    private final CacheAccess<String, T> cache;
 
     /**
      * Creates a new generic JCS wrapper.

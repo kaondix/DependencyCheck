@@ -17,13 +17,16 @@
  */
 package org.owasp.dependencycheck;
 
-import com.google.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.jcs3.JCS;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.owasp.dependencycheck.analyzer.AnalysisPhase;
 import org.owasp.dependencycheck.analyzer.Analyzer;
 import org.owasp.dependencycheck.analyzer.AnalyzerService;
 import org.owasp.dependencycheck.analyzer.FileTypeAnalyzer;
-import org.owasp.dependencycheck.data.nvdcve.ConnectionFactory;
+import org.owasp.dependencycheck.data.nvdcve.DatabaseManager;
 import org.owasp.dependencycheck.data.nvdcve.CveDB;
 import org.owasp.dependencycheck.data.nvdcve.DatabaseException;
 import org.owasp.dependencycheck.data.nvdcve.DatabaseProperties;
@@ -35,23 +38,29 @@ import org.owasp.dependencycheck.exception.ExceptionCollection;
 import org.owasp.dependencycheck.exception.InitializationException;
 import org.owasp.dependencycheck.exception.NoDataException;
 import org.owasp.dependencycheck.exception.ReportException;
+import org.owasp.dependencycheck.exception.WriteLockException;
 import org.owasp.dependencycheck.reporting.ReportGenerator;
 import org.owasp.dependencycheck.utils.Settings;
+import org.owasp.dependencycheck.utils.WriteLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -60,19 +69,23 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.annotation.concurrent.NotThreadSafe;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.jcs.JCS;
-
-import org.owasp.dependencycheck.exception.H2DBLockException;
-import org.owasp.dependencycheck.utils.H2DBLock;
-
-//CSOFF: AvoidStarImport
-import static org.owasp.dependencycheck.analyzer.AnalysisPhase.*;
-//CSON: AvoidStarImport
+import static org.owasp.dependencycheck.analyzer.AnalysisPhase.FINAL;
+import static org.owasp.dependencycheck.analyzer.AnalysisPhase.FINDING_ANALYSIS;
+import static org.owasp.dependencycheck.analyzer.AnalysisPhase.FINDING_ANALYSIS_PHASE2;
+import static org.owasp.dependencycheck.analyzer.AnalysisPhase.IDENTIFIER_ANALYSIS;
+import static org.owasp.dependencycheck.analyzer.AnalysisPhase.INFORMATION_COLLECTION;
+import static org.owasp.dependencycheck.analyzer.AnalysisPhase.INFORMATION_COLLECTION2;
+import static org.owasp.dependencycheck.analyzer.AnalysisPhase.INITIAL;
+import static org.owasp.dependencycheck.analyzer.AnalysisPhase.POST_FINDING_ANALYSIS;
+import static org.owasp.dependencycheck.analyzer.AnalysisPhase.POST_IDENTIFIER_ANALYSIS;
+import static org.owasp.dependencycheck.analyzer.AnalysisPhase.POST_INFORMATION_COLLECTION1;
+import static org.owasp.dependencycheck.analyzer.AnalysisPhase.POST_INFORMATION_COLLECTION2;
+import static org.owasp.dependencycheck.analyzer.AnalysisPhase.POST_INFORMATION_COLLECTION3;
+import static org.owasp.dependencycheck.analyzer.AnalysisPhase.PRE_FINDING_ANALYSIS;
+import static org.owasp.dependencycheck.analyzer.AnalysisPhase.PRE_IDENTIFIER_ANALYSIS;
+import static org.owasp.dependencycheck.analyzer.AnalysisPhase.PRE_INFORMATION_COLLECTION;
+import org.owasp.dependencycheck.analyzer.DependencyBundlingAnalyzer;
+import org.owasp.dependencycheck.dependency.naming.Identifier;
 
 /**
  * Scans files, directories, etc. for Dependencies. Analyzers are loaded and
@@ -86,135 +99,54 @@ import static org.owasp.dependencycheck.analyzer.AnalysisPhase.*;
 public class Engine implements FileFilter, AutoCloseable {
 
     /**
-     * {@link Engine} execution modes.
+     * The Logger for use throughout the class.
      */
-    public enum Mode {
-        /**
-         * In evidence collection mode the {@link Engine} only collects evidence
-         * from the scan targets, and doesn't require a database.
-         */
-        EVIDENCE_COLLECTION(
-                false,
-                INITIAL,
-                PRE_INFORMATION_COLLECTION,
-                INFORMATION_COLLECTION,
-                INFORMATION_COLLECTION2,
-                POST_INFORMATION_COLLECTION
-        ),
-        /**
-         * In evidence processing mode the {@link Engine} processes the evidence
-         * collected using the {@link #EVIDENCE_COLLECTION} mode. Dependencies
-         * should be injected into the {@link Engine} using
-         * {@link Engine#setDependencies(List)}.
-         */
-        EVIDENCE_PROCESSING(
-                true,
-                PRE_IDENTIFIER_ANALYSIS,
-                IDENTIFIER_ANALYSIS,
-                POST_IDENTIFIER_ANALYSIS,
-                PRE_FINDING_ANALYSIS,
-                FINDING_ANALYSIS,
-                POST_FINDING_ANALYSIS,
-                FINDING_ANALYSIS_PHASE2,
-                FINAL
-        ),
-        /**
-         * In standalone mode the {@link Engine} will collect and process
-         * evidence in a single execution.
-         */
-        STANDALONE(true, AnalysisPhase.values());
-
-        /**
-         * Whether the database is required in this mode.
-         */
-        private final boolean databaseRequired;
-        /**
-         * The analysis phases included in the mode.
-         */
-        private final ImmutableList<AnalysisPhase> phases;
-
-        /**
-         * Returns true if the database is required; otherwise false.
-         *
-         * @return whether or not the database is required
-         */
-        private boolean isDatabaseRequired() {
-            return databaseRequired;
-        }
-
-        /**
-         * Returns the phases for this mode.
-         *
-         * @return the phases for this mode
-         */
-        public ImmutableList<AnalysisPhase> getPhases() {
-            return phases;
-        }
-
-        /**
-         * Constructs a new mode.
-         *
-         * @param databaseRequired if the database is required for the mode
-         * @param phases the analysis phases to include in the mode
-         */
-        Mode(boolean databaseRequired, AnalysisPhase... phases) {
-            this.databaseRequired = databaseRequired;
-            //must use Guava 11.0.1 API as of 3/30/2019 due to Jenkins compatability issues
-            //this.phases = Arrays.stream(phases).collect(ImmutableList.toImmutableList());
-            this.phases = new ImmutableList.Builder<AnalysisPhase>()
-                    .add(phases)
-                    .build();
-        }
-    }
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(Engine.class);
     /**
      * The list of dependencies.
      */
     private final List<Dependency> dependencies = Collections.synchronizedList(new ArrayList<>());
     /**
-     * The external view of the dependency list.
-     */
-    private Dependency[] dependenciesExternalView = null;
-    /**
      * A Map of analyzers grouped by Analysis phase.
      */
     private final Map<AnalysisPhase, List<Analyzer>> analyzers = new EnumMap<>(AnalysisPhase.class);
-
     /**
      * A Map of analyzers grouped by Analysis phase.
      */
     private final Set<FileTypeAnalyzer> fileTypeAnalyzers = new HashSet<>();
-
     /**
      * The engine execution mode indicating it will either collect evidence or
      * process evidence or both.
      */
     private final Mode mode;
-
     /**
      * The ClassLoader to use when dynamically loading Analyzer and Update
      * services.
      */
     private final ClassLoader serviceClassLoader;
     /**
-     * A reference to the database.
-     */
-    private CveDB database = null;
-    /**
-     * The Logger for use throughout the class.
-     */
-    private static final Logger LOGGER = LoggerFactory.getLogger(Engine.class);
-    /**
      * The configured settings.
      */
     private final Settings settings;
+    /**
+     * A storage location to persist objects throughout the execution of ODC.
+     */
+    private final Map<String, Object> objects = new HashMap<>();
+    /**
+     * The external view of the dependency list.
+     */
+    private Dependency[] dependenciesExternalView = null;
+    /**
+     * A reference to the database.
+     */
+    private CveDB database = null;
     /**
      * Used to store the value of
      * System.getProperty("javax.xml.accessExternalSchema") - ODC may change the
      * value of this system property at runtime. We store the value to reset the
      * property to its original value.
      */
-    private String accessExternalSchema;
+    private final String accessExternalSchema;
 
     /**
      * Creates a new {@link Mode#STANDALONE} Engine.
@@ -321,11 +253,26 @@ public class Engine implements FileFilter, AutoCloseable {
     }
 
     /**
-     * Adds a dependency.
+     * Adds a dependency. In some cases, when adding a virtual dependency, the
+     * method will identify if the virtual dependency was previously added and update
+     * the existing dependency rather then adding a duplicate.
      *
      * @param dependency the dependency to add
      */
     public synchronized void addDependency(Dependency dependency) {
+        if (dependency.isVirtual()) {
+            for (Dependency existing : dependencies) {
+                if (existing.isVirtual()
+                        && existing.getSha256sum() != null
+                        && existing.getSha256sum().equals(dependency.getSha256sum())
+                        && existing.getDisplayFileName() != null
+                        && existing.getDisplayFileName().equals(dependency.getDisplayFileName())
+                        && identifiersMatch(existing.getSoftwareIdentifiers(), dependency.getSoftwareIdentifiers())) {
+                    DependencyBundlingAnalyzer.mergeDependencies(existing, dependency, null);
+                    return;
+                }
+            }
+        }
         dependencies.add(dependency);
         dependenciesExternalView = null;
     }
@@ -498,8 +445,8 @@ public class Engine implements FileFilter, AutoCloseable {
     public List<Dependency> scan(Collection<File> files, String projectReference) {
         final List<Dependency> deps = new ArrayList<>();
         files.stream().map((file) -> scan(file, projectReference))
-                .filter((d) -> (d != null))
-                .forEach((d) -> deps.addAll(d));
+                .filter(Objects::nonNull)
+                .forEach(deps::addAll);
         return deps;
     }
 
@@ -597,6 +544,7 @@ public class Engine implements FileFilter, AutoCloseable {
         return scanFile(file, null);
     }
 
+    //CSOFF: NestedIfDepth
     /**
      * Scans a specified file. If a dependency is identified it is added to the
      * dependency collection.
@@ -621,15 +569,32 @@ public class Engine implements FileFilter, AutoCloseable {
                 if (sha1 != null) {
                     for (Dependency existing : dependencies) {
                         if (sha1.equals(existing.getSha1sum())) {
+                            if (existing.getDisplayFileName().contains(": ")
+                                    || dependency.getDisplayFileName().contains(": ")
+                                    || dependency.getActualFilePath().contains("dctemp")) {
+                                continue;
+                            }
                             found = true;
                             if (projectReference != null) {
                                 existing.addProjectReference(projectReference);
                             }
                             if (existing.getActualFilePath() != null && dependency.getActualFilePath() != null
                                     && !existing.getActualFilePath().equals(dependency.getActualFilePath())) {
-                                existing.addRelatedDependency(dependency);
-                            } else {
-                                dependency = existing;
+
+                                if (DependencyBundlingAnalyzer.firstPathIsShortest(existing.getFilePath(), dependency.getFilePath())) {
+                                    DependencyBundlingAnalyzer.mergeDependencies(existing, dependency, null);
+
+                                    //return null;
+                                    return existing;
+                                } else {
+                                    //Merging dependency<-existing could be complicated. Instead analyze them seperately
+                                    //and possibly merge them at the end.
+                                    found = false;
+                                }
+
+                            } else { //somehow we scanned the same file twice?
+                                //return null;
+                                return existing;
                             }
                             break;
                         }
@@ -645,6 +610,7 @@ public class Engine implements FileFilter, AutoCloseable {
         }
         return dependency;
     }
+    //CSON: NestedIfDepth
 
     /**
      * Runs the analyzers against all of the dependencies. Since the mutable
@@ -677,7 +643,11 @@ public class Engine implements FileFilter, AutoCloseable {
                 + "acceptance for use in an AS IS condition, and there are NO warranties, implied or otherwise, with regard to the analysis "
                 + "or its use. Any use of the tool and the reporting provided is at the user’s risk. In no event shall the copyright holder "
                 + "or OWASP be held liable for any damages whatsoever arising out of or in connection with the use of this tool, the analysis "
-                + "performed, or the resulting report.\n\n");
+                + "performed, or the resulting report.\n\n\n"
+                + "   About ODC: https://jeremylong.github.io/DependencyCheck/general/internals.html\n"
+                + "   False Positives: https://jeremylong.github.io/DependencyCheck/general/suppression.html\n"
+                + "\n"
+                + "💖 Sponsor: https://github.com/sponsors/jeremylong\n\n");
         LOGGER.debug("\n----------------------------------------------------\nBEGIN ANALYSIS\n----------------------------------------------------");
         LOGGER.info("Analysis Started");
         final long analysisStart = System.currentTimeMillis();
@@ -709,8 +679,8 @@ public class Engine implements FileFilter, AutoCloseable {
             }
         }
         mode.getPhases().stream()
-                .map((phase) -> analyzers.get(phase))
-                .forEach((analyzerList) -> analyzerList.forEach((a) -> closeAnalyzer(a)));
+                .map(analyzers::get)
+                .forEach((analyzerList) -> analyzerList.forEach(this::closeAnalyzer));
 
         LOGGER.debug("\n----------------------------------------------------\nEND ANALYSIS\n----------------------------------------------------");
         final long analysisDurationSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - analysisStart);
@@ -745,7 +715,7 @@ public class Engine implements FileFilter, AutoCloseable {
             }
         } else {
             try {
-                if (ConnectionFactory.isH2Connection(settings) && !ConnectionFactory.h2DataFileExists(settings)) {
+                if (DatabaseManager.isH2Connection(settings) && !DatabaseManager.h2DataFileExists(settings)) {
                     throw new ExceptionCollection(new NoDataException("Autoupdate is disabled and the database does not exist"), true);
                 } else {
                     openDatabase(true, true);
@@ -768,7 +738,7 @@ public class Engine implements FileFilter, AutoCloseable {
      */
     private void throwFatalDatabaseException(DatabaseException ex, final List<Throwable> exceptions) throws ExceptionCollection {
         final String msg;
-        if (ex.getMessage().contains("Unable to connect") && ConnectionFactory.isH2Connection(settings)) {
+        if (ex.getMessage().contains("Unable to connect") && DatabaseManager.isH2Connection(settings)) {
             msg = "Unable to connect to the database - if this error persists it may be "
                     + "due to a corrupt database. Consider running `purge` to delete the existing database";
         } else {
@@ -792,7 +762,7 @@ public class Engine implements FileFilter, AutoCloseable {
         final ExecutorService executorService = getExecutorService(analyzer);
 
         try {
-            final int timeout = settings.getInt(Settings.KEYS.ANALYSIS_TIMEOUT, 20);
+            final int timeout = settings.getInt(Settings.KEYS.ANALYSIS_TIMEOUT, 180);
             final List<Future<Void>> results = executorService.invokeAll(analysisTasks, timeout, TimeUnit.MINUTES);
 
             // ensure there was no exception during execution
@@ -822,7 +792,7 @@ public class Engine implements FileFilter, AutoCloseable {
      */
     protected synchronized List<AnalysisTask> getAnalysisTasks(Analyzer analyzer, List<Throwable> exceptions) {
         final List<AnalysisTask> result = new ArrayList<>();
-        dependencies.stream().map((dependency) -> new AnalysisTask(analyzer, dependency, this, exceptions)).forEach((task) -> result.add(task));
+        dependencies.stream().map((dependency) -> new AnalysisTask(analyzer, dependency, this, exceptions)).forEach(result::add);
         return result;
     }
 
@@ -898,9 +868,10 @@ public class Engine implements FileFilter, AutoCloseable {
      * @throws UpdateException thrown if the operation fails
      * @throws DatabaseException if the operation fails due to a local database
      * failure
+     * @return Whether any updates actually happened
      */
-    public void doUpdates() throws UpdateException, DatabaseException {
-        doUpdates(false);
+    public boolean doUpdates() throws UpdateException, DatabaseException {
+        return doUpdates(false);
     }
 
     /**
@@ -912,16 +883,11 @@ public class Engine implements FileFilter, AutoCloseable {
      * @throws UpdateException thrown if the operation fails
      * @throws DatabaseException if the operation fails due to a local database
      * failure
+     * @return Whether any updates actually happened
      */
-    public void doUpdates(boolean remainOpen) throws UpdateException, DatabaseException {
+    public boolean doUpdates(boolean remainOpen) throws UpdateException, DatabaseException {
         if (mode.isDatabaseRequired()) {
-            H2DBLock dblock = null;
-            try {
-                if (ConnectionFactory.isH2Connection(settings)) {
-                    dblock = new H2DBLock(settings);
-                    LOGGER.debug("locking for update");
-                    dblock.lock();
-                }
+            try (WriteLock dblock = new WriteLock(getSettings(), DatabaseManager.isH2Connection(getSettings()))) {
                 //lock is not needed as we already have the lock held
                 openDatabase(false, false);
                 LOGGER.info("Checking for updates");
@@ -952,15 +918,14 @@ public class Engine implements FileFilter, AutoCloseable {
                     //lock is not needed as we already have the lock held
                     openDatabase(true, false);
                 }
-            } catch (H2DBLockException ex) {
+
+                return dbUpdatesMade;
+            } catch (WriteLockException ex) {
                 throw new UpdateException("Unable to obtain an exclusive lock on the H2 database to perform updates", ex);
-            } finally {
-                if (dblock != null) {
-                    dblock.release();
-                }
             }
         } else {
             LOGGER.info("Skipping update check in evidence collection mode.");
+            return false;
         }
     }
 
@@ -1029,18 +994,14 @@ public class Engine implements FileFilter, AutoCloseable {
      * opening the database
      * @throws DatabaseException if the database connection could not be created
      */
+    @SuppressWarnings("try")
     public void openDatabase(boolean readOnly, boolean lockRequired) throws DatabaseException {
         if (mode.isDatabaseRequired() && database == null) {
-            H2DBLock lock = null;
-            try {
-                if (lockRequired && ConnectionFactory.isH2Connection(settings)) {
-                    lock = new H2DBLock(settings);
-                    lock.lock();
-                }
+            try (WriteLock dblock = new WriteLock(getSettings(), lockRequired && DatabaseManager.isH2Connection(settings))) {
                 if (readOnly
-                        && ConnectionFactory.isH2Connection(settings)
+                        && DatabaseManager.isH2Connection(settings)
                         && settings.getString(Settings.KEYS.DB_CONNECTION_STRING).contains("file:%s")) {
-                    final File db = ConnectionFactory.getH2DataFile(settings);
+                    final File db = DatabaseManager.getH2DataFile(settings);
                     if (db.isFile()) {
                         final File temp = settings.getTempDirectory();
                         final File tempDB = new File(temp, db.getName());
@@ -1051,22 +1012,20 @@ public class Engine implements FileFilter, AutoCloseable {
                         if (!connStr.contains("ACCESS_MODE_DATA")) {
                             settings.setString(Settings.KEYS.DB_CONNECTION_STRING, connStr + "ACCESS_MODE_DATA=r");
                         }
+                        settings.setBoolean(Settings.KEYS.AUTO_UPDATE, false);
                         database = new CveDB(settings);
                     } else {
-                        throw new DatabaseException("Unable to open database - configured database file does not exist: " + db.toString());
+                        throw new DatabaseException("Unable to open database - configured database file does not exist: " + db);
                     }
                 } else {
                     database = new CveDB(settings);
                 }
             } catch (IOException ex) {
                 throw new DatabaseException("Unable to open database in read only mode", ex);
-            } catch (H2DBLockException ex) {
+            } catch (WriteLockException ex) {
                 throw new DatabaseException("Failed to obtain lock - unable to open database", ex);
-            } finally {
-                if (lock != null) {
-                    lock.release();
-                }
             }
+            database.open();
         }
     }
 
@@ -1087,12 +1046,12 @@ public class Engine implements FileFilter, AutoCloseable {
      */
     @NotNull
     public List<Analyzer> getAnalyzers() {
-        final List<Analyzer> ret = new ArrayList<>();
+        final List<Analyzer> analyzerList = new ArrayList<>();
         //insteae of forEach - we can just do a collect
-        mode.getPhases().stream().map((phase) -> analyzers.get(phase)).forEachOrdered((analyzerList) -> {
-            ret.addAll(analyzerList);
-        });
-        return ret;
+        mode.getPhases().stream()
+                .map(analyzers::get)
+                .forEachOrdered(analyzerList::addAll);
+        return analyzerList;
     }
 
     /**
@@ -1128,6 +1087,46 @@ public class Engine implements FileFilter, AutoCloseable {
      */
     public Settings getSettings() {
         return settings;
+    }
+
+    /**
+     * Retrieve an object from the objects collection.
+     *
+     * @param key the key to retrieve the object
+     * @return the object
+     */
+    public Object getObject(String key) {
+        return objects.get(key);
+    }
+
+    /**
+     * Put an object in the object collection.
+     *
+     * @param key the key to store the object
+     * @param object the object to store
+     */
+    public void putObject(String key, Object object) {
+        objects.put(key, object);
+    }
+
+    /**
+     * Verifies if the object exists in the object store.
+     *
+     * @param key the key to retrieve the object
+     * @return <code>true</code> if the object exists; otherwise
+     * <code>false</code>
+     */
+    public boolean hasObject(String key) {
+        return objects.containsKey(key);
+    }
+
+    /**
+     * Removes an object from the object store.
+     *
+     * @param key the key to the object
+     */
+    public void removeObject(String key) {
+        objects.remove(key);
     }
 
     /**
@@ -1178,7 +1177,6 @@ public class Engine implements FileFilter, AutoCloseable {
         throw new ExceptionCollection(exceptions, true);
     }
 
-    //CSOFF: LineLength
     /**
      * Writes the report to the given output directory.
      *
@@ -1194,8 +1192,8 @@ public class Engine implements FileFilter, AutoCloseable {
     public void writeReports(String applicationName, File outputDir, String format) throws ReportException {
         writeReports(applicationName, null, null, null, outputDir, format, null);
     }
-    //CSON: LineLength
 
+    //CSOFF: LineLength
     /**
      * Writes the report to the given output directory.
      *
@@ -1210,8 +1208,8 @@ public class Engine implements FileFilter, AutoCloseable {
     public void writeReports(String applicationName, File outputDir, String format, ExceptionCollection exceptions) throws ReportException {
         writeReports(applicationName, null, null, null, outputDir, format, exceptions);
     }
+    //CSON: LineLength
 
-    //CSOFF: LineLength
     /**
      * Writes the report to the given output directory.
      *
@@ -1224,7 +1222,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * @param format the report format (ALL, HTML, CSV, JSON, etc.)
      * @throws ReportException thrown if there is an error generating the report
      * @deprecated use
-     * {@link #writeReports(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.io.File, java.lang.String, org.owasp.dependencycheck.exception.ExceptionCollection)}
+     * {@link #writeReports(String, String, String, String, File, String, ExceptionCollection)}
      */
     @Deprecated
     public synchronized void writeReports(String applicationName, @Nullable final String groupId,
@@ -1232,8 +1230,8 @@ public class Engine implements FileFilter, AutoCloseable {
             @NotNull final File outputDir, String format) throws ReportException {
         writeReports(applicationName, groupId, artifactId, version, outputDir, format, null);
     }
-    //CSON: LineLength
 
+    //CSOFF: LineLength
     /**
      * Writes the report to the given output directory.
      *
@@ -1255,6 +1253,7 @@ public class Engine implements FileFilter, AutoCloseable {
             throw new UnsupportedOperationException("Cannot generate report in evidence collection mode.");
         }
         final DatabaseProperties prop = database.getDatabaseProperties();
+
         final ReportGenerator r = new ReportGenerator(applicationName, groupId, artifactId, version,
                 dependencies, getAnalyzers(), prop, settings, exceptions);
         try {
@@ -1263,6 +1262,103 @@ public class Engine implements FileFilter, AutoCloseable {
             final String msg = String.format("Error generating the report for %s", applicationName);
             LOGGER.debug(msg, ex);
             throw new ReportException(msg, ex);
+        }
+    }
+    //CSON: LineLength
+
+    private boolean identifiersMatch(Set<Identifier> left, Set<Identifier> right) {
+        if (left != null && right != null && left.size() > 0 && left.size() == right.size()) {
+            int count = 0;
+            for (Identifier l : left) {
+                for (Identifier r : right) {
+                    if (l.getValue().equals(r.getValue())) {
+                        count += 1;
+                        break;
+                    }
+                }
+            }
+            return count == left.size();
+        }
+        return false;
+    }
+
+    /**
+     * {@link Engine} execution modes.
+     */
+    public enum Mode {
+        /**
+         * In evidence collection mode the {@link Engine} only collects evidence
+         * from the scan targets, and doesn't require a database.
+         */
+        EVIDENCE_COLLECTION(
+                false,
+                INITIAL,
+                PRE_INFORMATION_COLLECTION,
+                INFORMATION_COLLECTION,
+                INFORMATION_COLLECTION2,
+                POST_INFORMATION_COLLECTION1,
+                POST_INFORMATION_COLLECTION2,
+                POST_INFORMATION_COLLECTION3
+        ),
+        /**
+         * In evidence processing mode the {@link Engine} processes the evidence
+         * collected using the {@link #EVIDENCE_COLLECTION} mode. Dependencies
+         * should be injected into the {@link Engine} using
+         * {@link Engine#setDependencies(List)}.
+         */
+        EVIDENCE_PROCESSING(
+                true,
+                PRE_IDENTIFIER_ANALYSIS,
+                IDENTIFIER_ANALYSIS,
+                POST_IDENTIFIER_ANALYSIS,
+                PRE_FINDING_ANALYSIS,
+                FINDING_ANALYSIS,
+                POST_FINDING_ANALYSIS,
+                FINDING_ANALYSIS_PHASE2,
+                FINAL
+        ),
+        /**
+         * In standalone mode the {@link Engine} will collect and process
+         * evidence in a single execution.
+         */
+        STANDALONE(true, AnalysisPhase.values());
+
+        /**
+         * Whether the database is required in this mode.
+         */
+        private final boolean databaseRequired;
+        /**
+         * The analysis phases included in the mode.
+         */
+        private final List<AnalysisPhase> phases;
+
+        /**
+         * Constructs a new mode.
+         *
+         * @param databaseRequired if the database is required for the mode
+         * @param phases the analysis phases to include in the mode
+         */
+        Mode(boolean databaseRequired, AnalysisPhase... phases) {
+            this.databaseRequired = databaseRequired;
+            this.phases = Collections.unmodifiableList(Arrays.asList(phases));
+        }
+
+        /**
+         * Returns true if the database is required; otherwise false.
+         *
+         * @return whether or not the database is required
+         */
+        private boolean isDatabaseRequired() {
+            return databaseRequired;
+        }
+
+        /**
+         * Returns the phases for this mode.
+         *
+         * @return the phases for this mode
+         */
+        public List<AnalysisPhase> getPhases() {
+            return phases;
         }
     }
 }

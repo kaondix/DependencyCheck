@@ -24,10 +24,10 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Properties;
 import org.apache.commons.io.filefilter.NameFileFilter;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.apache.commons.lang3.StringUtils;
@@ -35,11 +35,10 @@ import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
 import org.owasp.dependencycheck.dependency.Confidence;
 import org.owasp.dependencycheck.dependency.Dependency;
+import org.owasp.dependencycheck.utils.PyPACoreMetadataParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.mail.MessagingException;
-import javax.mail.internet.InternetHeaders;
 import org.owasp.dependencycheck.exception.InitializationException;
 import org.owasp.dependencycheck.utils.ExtractionException;
 import org.owasp.dependencycheck.utils.ExtractionUtil;
@@ -290,8 +289,8 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
      * @param dependency the dependency being analyzed
      * @param file a reference to the manifest/properties file
      */
-    private static void collectWheelMetadata(Dependency dependency, File file) {
-        final InternetHeaders headers = getManifestProperties(file);
+    private static void collectWheelMetadata(Dependency dependency, File file) throws AnalysisException {
+        final Properties headers = PyPACoreMetadataParser.getProperties(file);
         final String version = addPropertyToEvidence(dependency, EvidenceType.VERSION, Confidence.HIGHEST, headers, "Version");
         final String name = addPropertyToEvidence(dependency, EvidenceType.VENDOR, Confidence.HIGHEST, headers, "Name");
         addPropertyToEvidence(dependency, EvidenceType.PRODUCT, Confidence.HIGHEST, headers, "Name");
@@ -301,14 +300,14 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
         dependency.setVersion(version);
         dependency.setPackagePath(packagePath);
         dependency.setDisplayFileName(packagePath);
-        final String url = headers.getHeader("Home-page", null);
+        final String url = headers.getProperty("Home-page", null);
         if (StringUtils.isNotBlank(url)) {
             if (UrlStringUtils.isUrl(url)) {
                 dependency.addEvidence(EvidenceType.VENDOR, METADATA, "vendor", url, Confidence.MEDIUM);
             }
         }
         addPropertyToEvidence(dependency, EvidenceType.VENDOR, Confidence.LOW, headers, "Author");
-        final String summary = headers.getHeader("Summary", null);
+        final String summary = headers.getProperty("Summary", null);
         if (StringUtils.isNotBlank(summary)) {
             JarAnalyzer.addDescription(dependency, summary, METADATA, "summary");
         }
@@ -336,8 +335,8 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
      * <code>null</code>
      */
     private static String addPropertyToEvidence(Dependency dependency, EvidenceType type, Confidence confidence,
-            InternetHeaders headers, String property) {
-        final String value = headers.getHeader(property, null);
+            Properties headers, String property) {
+        final String value = headers.getProperty(property, null);
         LOGGER.debug("Property: {}, Value: {}", property, value);
         if (StringUtils.isNotBlank(value)) {
             dependency.addEvidence(type, METADATA, property, value, confidence);
@@ -368,20 +367,18 @@ public class PythonDistributionAnalyzer extends AbstractFileTypeAnalyzer {
      * @param manifest the manifest
      * @return the manifest entries
      */
-    private static InternetHeaders getManifestProperties(File manifest) {
-        final InternetHeaders result = new InternetHeaders();
+    private static Properties getManifestProperties(File manifest) {
+        final Properties prop = new Properties();
         if (null == manifest) {
             LOGGER.debug("Manifest file not found.");
         } else {
             try (InputStream in = new BufferedInputStream(new FileInputStream(manifest))) {
-                result.load(in);
-            } catch (MessagingException | FileNotFoundException e) {
+                prop.load(in);
+            } catch (IOException e) {
                 LOGGER.warn(e.getMessage(), e);
-            } catch (IOException ex) {
-                LOGGER.warn(ex.getMessage(), ex);
             }
         }
-        return result;
+        return prop;
     }
 
     /**

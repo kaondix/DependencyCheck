@@ -2,19 +2,16 @@
 
 ## Supported Versions
 
-| Version | Supported          |
-| --------|--------------------|
-| 5.3.x   | :white_check_mark: |
-| 5.2.x   | :white_check_mark: |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :white_check_mark: |
-| < 5.0.0 | :x:                |
+| Version  | Supported          |
+| ---------|--------------------|
+| 8.0.0+   | :white_check_mark: |
+| <= 7.4.4 | :x:                |
 
 ## Reporting a Vulnerability
 
 If a security vulnerability is identified in dependency-check please
 open an [issue](https://github.com/jeremylong/DependencyCheck/issues/new/choose)
-and/or submit a PR to resolve the identified vulnerabilitiy..
+and/or submit a PR to resolve the identified vulnerability.
 
 The team is very responsive to reported vulnerabilities - historically having reported issues resolved in 30 days or less.
 

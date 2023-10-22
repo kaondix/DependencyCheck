@@ -80,7 +80,7 @@ public class SuppressionHandler extends DefaultHandler {
      * The GAV element name.
      */
     public static final String GAV = "gav";
-        /**
+    /**
      * The Package URL element name.
      */
     public static final String PACKAGE_URL = "packageUrl";
@@ -117,7 +117,7 @@ public class SuppressionHandler extends DefaultHandler {
     /**
      * Handles the start element event.
      *
-     * @param uri the uri of the element being processed
+     * @param uri the URI of the element being processed
      * @param localName the local name of the element being processed
      * @param qName the qName of the element being processed
      * @param attributes the attributes of the element being processed

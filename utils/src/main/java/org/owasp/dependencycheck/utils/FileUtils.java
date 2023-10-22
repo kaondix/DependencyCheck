@@ -23,6 +23,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.UUID;
 
 import org.jetbrains.annotations.NotNull;
@@ -88,12 +89,16 @@ public final class FileUtils {
             return false;
         }
 
-        final boolean success = org.apache.commons.io.FileUtils.deleteQuietly(file);
-        if (!success) {
-            LOGGER.debug("Failed to delete file: {}; attempting to delete on exit.", file.getPath());
+        try {
+            org.apache.commons.io.FileUtils.forceDelete(file);
+        } catch (IOException ex) {
+            LOGGER.trace(ex.getMessage(), ex);
+            LOGGER.debug("Failed to delete file: {} (error message: {}); attempting to delete on exit.", file.getPath(), ex.getMessage());
             file.deleteOnExit();
+            return false;
         }
-        return success;
+
+        return true;
     }
 
     /**
@@ -106,7 +111,7 @@ public final class FileUtils {
      */
     @NotNull
     public static File createTempDirectory(@Nullable final File base) throws IOException {
-        final File tempDir = new File(base, "dctemp" + UUID.randomUUID().toString());
+        final File tempDir = new File(base, "dctemp" + UUID.randomUUID());
         if (tempDir.exists()) {
             return createTempDirectory(base);
         }
@@ -149,20 +154,17 @@ public final class FileUtils {
      *
      * @param resource path
      * @return the input stream for the given resource
+     * @throws FileNotFoundException if the file could not be found
      */
     @Nullable
-    public static InputStream getResourceAsStream(@NotNull String resource) {
+    public static InputStream getResourceAsStream(@NotNull String resource) throws FileNotFoundException {
         final ClassLoader classLoader = FileUtils.class.getClassLoader();
         final InputStream inputStream = classLoader != null
                 ? classLoader.getResourceAsStream(resource)
                 : ClassLoader.getSystemResourceAsStream(resource);
 
         if (inputStream == null) {
-            try {
-                return new FileInputStream(resource);
-            } catch (final FileNotFoundException e) {
-                LOGGER.error("Unable to create an Input Stream for " + resource, e);
-            }
+            return new FileInputStream(resource);
         }
         return inputStream;
     }
@@ -176,9 +178,15 @@ public final class FileUtils {
      */
     public static File getResourceAsFile(final String resource) {
         final ClassLoader classLoader = FileUtils.class.getClassLoader();
-        final String path = classLoader != null
-                ? classLoader.getResource(resource).getFile()
-                : ClassLoader.getSystemResource(resource).getFile();
+        String path = null;
+        if (classLoader != null) {
+            final URL url = classLoader.getResource(resource);
+            if (url != null) {
+                path = url.getFile();
+            }
+        } else {
+            path = ClassLoader.getSystemResource(resource).getFile();
+        }
 
         if (path == null) {
             return new File(resource);

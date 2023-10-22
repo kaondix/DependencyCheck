@@ -1,0 +1,153 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "dependency-check",
+          "version": "$version",
+          "informationUri": "https://jeremylong.github.io/DependencyCheck/",
+        "rules": [
+            #foreach($rule in $rpt.convertToSarifRules($dependencies))#if($foreach.count > 1),#end{
+              "id": "$enc.json($rule.id)",
+              "shortDescription": {
+                 "text": "$enc.json($rule.shortDescription)"
+              },
+              "fullDescription": {
+                "text": "$enc.json($rule.fullDescription)"
+              },
+              "help": {
+                "text": "",
+                "markdown": "#if($rule.getSource().equals("NVD"))For more information see [$enc.json($rule.name)](https://web.nvd.nist.gov/view/vuln/detail?vulnId=$enc.url($rule.name)).\n
+#elseif($rule.getSource().equals("NPM"))For more information see [$enc.json($rule.name)](https://github.com/advisories/$enc.url($rule.name))\n#end
+\n\n
+If this is a false positive - consider using the HTML report to generate a suppression file. 
+For more information see [How dependency-check works](https://jeremylong.github.io/DependencyCheck/general/internals.html), 
+[How to read the HTML report](https://jeremylong.github.io/DependencyCheck/general/thereport.html), and 
+[Suppressing false positives](https://jeremylong.github.io/DependencyCheck/general/suppression.html).
+"
+              },
+              "properties": {
+                #if($rule.cvssv2Severity)
+                    "cvssv2_score": $rule.cvssv2Score,
+                    "cvssv2_accessVector": "$enc.json($rule.cvssv2AccessVector)",
+                    "cvssv2_accessComplexity": "$enc.json($rule.cvssv2AccessComplexity)",
+                    "cvssv2_authenticationr": "$enc.json($rule.cvssv2Authentication)",
+                    "cvssv2_confidentialImpact": "$enc.json($rule.cvssv2ConfidentialityImpact)",
+                    "cvssv2_integrityImpact": "$enc.json($rule.cvssv2IntegrityImpact)",
+                    "cvssv2_availabilityImpact": "$enc.json($rule.cvssv2AvailabilityImpact)",
+                    "cvssv2_severity": "$enc.json($rule.cvssv2Severity)",
+                #end
+                #if($rule.cvssv3BaseSeverity)
+                    "cvssv3_baseScore": $rule.cvssv3BaseScore,
+                    "security-severity": "$rule.cvssv3BaseScore",
+                    "cvssv3_attackVector": "$enc.json($rule.cvssv3AttackVector)",
+                    "cvssv3_attackComplexity": "$enc.json($rule.cvssv3AttackComplexity)",
+                    "cvssv3_privilegesRequired": "$enc.json($rule.cvssv3PrivilegesRequired)",
+                    "cvssv3_userInteraction": "$enc.json($rule.cvssv3UserInteraction)",
+                    "cvssv3_scope": "$enc.json($rule.cvssv3Scope)",
+                    "cvssv3_confidentialityImpact": "$enc.json($rule.cvssv3ConfidentialityImpact)",
+                    "cvssv3_integrityImpact": "$enc.json($rule.cvssv3IntegrityImpact)",
+                    "cvssv3_availabilityImpact": "$enc.json($rule.cvssv3AvailabilityImpact)",
+                    "cvssv3_baseSeverity": "$enc.json($rule.cvssv3BaseSeverity)",
+                    #if($rule.cvssv3ExploitabilityScore)"cvssv3_exploitabilityScore": "$enc.json($rule.cvssv3ExploitabilityScore)",#end
+                    #if($rule.cvssv3ImpactScore)"cvssv3_impactScore": "$enc.json($rule.cvssv3ImpactScore)",#end
+                    #if($rule.cvssv3Version)"cvssv3_version": "$enc.json($rule.cvssv3Version)",#end
+                #end
+                "source": "$enc.json($rule.getSource())"
+              }
+            }#end
+          ],
+        "properties": {
+          "disclaimer": "Dependency-Check is an open source tool performing a best effort analysis of 3rd party dependencies; false positives and false negatives may exist in the analysis performed by the tool. Use of the tool and the reporting provided constitutes acceptance for use in an AS IS condition, and there are NO warranties, implied or otherwise, with regard to the analysis or its use. Any use of the tool and the reporting provided is at the user's risk. In no event shall the copyright holder or OWASP be held liable for any damages whatsoever arising out of or in connection with the use of this tool, the analysis performed, or the resulting report.",
+          "nvd": "This report contains data retrieved from the National Vulnerability Database: https://nvd.nist.gov",
+          "cisa": "This report may contain data retrieved from the CISA Known Exploited Vulnerability Catalog: https://www.cisa.gov/known-exploited-vulnerabilities-catalog",
+          "npm": "This report may contain data retrieved from the the Github Advisory Database (via NPM Audit API): https://github.com/advisories/",
+          "retirejs": "This report may contain data retrieved from the RetireJS community: https://retirejs.github.io/retire.js/",
+          "ossindex": "This report may contain data retrieved from the Sonatype OSS Index: https://ossindex.sonatype.org"
+          #foreach($prop in $properties.getMetaData().entrySet())
+            ,"$enc.json($prop.key)": "$enc.json($prop.value)"
+          #end
+          }
+        }
+      },
+      #set($idCounter=1)
+      #set($vidCounter=1)
+      "artifacts": [
+        #foreach($dependency in $dependencies)#if($foreach.count > 1),#end{
+          #if($dependency.description)
+          "description": {
+             "text": "$enc.json($dependency.description)"
+          },
+          #end
+          "location": {
+            "uri": "file://$enc.json($dependency.FilePath)"
+          },
+          #if(!$dependency.isVirtual())
+          "hashes": {
+            "md5": "$enc.json($dependency.Md5sum)",
+            "sha1": "$enc.json($dependency.Sha1sum)",
+            "sha256": "$enc.json($dependency.Sha256sum)"
+          },#end
+          "properties": {
+            #set($needsComma=0)
+            #if($dependency.license)"license": "$enc.json($dependency.license)"#set($needsComma=1)#end
+            #if($dependency.getSoftwareIdentifiers() && $dependency.getSoftwareIdentifiers().size()>0)
+                #foreach($id in $dependency.getSoftwareIdentifiers())
+                    #if($needsComma==1 || $foreach.count > 1),#end
+                    "id$idCounter": "$enc.json($id.value)"
+                    #set($idCounter=$idCounter+1)
+                #end
+                #set($needsComma=1)
+            #end
+            #if($dependency.getVulnerableSoftwareIdentifiers() && $dependency.getVulnerableSoftwareIdentifiers().size()>0)
+                #foreach($id in $dependency.getVulnerableSoftwareIdentifiers())
+                    #if($needsComma==1 || $foreach.count > 1),#end
+                    "vid$vidCounter": "$enc.json($id.value)"
+                    #set($vidCounter=$vidCounter+1)
+                #end
+            #end
+          }
+        }
+        #end
+      ],
+      "results": [
+        #set($needsComma=0)
+        #foreach($dependency in $dependencies)
+        #set($depIndex=$foreach.count - 1)
+          #foreach($vuln in $dependency.getVulnerabilities(true))#if($needsComma==1),#end {
+          #set($needsComma=1)
+          "ruleId": "$enc.json($vuln.name)",
+          "level": "warning",
+          "message": {
+            "text": "$enc.json($vuln.name)#if($vuln.description) - $enc.json($vuln.description)#end"
+          },
+          "partialFingerprints": {
+            "vulnerabilityHash": "$checksum.getMD5Checksum($vuln.name)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "file://$enc.json($dependency.FilePath)"
+                  ,"index": $depIndex
+                }
+              }
+            #if($dependency.getSoftwareIdentifiers() && $dependency.getSoftwareIdentifiers().size()>0)
+                #set($id = $dependency.getSoftwareIdentifiers().iterator().next())
+                ,"logicalLocations": [
+                    {
+                    "fullyQualifiedName": "$enc.json($id.value)"
+                    }
+                ]
+            #end
+              
+            }
+          ]
+          }#end
+        #end
+      ]
+    }
+  ]
+}

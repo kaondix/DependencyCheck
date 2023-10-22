@@ -85,7 +85,7 @@ public final class Settings {
     /**
      * Reference to a utility class used to convert objects to json.
      */
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     //<editor-fold defaultstate="collapsed" desc="KEYS used to access settings">
     /**
@@ -167,6 +167,10 @@ public final class Settings {
          */
         public static final String CVE_MODIFIED_JSON = "cve.url.modified";
         /**
+         * The properties key for the default filename of the CVE modified URL.
+         */
+        static final String CVE_MODIFIED_DEFAULT_FILENAME = "cve.url.modified.defaultFilename";
+        /**
          * The properties key for the original/modified URL to retrieve the
          * recently modified and added CVE entries (last 8 days). Note, this is
          * only used to compare against CVE_MODIFIED_JSON.
@@ -177,6 +181,10 @@ public final class Settings {
          * added CVE entries (last 8 days) using the JSON data feeds.
          */
         public static final String CVE_BASE_JSON = "cve.url.base";
+        /**
+         * The properties key for the default filename of the CVE base URL.
+         */
+        static final String CVE_BASE_DEFAULT_FILENAME = "cve.url.base.defaultFilename";
         /**
          * The username to use when connecting to the CVE-URL.
          */
@@ -202,6 +210,11 @@ public final class Settings {
          */
         public static final String CVE_START_YEAR = "cve.startyear";
         /**
+         * A configurable sleep time between downloading the NVD CVE data. The
+         * time is in milliseconds.
+         */
+        public static final String CVE_DOWNLOAD_WAIT_TIME = "cve.download.waittime";
+        /**
          * The properties key that indicates how often the CPE data needs to be
          * updated.
          */
@@ -210,6 +223,16 @@ public final class Settings {
          * The properties key for the URL to retrieve the CPE.
          */
         public static final String CPE_URL = "cpe.url";
+        /**
+         * The properties key for the URL to retrieve the Known Exploited
+         * Vulnerabilities..
+         */
+        public static final String KEV_URL = "kev.url";
+        /**
+         * The properties key to control the skipping of the check for Known
+         * Exploited Vulnerabilities updates.
+         */
+        public static final String KEV_CHECK_VALID_FOR_HOURS = "kev.check.validforhours";
         /**
          * Whether or not if using basic auth with a proxy the system setting
          * 'jdk.http.auth.tunneling.disabledSchemes' should be set to an empty
@@ -242,6 +265,10 @@ public final class Settings {
          */
         public static final String CONNECTION_TIMEOUT = "connection.timeout";
         /**
+         * The properties key for the connection read timeout.
+         */
+        public static final String CONNECTION_READ_TIMEOUT = "connection.read.timeout";
+        /**
          * The location of the temporary directory.
          */
         public static final String TEMP_DIRECTORY = "temp.directory";
@@ -258,6 +285,36 @@ public final class Settings {
          */
         public static final String SUPPRESSION_FILE = "suppression.file";
         /**
+         * The username used when connecting to the suppressionFiles.
+         */
+        public static final String SUPPRESSION_FILE_USER = "suppression.file.user";
+        /**
+         * The password used when connecting to the suppressionFiles.
+         */
+        public static final String SUPPRESSION_FILE_PASSWORD = "suppression.file.password";
+        /**
+         * The key for the whether the hosted suppressions file datasource is
+         * enabled.
+         */
+        public static final String HOSTED_SUPPRESSIONS_ENABLED = "hosted.suppressions.enabled";
+        /**
+         * The key for the hosted suppressions file URL.
+         */
+        public static final String HOSTED_SUPPRESSIONS_URL = "hosted.suppressions.url";
+
+        /**
+         * The properties key for defining whether the hosted suppressions file
+         * will be updated regardless of the autoupdate settings.
+         */
+        public static final String HOSTED_SUPPRESSIONS_FORCEUPDATE = "hosted.suppressions.forceupdate";
+
+        /**
+         * The properties key to control the skipping of the check for hosted
+         * suppressions file updates.
+         */
+        public static final String HOSTED_SUPPRESSIONS_VALID_FOR_HOURS = "hosted.suppressions.validforhours";
+
+        /**
          * The key for the hint file.
          */
         public static final String HINTS_FILE = "hints.file";
@@ -271,6 +328,13 @@ public final class Settings {
          * The properties key for whether the Jar Analyzer is enabled.
          */
         public static final String ANALYZER_JAR_ENABLED = "analyzer.jar.enabled";
+
+        /**
+         * The properties key for whether the Known Exploited Vulnerability
+         * Analyzer is enabled.
+         */
+        public static final String ANALYZER_KNOWN_EXPLOITED_ENABLED = "analyzer.knownexploited.enabled";
+
         /**
          * The properties key for whether experimental analyzers are loaded.
          */
@@ -289,9 +353,22 @@ public final class Settings {
          */
         public static final String ANALYZER_NODE_PACKAGE_ENABLED = "analyzer.node.package.enabled";
         /**
+         * The properties key for configure whether the Node Package analyzer
+         * should skip devDependencies.
+         */
+        public static final String ANALYZER_NODE_PACKAGE_SKIPDEV = "analyzer.node.package.skipdev";
+        /**
          * The properties key for whether the Node Audit analyzer is enabled.
          */
         public static final String ANALYZER_NODE_AUDIT_ENABLED = "analyzer.node.audit.enabled";
+        /**
+         * The properties key for whether the Yarn Audit analyzer is enabled.
+         */
+        public static final String ANALYZER_YARN_AUDIT_ENABLED = "analyzer.yarn.audit.enabled";
+        /**
+         * The properties key for whether the Pnpm Audit analyzer is enabled.
+         */
+        public static final String ANALYZER_PNPM_AUDIT_ENABLED = "analyzer.pnpm.audit.enabled";
         /**
          * The properties key for supplying the URL to the Node Audit API.
          */
@@ -325,6 +402,14 @@ public final class Settings {
          */
         public static final String ANALYZER_RETIREJS_REPO_JS_URL = "analyzer.retirejs.repo.js.url";
         /**
+         * The properties key for the Nexus search credentials username.
+         */
+        public static final String ANALYZER_RETIREJS_REPO_JS_USER = "analyzer.retirejs.repo.js.username";
+        /**
+         * The properties key for the Nexus search credentials password.
+         */
+        public static final String ANALYZER_RETIREJS_REPO_JS_PASSWORD = "analyzer.retirejs.repo.js.password";
+        /**
          * The properties key for defining whether the RetireJS repository will
          * be updated regardless of the autoupdate settings.
          */
@@ -335,10 +420,15 @@ public final class Settings {
          */
         public static final String ANALYZER_RETIREJS_REPO_VALID_FOR_HOURS = "analyzer.retirejs.repo.validforhours";
         /**
-         * The properties key for whether the composer lock file analyzer is
+         * The properties key for whether the PHP composer lock file analyzer is
          * enabled.
          */
         public static final String ANALYZER_COMPOSER_LOCK_ENABLED = "analyzer.composer.lock.enabled";
+        /**
+         * The properties key for whether the Perl CPAN file file analyzer is
+         * enabled.
+         */
+        public static final String ANALYZER_CPANFILE_ENABLED = "analyzer.cpanfile.enabled";
         /**
          * The properties key for whether the Python Distribution analyzer is
          * enabled.
@@ -367,6 +457,14 @@ public final class Settings {
          */
         public static final String ANALYZER_GOLANG_PATH = "analyzer.golang.path";
         /**
+         * The path to go, if available.
+         */
+        public static final String ANALYZER_YARN_PATH = "analyzer.yarn.path";
+        /**
+         * The path to pnpm, if available.
+         */
+        public static final String ANALYZER_PNPM_PATH = "analyzer.pnpm.path";
+        /**
          * The properties key for whether the Golang Dep analyzer is enabled.
          */
         public static final String ANALYZER_GOLANG_DEP_ENABLED = "analyzer.golang.dep.enabled";
@@ -379,9 +477,22 @@ public final class Settings {
          */
         public static final String ANALYZER_AUTOCONF_ENABLED = "analyzer.autoconf.enabled";
         /**
+         * The properties key for whether the maven_install.json analyzer is
+         * enabled.
+         */
+        public static final String ANALYZER_MAVEN_INSTALL_ENABLED = "analyzer.maveninstall.enabled";
+        /**
          * The properties key for whether the pip analyzer is enabled.
          */
         public static final String ANALYZER_PIP_ENABLED = "analyzer.pip.enabled";
+        /**
+         * The properties key for whether the pipfile analyzer is enabled.
+         */
+        public static final String ANALYZER_PIPFILE_ENABLED = "analyzer.pipfile.enabled";
+        /**
+         * The properties key for whether the Poetry analyzer is enabled.
+         */
+        public static final String ANALYZER_POETRY_ENABLED = "analyzer.poetry.enabled";
         /**
          * The properties key for whether the CMake analyzer is enabled.
          */
@@ -404,6 +515,10 @@ public final class Settings {
          * analyzer is enabled.
          */
         public static final String ANALYZER_NUGETCONF_ENABLED = "analyzer.nugetconf.enabled";
+        /**
+         * The properties key for whether the Libman analyzer is enabled.
+         */
+        public static final String ANALYZER_LIBMAN_ENABLED = "analyzer.libman.enabled";
         /**
          * The properties key for whether the .NET MSBuild Project analyzer is
          * enabled.
@@ -468,6 +583,10 @@ public final class Settings {
          */
         public static final String ANALYZER_CENTRAL_ENABLED = "analyzer.central.enabled";
         /**
+         * Key for the path to the local Maven repository.
+         */
+        public static final String MAVEN_LOCAL_REPO = "odc.maven.local.repo";
+        /**
          * Key for the URL to obtain content from Maven Central.
          */
         public static final String CENTRAL_CONTENT_URL = "central.content.url";
@@ -494,6 +613,11 @@ public final class Settings {
          * enabled.
          */
         public static final String ANALYZER_SWIFT_PACKAGE_MANAGER_ENABLED = "analyzer.swift.package.manager.enabled";
+        /**
+         * The properties key for whether the SWIFT package resolved analyzer is
+         * enabled.
+         */
+        public static final String ANALYZER_SWIFT_PACKAGE_RESOLVED_ENABLED = "analyzer.swift.package.resolved.enabled";
         /**
          * The properties key for the Central search URL.
          */
@@ -621,10 +745,10 @@ public final class Settings {
          */
         public static final String MAX_BATCH_SIZE = "database.batchinsert.maxsize";
         /**
-         * The key that specifies the class name of the H2 database shutdown
+         * The key that specifies the class name of the Write Lock shutdown
          * hook.
          */
-        public static final String H2DB_SHUTDOWN_HOOK = "data.h2.shutdownhook";
+        public static final String WRITELOCK_SHUTDOWN_HOOK = "data.writelock.shutdownhook";
         /**
          * The properties key for whether the Sonatype OSS Index analyzer is
          * enabled.
@@ -648,8 +772,32 @@ public final class Settings {
          */
         public static final String ANALYZER_OSSINDEX_PASSWORD = "analyzer.ossindex.password";
         /**
+         * The properties key for the Sonatype OSS batch-size.
+         */
+        public static final String ANALYZER_OSSINDEX_BATCH_SIZE = "analyzer.ossindex.batch.size";
+        /**
+         * The properties key for the Sonatype OSS Request Delay. Amount of time
+         * in seconds to wait before executing a request against the Sonatype
+         * OSS Rest API
+         */
+        public static final String ANALYZER_OSSINDEX_REQUEST_DELAY = "analyzer.ossindex.request.delay";
+        /**
+         * The properties key for only warning about Sonatype OSS Index remote
+         * errors instead of failing the request.
+         */
+        public static final String ANALYZER_OSSINDEX_WARN_ONLY_ON_REMOTE_ERRORS = "analyzer.ossindex.remote-error.warn-only";
+        /**
          * The properties key setting whether or not the JSON and XML reports
          * will be pretty printed.
+         */
+
+        /**
+         * The properties key for whether the Dart analyzer is enabled.
+         */
+        public static final String ANALYZER_DART_ENABLED = "analyzer.dart.enabled";
+
+        /**
+         * The properties key for whether to pretty print the XML/JSON reports.
          */
         public static final String PRETTY_PRINT = "odc.reports.pretty.print";
         /**
@@ -772,7 +920,7 @@ public final class Settings {
      * @param value the property value
      * @return the printable value
      */
-    protected String getPrintableValue(@NotNull String key, String value) {
+    String getPrintableValue(@NotNull String key, String value) {
         String printableValue = null;
         if (value != null) {
             printableValue = isKeyMasked(key) ? "********" : value;
@@ -786,13 +934,12 @@ public final class Settings {
      * {@link #mergeProperties(java.io.File)} to add additional properties after
      * the call to initialize.
      */
-    protected void initMaskedKeys() {
+    void initMaskedKeys() {
         final String[] masked = getArray(Settings.KEYS.MASKED_PROPERTIES);
         if (masked == null) {
             maskedKeys = new ArrayList<>();
         } else {
-            maskedKeys = Arrays.asList(masked)
-                    .stream()
+            maskedKeys = Arrays.stream(masked)
                     .map(v -> Pattern.compile(v).asPredicate())
                     .collect(Collectors.toList());
         }
@@ -1032,7 +1179,7 @@ public final class Settings {
      * @param key the key to lookup within the properties file
      * @return the property from the properties file converted to a File object
      */
-    protected File getDataFile(@NotNull final String key) {
+    File getDataFile(@NotNull final String key) {
         final String file = getString(key);
         LOGGER.debug("Settings.getDataFile() - file: '{}'", file);
         if (file == null) {
@@ -1043,7 +1190,7 @@ public final class Settings {
             final File jarPath = getJarPath();
             LOGGER.debug("Settings.getDataFile() - jar file: '{}'", jarPath.toString());
             final File retVal = new File(jarPath, file.substring(6));
-            LOGGER.debug("Settings.getDataFile() - returning: '{}'", retVal.toString());
+            LOGGER.debug("Settings.getDataFile() - returning: '{}'", retVal);
             return retVal;
         }
         return new File(file);
@@ -1363,7 +1510,7 @@ public final class Settings {
      */
     public File getTempFile(@NotNull final String prefix, @NotNull final String extension) throws IOException {
         final File dir = getTempDirectory();
-        final String tempFileName = String.format("%s%s.%s", prefix, UUID.randomUUID().toString(), extension);
+        final String tempFileName = String.format("%s%s.%s", prefix, UUID.randomUUID(), extension);
         final File tempFile = new File(dir, tempFileName);
         if (tempFile.exists()) {
             return getTempFile(prefix, extension);

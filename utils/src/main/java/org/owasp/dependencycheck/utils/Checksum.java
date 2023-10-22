@@ -17,24 +17,18 @@
  */
 package org.owasp.dependencycheck.utils;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.charset.UnsupportedCharsetException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.hash.HashCode;
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hashing;
-import com.google.common.io.Files;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Includes methods to generate the MD5 and SHA1 checksum.
@@ -48,6 +42,10 @@ public final class Checksum {
      * Hex code characters used in getHex.
      */
     private static final String HEXES = "0123456789abcdef";
+    /**
+     * Buffer size for calculating checksums.
+     */
+    private static final int BUFFER_SIZE = 1024;
 
     /**
      * The logger.
@@ -60,7 +58,7 @@ public final class Checksum {
     /**
      * SHA1 constant.
      */
-    private static final String SHA1 = "SHA1";
+    private static final String SHA1 = "SHA-1";
     /**
      * SHA256 constant.
      */
@@ -68,13 +66,7 @@ public final class Checksum {
     /**
      * Cached file checksums for each supported algorithm.
      */
-    private static final Map<String, Map<File, byte[]>> CHECKSUM_CACHES = new HashMap<>(3);
-
-    static {
-        CHECKSUM_CACHES.put(MD5, new ConcurrentHashMap<>());
-        CHECKSUM_CACHES.put(SHA256, new ConcurrentHashMap<>());
-        CHECKSUM_CACHES.put(SHA1, new ConcurrentHashMap<>());
-    }
+    private static final Map<File, FileChecksums> CHECKSUM_CACHE = new ConcurrentHashMap<>();
 
     /**
      * Private constructor for a utility class.
@@ -94,32 +86,40 @@ public final class Checksum {
      * @throws java.security.NoSuchAlgorithmException when an algorithm is
      * specified that does not exist
      */
-    public static byte[] getChecksum(String algorithm, File file) throws NoSuchAlgorithmException, IOException {
-        final Map<File, byte[]> checksumCache = CHECKSUM_CACHES.get(algorithm.toUpperCase());
-        if (checksumCache == null) {
-            throw new NoSuchAlgorithmException(algorithm);
-        }
-        byte[] checksum = checksumCache.get(file);
-        if (checksum == null) {
-            HashFunction hashFunction = null;
-            switch (algorithm.toUpperCase()) {
-                case MD5:
-                    hashFunction = Hashing.md5();
-                    break;
-                case SHA1:
-                    hashFunction = Hashing.sha1();
-                    break;
-                case SHA256:
-                    hashFunction = Hashing.sha256();
-                    break;
-                default:
-                    throw new NoSuchAlgorithmException(algorithm);
+    public static String getChecksum(String algorithm, File file) throws NoSuchAlgorithmException, IOException {
+        FileChecksums fileChecksums = CHECKSUM_CACHE.get(file);
+        if (fileChecksums == null) {
+            try (InputStream stream = Files.newInputStream(file.toPath())) {
+                final MessageDigest md5Digest = getMessageDigest(MD5);
+                final MessageDigest sha1Digest = getMessageDigest(SHA1);
+                final MessageDigest sha256Digest = getMessageDigest(SHA256);
+                final byte[] buffer = new byte[BUFFER_SIZE];
+                int read = stream.read(buffer, 0, BUFFER_SIZE);
+                while (read > -1) {
+                    // update all checksums together instead of reading the file multiple times
+                    md5Digest.update(buffer, 0, read);
+                    sha1Digest.update(buffer, 0, read);
+                    sha256Digest.update(buffer, 0, read);
+                    read = stream.read(buffer, 0, BUFFER_SIZE);
+                }
+                fileChecksums = new FileChecksums(
+                    getHex(md5Digest.digest()),
+                    getHex(sha1Digest.digest()),
+                    getHex(sha256Digest.digest())
+                );
+                CHECKSUM_CACHE.put(file, fileChecksums);
             }
-            final HashCode hash = Files.asByteSource(file).hash(hashFunction);
-            checksum = hash.asBytes();
-            checksumCache.put(file, checksum);
         }
-        return checksum;
+        switch (algorithm.toUpperCase()) {
+            case MD5:
+                return fileChecksums.md5;
+            case SHA1:
+                return fileChecksums.sha1;
+            case SHA256:
+                return fileChecksums.sha256;
+            default:
+                throw new NoSuchAlgorithmException(algorithm);
+        }
     }
 
     /**
@@ -132,8 +132,7 @@ public final class Checksum {
      * not available
      */
     public static String getMD5Checksum(File file) throws IOException, NoSuchAlgorithmException {
-        final byte[] b = getChecksum(MD5, file);
-        return getHex(b);
+        return getChecksum(MD5, file);
     }
 
     /**
@@ -146,8 +145,7 @@ public final class Checksum {
      * not available
      */
     public static String getSHA1Checksum(File file) throws IOException, NoSuchAlgorithmException {
-        final byte[] b = getChecksum(SHA1, file);
-        return getHex(b);
+        return getChecksum(SHA1, file);
     }
 
     /**
@@ -160,8 +158,7 @@ public final class Checksum {
      * not available
      */
     public static String getSHA256Checksum(File file) throws IOException, NoSuchAlgorithmException {
-        final byte[] b = getChecksum(SHA256, file);
-        return getHex(b);
+        return getChecksum(SHA256, file);
     }
 
     /**
@@ -173,9 +170,7 @@ public final class Checksum {
      * @return the hex representation of the MD5 hash
      */
     public static String getChecksum(String algorithm, byte[] bytes) {
-        final MessageDigest digest = getMessageDigest(algorithm);
-        final byte[] b = digest.digest(bytes);
-        return getHex(b);
+        return getHex(getMessageDigest(algorithm).digest(bytes));
     }
 
     /**
@@ -185,8 +180,7 @@ public final class Checksum {
      * @return the hex representation of the MD5
      */
     public static String getMD5Checksum(String text) {
-        final byte[] data = stringToBytes(text);
-        return getChecksum(MD5, data);
+        return getChecksum(MD5, stringToBytes(text));
     }
 
     /**
@@ -196,19 +190,17 @@ public final class Checksum {
      * @return the hex representation of the SHA1
      */
     public static String getSHA1Checksum(String text) {
-        final byte[] data = stringToBytes(text);
-        return getChecksum(SHA1, data);
+        return getChecksum(SHA1, stringToBytes(text));
     }
 
     /**
-     * Calculates the SHA1 checksum of the specified text.
+     * Calculates the SHA256 checksum of the specified text.
      *
      * @param text the text to generate the SHA1 checksum
      * @return the hex representation of the SHA1
      */
     public static String getSHA256Checksum(String text) {
-        final byte[] data = stringToBytes(text);
-        return getChecksum(SHA256, data);
+        return getChecksum(SHA256, stringToBytes(text));
     }
 
     /**
@@ -218,13 +210,7 @@ public final class Checksum {
      * @return the bytes
      */
     private static byte[] stringToBytes(String text) {
-        byte[] data;
-        try {
-            data = text.getBytes(Charset.forName(StandardCharsets.UTF_8.name()));
-        } catch (UnsupportedCharsetException ex) {
-            data = text.getBytes(Charset.defaultCharset());
-        }
-        return data;
+        return text.getBytes(StandardCharsets.UTF_8);
     }
 
     /**
@@ -262,6 +248,21 @@ public final class Checksum {
             LOGGER.error(e.getMessage(), e);
             final String msg = String.format("Failed to obtain the %s message digest.", algorithm);
             throw new IllegalStateException(msg, e);
+        }
+    }
+
+    /**
+     * File checksums for each supported algorithm
+     */
+    private static class FileChecksums {
+        private final String md5;
+        private final String sha1;
+        private final String sha256;
+
+        public FileChecksums(String md5, String sha1, String sha256) {
+            this.md5 = md5;
+            this.sha1 = sha1;
+            this.sha256 = sha256;
         }
     }
 }

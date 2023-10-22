@@ -20,10 +20,17 @@ package org.owasp.dependencycheck.data.nodeaudit;
 import org.owasp.dependencycheck.analyzer.NodePackageAnalyzer;
 
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
-import javax.json.*;
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
+import javax.json.JsonString;
+import javax.json.JsonValue;
 import javax.annotation.concurrent.ThreadSafe;
+import org.apache.commons.collections4.MultiValuedMap;
 
 /**
  * Class used to create the payload to submit to the NPM Audit API service.
@@ -33,7 +40,6 @@ import javax.annotation.concurrent.ThreadSafe;
  */
 @ThreadSafe
 public final class NpmPayloadBuilder {
-
     /**
      * Private constructor for utility class.
      */
@@ -44,15 +50,15 @@ public final class NpmPayloadBuilder {
     /**
      * Builds an npm audit API payload.
      *
-     * @param lockJson            the package-lock.json
-     * @param packageJson         the package.json
-     * @param dependencyMap       a collection of module/version pairs that is
-     *                            populated while building the payload
+     * @param lockJson the package-lock.json
+     * @param packageJson the package.json
+     * @param dependencyMap a collection of module/version pairs that is
+     * populated while building the payload
      * @param skipDevDependencies whether devDependencies should be skipped
      * @return the npm audit API payload
      */
     public static JsonObject build(JsonObject lockJson, JsonObject packageJson,
-                                   Map<String, String> dependencyMap, boolean skipDevDependencies) {
+            MultiValuedMap<String, String> dependencyMap, boolean skipDevDependencies) {
         final JsonObjectBuilder payloadBuilder = Json.createObjectBuilder();
         addProjectInfo(packageJson, payloadBuilder);
 
@@ -67,13 +73,12 @@ public final class NpmPayloadBuilder {
                             Map.Entry::getKey,
                             Map.Entry::getValue,
                             (oldValue, newValue) -> newValue, TreeMap::new))
-                    .entrySet()
-                    .forEach((entry) -> {
-                        if (NodePackageAnalyzer.shouldSkipDependency(entry.getKey(), ((JsonString) entry.getValue()).getString())) {
+                    .forEach((key, value) -> {
+                        if (NodePackageAnalyzer.shouldSkipDependency(key, ((JsonString) value).getString())) {
                             return;
                         }
-                        requiresBuilder.add(entry.getKey(), entry.getValue());
-                        dependencyMap.put(entry.getKey(), entry.getValue().toString());
+                        requiresBuilder.add(key, value);
+                        dependencyMap.put(key, value.toString());
                     });
         }
 
@@ -84,30 +89,42 @@ public final class NpmPayloadBuilder {
                             Map.Entry::getKey,
                             Map.Entry::getValue,
                             (oldValue, newValue) -> newValue, TreeMap::new))
-                    .entrySet()
-                    .forEach((entry) -> {
-                        if (NodePackageAnalyzer.shouldSkipDependency(entry.getKey(), ((JsonString) entry.getValue()).getString())) {
+                    .forEach((key, value) -> {
+                        if (NodePackageAnalyzer.shouldSkipDependency(key, ((JsonString) value).getString())) {
                             return;
                         }
-                        requiresBuilder.add(entry.getKey(), entry.getValue());
-                        dependencyMap.put(entry.getKey(), entry.getValue().toString());
+                        requiresBuilder.add(key, value);
+                        dependencyMap.put(key, value.toString());
                     });
         }
 
         payloadBuilder.add("requires", requiresBuilder.build());
 
         final JsonObjectBuilder dependenciesBuilder = Json.createObjectBuilder();
-        final JsonObject dependencies = lockJson.getJsonObject("dependencies");
-        if (dependencies != null) {
-            dependencies.entrySet().forEach((entry) -> {
-                final JsonObject dep = ((JsonObject) entry.getValue());
-                final String version = dep.getString("version");
+        final int lockJsonVersion = lockJson.containsKey("lockfileVersion") ? lockJson.getInt("lockfileVersion") : 1;
+        JsonObject dependencies = lockJson.getJsonObject("dependencies");
+        if (lockJsonVersion >= 2 && dependencies == null) {
+            dependencies = lockJson.getJsonObject("packages");
+        }
 
-                if (NodePackageAnalyzer.shouldSkipDependency(entry.getKey(), version)) {
+        if (dependencies != null) {
+            dependencies.forEach((key, value) -> {
+                final int indexOfNodeModule = key.lastIndexOf(NodePackageAnalyzer.NODE_MODULES_DIRNAME + "/");
+                if (indexOfNodeModule >= 0) {
+                    key = key.substring(indexOfNodeModule + NodePackageAnalyzer.NODE_MODULES_DIRNAME.length() + 1);
+                }
+
+                final JsonObject dep = ((JsonObject) value);
+                final String version = dep.getString("version", "");
+                final boolean isDev = dep.getBoolean("dev", false);
+                if (skipDevDependencies && isDev) {
                     return;
                 }
-                dependencyMap.put(entry.getKey(), version);
-                dependenciesBuilder.add(entry.getKey(), buildDependencies(dep, dependencyMap));
+                if (NodePackageAnalyzer.shouldSkipDependency(key, version)) {
+                    return;
+                }
+                dependencyMap.put(key, version);
+                dependenciesBuilder.add(key, buildDependencies(dep, dependencyMap));
             });
         }
         payloadBuilder.add("dependencies", dependenciesBuilder.build());
@@ -120,12 +137,14 @@ public final class NpmPayloadBuilder {
      * Attempts to build the request data for NPM Audit API call. This may
      * produce a payload that will fail.
      *
-     * @param packageJson   a raw package-lock.json file
+     * @param packageJson a raw package-lock.json file
      * @param dependencyMap a collection of module/version pairs that is
-     *                      populated while building the payload
+     * @param skipDevDependencies whether devDependencies should be skipped
+     * populated while building the payload
      * @return the JSON payload for NPN Audit
      */
-    public static JsonObject build(JsonObject packageJson, Map<String, String> dependencyMap) {
+    public static JsonObject build(JsonObject packageJson, MultiValuedMap<String, String> dependencyMap,
+                                   final boolean skipDevDependencies) {
         final JsonObjectBuilder payloadBuilder = Json.createObjectBuilder();
         addProjectInfo(packageJson, payloadBuilder);
 
@@ -136,12 +155,18 @@ public final class NpmPayloadBuilder {
 
         final JsonObject dependencies = packageJson.getJsonObject("dependencies");
         if (dependencies != null) {
-            dependencies.entrySet().forEach((entry) -> {
+            dependencies.forEach((name, value) -> {
                 final String version;
-                if (entry.getValue().getValueType() == JsonValue.ValueType.OBJECT) {
-                    final JsonObject dep = ((JsonObject) entry.getValue());
-                    final String name = entry.getKey();
-                    version = dep.getString("version");
+                if (value.getValueType() == JsonValue.ValueType.OBJECT) {
+                    final JsonObject dep = ((JsonObject) value);
+                    version = Optional.ofNullable(dep.getJsonString("version"))
+                            .map(JsonString::getString)
+                            .orElse(null);
+
+                    final boolean isDev = dep.getBoolean("dev", false);
+                    if (skipDevDependencies && isDev) {
+                        return;
+                    }
                     if (NodePackageAnalyzer.shouldSkipDependency(name, version)) {
                         return;
                     }
@@ -150,14 +175,14 @@ public final class NpmPayloadBuilder {
                 } else {
                     //TODO I think the following is dead code and no real "dependencies"
                     //     section in a lock file will look like this
-                    final String tmp = entry.getValue().toString();
+                    final String tmp = value.toString();
                     if (tmp.startsWith("\"")) {
                         version = tmp.substring(1, tmp.length() - 1);
                     } else {
                         version = tmp;
                     }
                 }
-                requiresBuilder.add(entry.getKey(), "^" + version);
+                requiresBuilder.add(name, Objects.isNull(version) ? "*" : "^" + version);
             });
         }
         payloadBuilder.add("requires", requiresBuilder.build());
@@ -171,7 +196,7 @@ public final class NpmPayloadBuilder {
     /**
      * Adds the project name and version to the npm audit API payload.
      *
-     * @param packageJson    a reference to the package-lock.json
+     * @param packageJson a reference to the package-lock.json
      * @param payloadBuilder a reference to the npm audit API payload builder
      */
     private static void addProjectInfo(JsonObject packageJson, final JsonObjectBuilder payloadBuilder) {
@@ -204,27 +229,50 @@ public final class NpmPayloadBuilder {
      * Recursively builds the dependency structure - copying only the needed
      * items from the package-lock.json into the npm audit API payload.
      *
-     * @param dep           the parent dependency
+     * @param dep the parent dependency
      * @param dependencyMap the collection of child dependencies
      * @return the dependencies structure needed for the npm audit API payload
      */
-    private static JsonObject buildDependencies(JsonObject dep, Map<String, String> dependencyMap) {
+    private static JsonObject buildDependencies(JsonObject dep, MultiValuedMap<String, String> dependencyMap) {
         final JsonObjectBuilder depBuilder = Json.createObjectBuilder();
-        depBuilder.add("version", dep.getString("version"));
+        Optional.ofNullable(dep.getJsonString("version"))
+                        .map(JsonString::getString)
+                        .ifPresent(version -> depBuilder.add("version", version));
 
         //not installed package (like, dependency of an optional dependency) doesn't contains integrity
         if (dep.containsKey("integrity")) {
             depBuilder.add("integrity", dep.getString("integrity"));
         }
         if (dep.containsKey("requires")) {
-            depBuilder.add("requires", dep.getJsonObject("requires"));
+            final JsonObjectBuilder requiresBuilder = Json.createObjectBuilder();
+            dep.getJsonObject("requires").forEach((key, value) -> {
+                if (NodePackageAnalyzer.shouldSkipDependency(key, ((JsonString) value).getString())) {
+                    return;
+                }
+    
+                requiresBuilder.add(key, value);
+            });
+            depBuilder.add("requires", requiresBuilder.build());
         }
         if (dep.containsKey("dependencies")) {
             final JsonObjectBuilder dependeciesBuilder = Json.createObjectBuilder();
-            dep.getJsonObject("dependencies").entrySet().forEach((entry) -> {
-                final String v = ((JsonObject) entry.getValue()).getString("version");
-                dependencyMap.put(entry.getKey(), v);
-                dependeciesBuilder.add(entry.getKey(), buildDependencies((JsonObject) entry.getValue(), dependencyMap));
+            dep.getJsonObject("dependencies").forEach((key, value) -> {
+                if (value.getValueType() == JsonValue.ValueType.OBJECT) {
+                    final JsonObject currentDep = (JsonObject) value;
+                    final String v = currentDep.getString("version");
+                    dependencyMap.put(key, v);
+                    dependeciesBuilder.add(key, buildDependencies(currentDep, dependencyMap));
+                } else {
+                    final String tmp = value.toString();
+                    final String v;
+                    if (tmp.startsWith("\"")) {
+                        v = tmp.substring(1, tmp.length() - 1);
+                    } else {
+                        v = tmp;
+                    }
+                    dependencyMap.put(key, v);
+                    dependeciesBuilder.add(key, v);
+                }
             });
             depBuilder.add("dependencies", dependeciesBuilder.build());
         }

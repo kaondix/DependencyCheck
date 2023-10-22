@@ -12,14 +12,16 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import org.owasp.dependencycheck.dependency.EvidenceType;
 
 /**
- * Unit tests for CocoaPodsAnalyzer.
+ * Unit tests for CocoaPodsAnalyzer and SwiftPackageManagerAnalyzer.
  *
  * @author Bianca Jiang
+ * @author Jorge Mendes
  */
 public class SwiftAnalyzersTest extends BaseTest {
 
@@ -28,6 +30,7 @@ public class SwiftAnalyzersTest extends BaseTest {
      */
     private CocoaPodsAnalyzer podsAnalyzer;
     private SwiftPackageManagerAnalyzer spmAnalyzer;
+    private SwiftPackageResolvedAnalyzer sprAnalyzer;
 
     /**
      * Correctly setup the analyzer for testing.
@@ -47,6 +50,11 @@ public class SwiftAnalyzersTest extends BaseTest {
         spmAnalyzer.initialize(getSettings());
         spmAnalyzer.setFilesMatched(true);
         spmAnalyzer.prepare(null);
+
+        sprAnalyzer = new SwiftPackageResolvedAnalyzer();
+        sprAnalyzer.initialize(getSettings());
+        sprAnalyzer.setFilesMatched(true);
+        sprAnalyzer.prepare(null);
     }
 
     /**
@@ -97,6 +105,7 @@ public class SwiftAnalyzersTest extends BaseTest {
     @Test
     public void testSPMSupportsFiles() {
         assertThat(spmAnalyzer.accept(new File("Package.swift")), is(true));
+        assertThat(sprAnalyzer.accept(new File("Package.resolved")), is(true));
     }
 
     /**
@@ -166,5 +175,43 @@ public class SwiftAnalyzersTest extends BaseTest {
         //TODO: when version processing is added, update the expected name.
         assertThat(result.getDisplayFileName(), equalTo("Gloss"));
         assertThat(result.getEcosystem(), equalTo(SwiftPackageManagerAnalyzer.DEPENDENCY_ECOSYSTEM));
+    }
+
+    @Test
+    public void testSPMResolvedAnalyzerV1() throws AnalysisException {
+        final Engine engine = new Engine(getSettings());
+        final Dependency result = new Dependency(BaseTest.getResourceAsFile(this,
+                "swift/spm/Package.resolved"));
+        sprAnalyzer.analyze(result, engine);
+
+        assertThat(engine.getDependencies().length, equalTo(3));
+        assertThat(engine.getDependencies()[0].getName(), equalTo("Alamofire"));
+        assertThat(engine.getDependencies()[0].getVersion(), equalTo("5.4.3"));
+        assertThat(engine.getDependencies()[1].getName(), equalTo("AlamofireImage"));
+        assertThat(engine.getDependencies()[1].getVersion(), equalTo("4.2.0"));
+        assertThat(engine.getDependencies()[2].getName(), equalTo("Facebook"));
+        assertThat(engine.getDependencies()[2].getVersion(), equalTo("9.3.0"));
+    }
+
+    @Test
+    public void testSPMResolvedAnalyzerV2() throws AnalysisException {
+        final Engine engine = new Engine(getSettings());
+        final Dependency result = new Dependency(BaseTest.getResourceAsFile(this,
+                "swift/spmV2/Package.resolved"));
+        sprAnalyzer.analyze(result, engine);
+
+        assertThat(engine.getDependencies().length, equalTo(3));
+        assertThat(engine.getDependencies()[0].getName(), equalTo("alamofire"));
+        assertThat(engine.getDependencies()[0].getVersion(), equalTo("5.4.3"));
+        assertThat(engine.getDependencies()[1].getName(), equalTo("alamofireimage"));
+        assertThat(engine.getDependencies()[1].getVersion(), equalTo("4.2.0"));
+        assertThat(engine.getDependencies()[2].getName(), equalTo("facebook"));
+        assertThat(engine.getDependencies()[2].getVersion(), equalTo("9.3.0"));
+    }
+
+    @Test
+    public void testIsEnabledIsTrueByDefault() {
+        assertTrue(spmAnalyzer.isEnabled());
+        assertTrue(sprAnalyzer.isEnabled());
     }
 }

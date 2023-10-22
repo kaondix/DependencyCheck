@@ -19,7 +19,7 @@ Copyright (c) 2018 Jeremy Long. All Rights Reserved.
 @version 2.0
 
 *#<?xml version="1.0"?>
-<analysis xmlns="https://jeremylong.github.io/DependencyCheck/dependency-check.2.4.xsd">
+<analysis xmlns="https://jeremylong.github.io/DependencyCheck/dependency-check.3.1.xsd">
     <scanInfo>
         <engineVersion>$version</engineVersion>
 #foreach($prop in $properties.getMetaData().entrySet())
@@ -66,7 +66,7 @@ Copyright (c) 2018 Jeremy Long. All Rights Reserved.
         <version>$enc.xml($applicationVersion)</version>
 #end
         <reportDate>$scanDateXML</reportDate>
-        <credits>This report contains data retrieved from the National Vulnerability Database: https://nvd.nist.gov, NPM Public Advisories: https://www.npmjs.com/advisories, and the RetireJS community.</credits>
+        <credits>This report contains data retrieved from the National Vulnerability Database: https://nvd.nist.gov, Github Advisory Database (via NPM Audit API): https://github.com/advisories/, and the RetireJS community.</credits>
     </projectInfo>
     <dependencies>
 #foreach($dependency in $dependencies)
@@ -89,13 +89,20 @@ Copyright (c) 2018 Jeremy Long. All Rights Reserved.
 #end
             </projectReferences>
 #end
+#if ($dependency.includedBy.size()>0)
+            <includedBy>
+#foreach($ref in $dependency.includedBy)
+                <reference#if($ref.getType()) type="$enc.xml($ref.getType())"#end>$enc.xml($ref.getReference())</reference>
+#end
+            </includedBy>
+#end
 #if ($dependency.getRelatedDependencies().size()>0)
             <relatedDependencies>
 #foreach($related in $dependency.getRelatedDependencies())
                 <relatedDependency#if($related.isVirtual()) isVirtual="true"#end>
-                    <fileName>$enc.xml($related.FileName)</fileName>
+                    <fileName>$enc.xml($related.DisplayFileName)</fileName>
                     <filePath>$enc.xml($related.FilePath)</filePath>
-                    <sha256>#if(!$dependency.isVirtual())$enc.xml($dependency.Sha256sum)#end</sha256>
+                    <sha256>#if(!$related.isVirtual())$enc.xml($related.Sha256sum)#end</sha256>
                     <sha1>#if(!$related.isVirtual())$enc.xml($related.Sha1sum)#end</sha1>
                     <md5>#if(!$related.isVirtual())$enc.xml($related.Md5sum)#end</md5>
 #if($related.getSoftwareIdentifiers().size()>0)
@@ -192,6 +199,34 @@ Copyright (c) 2018 Jeremy Long. All Rights Reserved.
 #foreach($vuln in $dependency.getVulnerabilities(true))
                 <vulnerability source="$enc.xml($vuln.getSource().name())">
                     <name>$enc.xml($vuln.name)</name>
+#if($vuln.getKnownExploitedVulnerability())
+                    <knownExploitedVulnerability>
+#if($vuln.getKnownExploitedVulnerability().getVendorProject())
+                        <vendorProject>$enc.xml($vuln.getKnownExploitedVulnerability().getVendorProject())</vendorProject>
+#end
+#if($vuln.getKnownExploitedVulnerability().getProduct())
+                        <product>$enc.xml($vuln.getKnownExploitedVulnerability().getProduct())</product>
+#end
+#if($vuln.getKnownExploitedVulnerability().getVulnerabilityName())
+                        <name>enc.xml($vuln.getKnownExploitedVulnerability().getVulnerabilityName())</name>
+#end
+#if($vuln.getKnownExploitedVulnerability().getDateAdded())
+                        <dateAdded>$enc.xml($vuln.getKnownExploitedVulnerability().getDateAdded())</dateAdded>
+#end
+#if($vuln.getKnownExploitedVulnerability().getShortDescription())
+                        <description>$enc.xml($vuln.getKnownExploitedVulnerability().getShortDescription())</description>
+#end
+#if($vuln.getKnownExploitedVulnerability().getRequiredAction())
+                        <requiredAction>$enc.xml($vuln.getKnownExploitedVulnerability().getRequiredAction())</requiredAction>
+#end
+#if($vuln.getKnownExploitedVulnerability().getDueDate())
+                        <dueDate>$enc.xml($vuln.getKnownExploitedVulnerability().getDueDate())</dueDate>
+#end
+#if($vuln.getKnownExploitedVulnerability().getNotes())
+                        <notes>$enc.xml($vuln.getKnownExploitedVulnerability().getNotes())</notes>
+#end
+                    </knownExploitedVulnerability>
+#end
 #if($vuln.unscoredSeverity)
                     <severity unscored="true">#if($vuln.unscoredSeverity.equals("0.0"))Unknown#else$enc.xml($vuln.unscoredSeverity)#end</severity>
 #elseif($vuln.cvssV3 && $vuln.cvssV3.baseSeverity)
@@ -209,6 +244,14 @@ Copyright (c) 2018 Jeremy Long. All Rights Reserved.
                         <integrityImpact>#if($vuln.cvssV2.integrityImpact)$enc.xml($vuln.cvssV2.integrityImpact)#end</integrityImpact>
                         <availabilityImpact>#if($vuln.cvssV2.availabilityImpact)$enc.xml($vuln.cvssV2.availabilityImpact)#end</availabilityImpact>
                         <severity>#if($vuln.cvssV2.severity)$enc.xml($vuln.cvssV2.severity)#end</severity>
+#if($vuln.cvssV2.version)<version>$enc.xml($vuln.cvssV2.version)</version>#end
+#if($vuln.cvssV2.exploitabilityScore)<exploitabilityScore>$enc.xml($vuln.cvssV2.exploitabilityScore)</exploitabilityScore>#end
+#if($vuln.cvssV2.impactScore)<impactScore>$enc.xml($vuln.cvssV2.impactScore)</impactScore>#end
+#if($vuln.cvssV2.acInsufInfo)<acInsufInfo>$enc.xml($vuln.cvssV2.acInsufInfo)</acInsufInfo>#end
+#if($vuln.cvssV2.obtainAllPrivilege)<obtainAllPrivilege>$enc.xml($vuln.cvssV2.obtainAllPrivilege)</obtainAllPrivilege>#end
+#if($vuln.cvssV2.obtainUserPrivilege)<obtainUserPrivilege>$enc.xml($vuln.cvssV2.obtainUserPrivilege)</obtainUserPrivilege>#end
+#if($vuln.cvssV2.obtainOtherPrivilege)<obtainOtherPrivilege>$enc.xml($vuln.cvssV2.obtainOtherPrivilege)</obtainOtherPrivilege>#end
+#if($vuln.cvssV2.userInteractionRequired)<userInteractionRequired>$enc.xml($vuln.cvssV2.userInteractionRequired)</userInteractionRequired>#end
                     </cvssV2>
 #end
 #if($vuln.cvssV3)
@@ -223,6 +266,9 @@ Copyright (c) 2018 Jeremy Long. All Rights Reserved.
                         <integrityImpact>#if($vuln.cvssV3.integrityImpact)$enc.xml($vuln.cvssV3.integrityImpact)#end</integrityImpact>
                         <availabilityImpact>#if($vuln.cvssV3.availabilityImpact)$enc.xml($vuln.cvssV3.availabilityImpact)#end</availabilityImpact>
                         <baseSeverity>#if($vuln.cvssV3.baseSeverity)$enc.xml($vuln.cvssV3.baseSeverity)#end</baseSeverity>
+#if($vuln.cvssV3.exploitabilityScore)<exploitabilityScore>$enc.xml($vuln.cvssV3.exploitabilityScore)</exploitabilityScore>#end
+#if($vuln.cvssV3.impactScore)<impactScore>$enc.xml($vuln.cvssV3.impactScore)</impactScore>#end
+#if($vuln.cvssV3.version)<version>$enc.xml($vuln.cvssV3.version)</version>#end
                     </cvssV3>
 #end
 #if (!$vuln.cwes.isEmpty())
@@ -246,7 +292,7 @@ Copyright (c) 2018 Jeremy Long. All Rights Reserved.
 #end
                     </references>
                     <vulnerableSoftware>
-#foreach($vs in $vuln.getVulnerableSoftware())
+#foreach($vs in $vuln.getVulnerableSoftware(true))
                         <software#if($vs == $vuln.matchedVulnerableSoftware) vulnerabilityIdMatched="true"#end
                             #if($vs.versionStartIncluding) versionStartIncluding="$enc.xml($vs.versionStartIncluding)"#end
                             #if($vs.versionStartExcluding) versionStartExcluding="$enc.xml($vs.versionStartExcluding)"#end
@@ -271,6 +317,14 @@ Copyright (c) 2018 Jeremy Long. All Rights Reserved.
                         <integrityImpact>#if($vuln.cvssV2.integrityImpact)$enc.xml($vuln.cvssV2.integrityImpact)#end</integrityImpact>
                         <availabilityImpact>#if($vuln.cvssV2.availabilityImpact)$enc.xml($vuln.cvssV2.availabilityImpact)#end</availabilityImpact>
                         <severity>#if($vuln.cvssV2.severity)$enc.xml($vuln.cvssV2.severity)#end</severity>
+#if($vuln.cvssV2.version)<version>$enc.xml($vuln.cvssV2.version)</version>#end
+#if($vuln.cvssV2.exploitabilityScore)<exploitabilityScore>$enc.xml($vuln.cvssV2.exploitabilityScore)</exploitabilityScore>#end
+#if($vuln.cvssV2.impactScore)<impactScore>$enc.xml($vuln.cvssV2.impactScore)</impactScore>#end
+#if($vuln.cvssV2.acInsufInfo)<acInsufInfo>$enc.xml($vuln.cvssV2.acInsufInfo)</acInsufInfo>#end
+#if($vuln.cvssV2.obtainAllPrivilege)<obtainAllPrivilege>$enc.xml($vuln.cvssV2.obtainAllPrivilege)</obtainAllPrivilege>#end
+#if($vuln.cvssV2.obtainUserPrivilege)<obtainUserPrivilege>$enc.xml($vuln.cvssV2.obtainUserPrivilege)</obtainUserPrivilege>#end
+#if($vuln.cvssV2.obtainOtherPrivilege)<obtainOtherPrivilege>$enc.xml($vuln.cvssV2.obtainOtherPrivilege)</obtainOtherPrivilege>#end
+#if($vuln.cvssV2.userInteractionRequired)<userInteractionRequired>$enc.xml($vuln.cvssV2.userInteractionRequired)</userInteractionRequired>#end
                     </cvssV2>
 #end
 #if($vuln.cvssV3)
@@ -285,6 +339,9 @@ Copyright (c) 2018 Jeremy Long. All Rights Reserved.
                         <integrityImpact>#if($vuln.cvssV3.integrityImpact)$enc.xml($vuln.cvssV3.integrityImpact)#end</integrityImpact>
                         <availabilityImpact>#if($vuln.cvssV3.availabilityImpact)$enc.xml($vuln.cvssV3.availabilityImpact)#end</availabilityImpact>
                         <baseSeverity>#if($vuln.cvssV3.baseSeverity)$enc.xml($vuln.cvssV3.baseSeverity)#end</baseSeverity>
+#if($vuln.cvssV3.exploitabilityScore)<exploitabilityScore>$enc.xml($vuln.cvssV3.exploitabilityScore)</exploitabilityScore>#end
+#if($vuln.cvssV3.impactScore)<impactScore>$enc.xml($vuln.cvssV3.impactScore)</impactScore>#end
+#if($vuln.cvssV3.version)<version>$enc.xml($vuln.cvssV3.version)</version>#end
                     </cvssV3>
 #end
 #if (!$vuln.cwes.isEmpty())
@@ -308,14 +365,14 @@ Copyright (c) 2018 Jeremy Long. All Rights Reserved.
 #end
                     </references>
                     <vulnerableSoftware>
-#foreach($vs in $vuln.getVulnerableSoftware())
+#foreach($vs in $vuln.getVulnerableSoftware(true))
                         <software#if($vs == $vuln.matchedVulnerableSoftware) matched="true"#end
                             #if($vs.versionStartIncluding) versionStartIncluding="$enc.xml($vs.versionStartIncluding)"#end
                             #if($vs.versionStartExcluding) versionStartExcluding="$enc.xml($vs.versionStartExcluding)"#end
                             #if($vs.versionEndIncluding) versionEndIncluding="$enc.xml($vs.versionEndIncluding)"#end
                             #if($vs.versionEndExcluding) versionEndExcluding="$enc.xml($vs.versionEndExcluding)"#end
                             #if(!$vs.vulnerable) vulnerable="$vs.vulnerable"#end
-                        >$enc.xml($vs.toCpe23FS())</software>                            
+                        >$enc.xml($vs.toCpe23FS())</software>
 #end
                     </vulnerableSoftware>
                 </suppressedVulnerability>

@@ -30,11 +30,7 @@
         #set($vulnCount=$vulnCount+$dependency.getVulnerabilities().size())
     #end
     #foreach($vuln in $dependency.getVulnerabilities())
-        #if($vuln.cvssV3 && $vuln.cvssV3.baseScore < $junitFailOnCvss)
-            #set($vulnCount=$vulnCount - 1)
-        #elseif($vuln.cvssV2 && $vuln.cvssV2.score < $junitFailOnCvss)
-            #set($vulnCount=$vulnCount - 1)
-        #elseif($vuln.unscoredSeverity && $rpt.estimateSeverity($vuln.unscoredSeverity) < $junitFailOnCvss)
+        #if(!($vuln.cvssV3 && $vuln.cvssV3.baseScore >= $junitFailOnCvss) && !($vuln.cvssV2 && $vuln.cvssV2.score >= $junitFailOnCvss) && !($vuln.unscoredSeverity && $rpt.estimateSeverity($vuln.unscoredSeverity) >= $junitFailOnCvss))
             #set($vulnCount=$vulnCount - 1)
         #end
     #end
@@ -52,19 +48,13 @@
             #set($skipped=$dependency.getSuppressedVulnerabilities().size())
             #set($failed=$dependency.getVulnerabilities().size())
             #foreach($vuln in $dependency.getVulnerabilities())
-                #if($vuln.cvssV3 && $vuln.cvssV3.baseScore < $junitFailOnCvss)
-                    #set($skipped=$skipped + 1)
-                    #set($failed=$failed - 1)
-                #elseif($vuln.cvssV2 && $vuln.cvssV2.score < $junitFailOnCvss)
-                    #set($skipped=$skipped + 1)
-                    #set($failed=$failed - 1)
-                #elseif($vuln.unscoredSeverity && $rpt.estimateSeverity($vuln.unscoredSeverity) < $junitFailOnCvss)
+                #if( !($vuln.cvssV3 && $vuln.cvssV3.baseScore >= $junitFailOnCvss) && !($vuln.cvssV2 && $vuln.cvssV2.score >= $junitFailOnCvss) && !($vuln.unscoredSeverity && $rpt.estimateSeverity($vuln.unscoredSeverity) >= $junitFailOnCvss))
                     #set($skipped=$skipped + 1)
                     #set($failed=$failed - 1)
                 #end
             #end
         #end
-    <testsuite failures="$failed" id="$suiteId" name="$enc.xml($dependency.FilePath)" package="$enc.xml($dependency.DisplayFileName)" skipped="$skipped" tests="$testCount" timestamp="$scanDateJunit">
+        <testsuite failures="$failed" errors="0" time="0" id="$suiteId" name="$enc.xml($dependency.FilePath)" package="$enc.xml($dependency.DisplayFileName)" skipped="$skipped" tests="$testCount" timestamp="$scanDateJunit">
         #if($dependency.getVulnerabilities().size()==0 && $dependency.getSuppressedVulnerabilities().size()==0)
             <testcase classname="dependency-check" name="$enc.xml($dependency.DisplayFileName)"/>
         #end
@@ -80,24 +70,34 @@
                 #set($vulnerableName="")
             #end
             <testcase classname="$enc.xml($vuln.name)" name="$enc.xml($vulnerableName)">
-            #if($vuln.cvssV3 && $vuln.cvssV3.baseScore < $junitFailOnCvss)
+            #if($vuln.cvssV3 && $vuln.cvssV3.baseScore >= $junitFailOnCvss)
+                <failure message="cvssV3: $enc.xml($vuln.cvssV3.baseSeverity), score: $enc.xml($vuln.cvssV3.baseScore) ($enc.xml($vuln.cvssV3.toString()))"/>
+            #elseif($vuln.cvssV2 && $vuln.cvssV2.score >= $junitFailOnCvss)
+                <failure message="cvssV2: $enc.xml($vuln.cvssV2.severity), score: $enc.xml($vuln.cvssV2.score) ($enc.xml($vuln.cvssV2.toString()))"/>
+            #elseif($vuln.unscoredSeverity  && $rpt.estimateSeverity($vuln.unscoredSeverity) >= $junitFailOnCvss)
+                <failure message="unscored severity: #if($vuln.unscoredSeverity.equals("0.0"))Unknown#else$enc.xml($vuln.unscoredSeverity)#end"/>
+            #elseif($vuln.cvssV3 && $vuln.cvssV3.baseScore < $junitFailOnCvss)
                 <skipped message="score below $junitFailOnCvss"/>
             #elseif($vuln.cvssV2 && $vuln.cvssV2.score < $junitFailOnCvss)
                 <skipped message="score below $junitFailOnCvss"/>
             #elseif($vuln.unscoredSeverity && $rpt.estimateSeverity($vuln.unscoredSeverity) < $junitFailOnCvss)
                 <skipped message="score below $junitFailOnCvss"/>
-            #elseif($vuln.unscoredSeverity  && $rpt.estimateSeverity($vuln.unscoredSeverity) >= $junitFailOnCvss)
-                <failure message="unscored severity: #if($vuln.unscoredSeverity.equals("0.0"))Unknown#else$enc.xml($vuln.unscoredSeverity)#end"/>
-            #elseif($vuln.cvssV3 && $vuln.cvssV3.baseScore >= $junitFailOnCvss)
-                <failure message="cvssV3: $enc.xml($vuln.cvssV3.baseSeverity), score: $enc.xml($vuln.cvssV3.baseScore) ($enc.xml($vuln.cvssV3.toString()))"/>
-            #elseif($vuln.cvssV2 && $vuln.cvssV2.score >= $junitFailOnCvss)
-                <failure message="cvssV2: $enc.xml($vuln.cvssV2.severity), score: $enc.xml($vuln.cvssV2.score) ($enc.xml($vuln.cvssV2.toString()))"/>
             #end
             <system-out>#if($vuln.description)$enc.xml($vuln.description)#else<![CDATA[ 
                 #foreach($ref in $vuln.getReferences())
                     #if($ref.url)$enc.xml($ref.name): $enc.xml($ref.url)#end
                 #end]]>#end</system-out>
-            <system-err>location: $enc.xml($dependency.FilePath)</system-err>
+            #set($referencedProjects="")
+            #set($projectReferenced=false)
+            #foreach($ref in $dependency.projectReferences)
+                #if($projectReferenced)
+                    #set($referencedProjects="$referencedProjects, $ref")
+                #else
+                    #set($referencedProjects="$ref")
+                    #set($projectReferenced=true)
+                #end
+            #end
+            <system-err>location: $enc.xml($dependency.FilePath), project-references: [ $enc.xml($referencedProjects) ]</system-err>
         </testcase>
         #end
         #foreach($vuln in $dependency.getSuppressedVulnerabilities())

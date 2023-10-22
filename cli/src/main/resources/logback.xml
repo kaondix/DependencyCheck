@@ -9,6 +9,7 @@
             <pattern>[%level] %msg%n</pattern>
         </encoder>
     </appender>
+
     <logger name="org.apache.commons.jcs" level="ERROR" />
 
     <root level="INFO">

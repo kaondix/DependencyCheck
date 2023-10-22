@@ -18,15 +18,11 @@
 package org.owasp.dependencycheck.analyzer;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import org.owasp.dependencycheck.Engine;
 import org.owasp.dependencycheck.analyzer.exception.AnalysisException;
-import org.owasp.dependencycheck.data.golang.GoModJsonParser;
 import org.owasp.dependencycheck.dependency.Dependency;
 import org.owasp.dependencycheck.exception.InitializationException;
 import org.owasp.dependencycheck.utils.FileFilterBuilder;
@@ -34,10 +30,13 @@ import org.owasp.dependencycheck.utils.Settings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import javax.json.stream.JsonParsingException;
+import org.apache.commons.lang3.StringUtils;
 import org.owasp.dependencycheck.data.nvd.ecosystem.Ecosystem;
+import org.owasp.dependencycheck.processing.GoModProcessor;
+import org.owasp.dependencycheck.utils.processing.ProcessReader;
 
 /**
  * Go mod dependency analyzer.
@@ -72,6 +71,10 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
      */
     public static final String GO_MOD = "go.mod";
 
+    /**
+     * The path to the go executable.
+     */
+    private static String goPath = null;
     /**
      * The file filter for Gopkg.lock
      */
@@ -125,33 +128,38 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
      * @return the path to `go`
      */
     private String getGo() {
-        final String goPath = getSettings().getString(Settings.KEYS.ANALYZER_GOLANG_PATH);
-
-        if (goPath == null) {
-            LOGGER.warn(
-                    "Path to `go` executable not set. Trying default location. If you do want to set it, please set the `{}` property",
-                    Settings.KEYS.ANALYZER_GOLANG_PATH
-            );
-            return "go";
-        } else {
-            final File goFile = new File(goPath);
-            if (goFile.isFile()) {
-                return goFile.getAbsolutePath();
+        synchronized (this) {
+            if (goPath == null) {
+                final String path = getSettings().getString(Settings.KEYS.ANALYZER_GOLANG_PATH);
+                if (path == null) {
+                    goPath = "go";
+                } else {
+                    final File goFile = new File(path);
+                    if (goFile.isFile()) {
+                        goPath = goFile.getAbsolutePath();
+                    } else {
+                        LOGGER.warn("Provided path to `go` executable is invalid. Trying default location. "
+                                + "If you do want to set it, please set the `{}` property",
+                                Settings.KEYS.ANALYZER_GOLANG_PATH
+                        );
+                        goPath = "go";
+                    }
+                }
             }
         }
-
-        LOGGER.warn("Path to `go` exec executable does not exist: {}. Trying default location", goPath);
-        return "go";
+        return goPath;
     }
 
     /**
-     * Launches `go mod` in the given folder.
+     * Launches `go mod edit` to test if go is installed.
      *
-     * @param folder the working folder
+     * @param folder the folder location to execute go mode help in
      * @return a reference to the launched process
-     * @throws AnalysisException thrown if there is an issue launching `go mod`
+     * @throws AnalysisException thrown if there is an issue launching `go mod
+     * edit`
+     * @throws IOException thrown if there is an error starting `go mod edit`
      */
-    private Process launchGoMod(File folder) throws AnalysisException {
+    private Process testGoMod(File folder) throws AnalysisException, IOException {
         if (!folder.isDirectory()) {
             throw new AnalysisException(String.format("%s should have been a directory.", folder.getAbsolutePath()));
         }
@@ -160,12 +168,37 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
         args.add(getGo());
         args.add("mod");
         args.add("edit");
+
+        final ProcessBuilder builder = new ProcessBuilder(args);
+        builder.directory(folder);
+        LOGGER.debug("Launching: {} from {}", args, folder);
+        return builder.start();
+    }
+
+    /**
+     * Launches `go list -json -m -mod=readonly all` in the given folder.
+     *
+     * @param folder the working folder
+     * @return a reference to the launched process
+     * @throws AnalysisException thrown if there is an issue launching `go mod`
+     */
+    private Process launchGoListReadonly(File folder) throws AnalysisException {
+        if (!folder.isDirectory()) {
+            throw new AnalysisException(String.format("%s should have been a directory.", folder.getAbsolutePath()));
+        }
+
+        final List<String> args = new ArrayList<>();
+        args.add(getGo());
+        args.add("list");
         args.add("-json");
+        args.add("-m");
+        args.add("-mod=readonly");
+        args.add("all");
 
         final ProcessBuilder builder = new ProcessBuilder(args);
         builder.directory(folder);
         try {
-            LOGGER.info("Launching: {} from {}", args, folder);
+            LOGGER.debug("Launching: {} from {}", args, folder);
             return builder.start();
         } catch (IOException ioe) {
             throw new AnalysisException("go initialization failure; this error can be ignored if you are not analyzing Go. "
@@ -174,7 +207,8 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
     }
 
     /**
-     * No-op initializer implementation.
+     * Initialize the go mod analyzer; ensures that go is installed and can be
+     * called.
      *
      * @param engine a reference to the dependency-check engine
      * @throws InitializationException never thrown
@@ -184,61 +218,53 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
     @Override
     protected void prepareFileTypeAnalyzer(Engine engine) throws InitializationException {
         setEnabled(false);
-        final Process process;
+        final File tempDirectory;
         try {
-            process = launchGoMod(getSettings().getTempDirectory());
-        } catch (AnalysisException ae) {
-            final String msg = String.format("Exception from go process: %s. Disabling %s", ae.getCause(), ANALYZER_NAME);
-            throw new InitializationException(msg, ae);
+            tempDirectory = getSettings().getTempDirectory();
         } catch (IOException ex) {
             throw new InitializationException("Unable to create temporary file, the Go Mod Analyzer will be disabled", ex);
         }
-
-        final int exitValue;
         try {
-            exitValue = process.waitFor();
+            final Process process = testGoMod(tempDirectory);
+            try (ProcessReader processReader = new ProcessReader(process)) {
+                processReader.readAll();
+                final int exitValue = process.waitFor();
+                final int expectedNoModuleFoundExitValue = 1;
+                final int possiblyGoTooOldExitValue = 2;
+                final int goExecutableNotFoundExitValue = 127;
+
+                switch (exitValue) {
+                    case expectedNoModuleFoundExitValue:
+                        setEnabled(true);
+                        LOGGER.debug("{} is enabled.", ANALYZER_NAME);
+                        break;
+                    case goExecutableNotFoundExitValue:
+                        throw new InitializationException(String.format("Go executable not found. Disabling %s: %s", ANALYZER_NAME, exitValue));
+                    case possiblyGoTooOldExitValue:
+                        final String error = processReader.getError();
+                        if (!StringUtils.isBlank(error)) {
+                            if (error.contains("unknown subcommand \"mod\"")) {
+                                LOGGER.warn("Your version of `go` does not support modules. Disabling {}. Error: `{}`", ANALYZER_NAME, error);
+                                throw new InitializationException("Go version does not support modules.");
+                            }
+                            LOGGER.warn("An error occurred calling `go` - no output could be read. Disabling {}.", ANALYZER_NAME);
+                            throw new InitializationException("Error calling `go` - no output could be read.");
+                        }
+                    // fall through
+                    default:
+                        final String msg = String.format("Unexpected exit code from go process. Disabling %s: %s", ANALYZER_NAME, exitValue);
+                        throw new InitializationException(msg);
+                }
+            }
+        } catch (AnalysisException ae) {
+            final String msg = String.format("Exception from go process: %s. Disabling %s", ae.getCause(), ANALYZER_NAME);
+            throw new InitializationException(msg, ae);
         } catch (InterruptedException ex) {
             final String msg = String.format("Go mod process was interrupted. Disabling %s", ANALYZER_NAME);
             Thread.currentThread().interrupt();
             throw new InitializationException(msg);
-        }
-
-        final int expectedNoModuleFoundExitValue = 1;
-        final int possiblyGoTooOldExitValue = 2;
-        final int goExecutableNotFoundExitValue = 127;
-
-        switch (exitValue) {
-            case expectedNoModuleFoundExitValue:
-                setEnabled(true);
-                LOGGER.info("{} is enabled.", ANALYZER_NAME);
-                return;
-            case goExecutableNotFoundExitValue:
-                throw new InitializationException(String.format("Go executable not found. Disabling %s: %s", ANALYZER_NAME, exitValue));
-            case possiblyGoTooOldExitValue:
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8))) {
-                    if (!reader.ready()) {
-                        LOGGER.warn("Go mod error stream unexpectedly not ready. Disabling {}", ANALYZER_NAME);
-                        throw new InitializationException("Go mod error stream unexpectedly not ready.");
-                    } else {
-                        final String line = reader.readLine();
-                        if (line == null) {
-                            LOGGER.warn("An error occurred calling `go` - no output could be read. Disabling {}.", ANALYZER_NAME);
-                            throw new InitializationException("Error calling `go` - no output could be read.");
-                        }
-                        if (line.contains("unknown subcommand \"mod\"")) {
-                            LOGGER.warn("Your version of `go` does not support modules. Disabling {}. Error: `{}`", ANALYZER_NAME, line);
-                            throw new InitializationException("Go version does not support modules.");
-                        }
-                    }
-                } catch (UnsupportedEncodingException ex) {
-                    throw new InitializationException("Unexpected go encoding.", ex);
-                } catch (IOException ex) {
-                    throw new InitializationException("Unable to read go output.", ex);
-                }
-            // fall through
-            default:
-                final String msg = String.format("Unexpected exit code from go process. Disabling %s: %s", ANALYZER_NAME, exitValue);
-                throw new InitializationException(msg);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
         }
     }
 
@@ -252,38 +278,40 @@ public class GolangModAnalyzer extends AbstractFileTypeAnalyzer {
      */
     @Override
     protected void analyzeDependency(Dependency dependency, Engine engine) throws AnalysisException {
-        final File parentFile = dependency.getActualFile().getParentFile();
-        final Process process = launchGoMod(parentFile);
+        //engine.removeDependency(dependency);
 
         final int exitValue;
-        try {
-            exitValue = process.waitFor();
+        final File parentFile = dependency.getActualFile().getParentFile();
+        final Process process = launchGoListReadonly(parentFile);
+        String error = null;
+        try (GoModProcessor processor = new GoModProcessor(dependency, engine);
+                ProcessReader processReader = new ProcessReader(process, processor)) {
+            processReader.readAll();
+            error = processReader.getError();
+            if (!StringUtils.isBlank(error)) {
+                LOGGER.warn("While analyzing `{}` `go` generated the following warnings:\n{}", dependency.getFilePath(), error);
+            }
+            exitValue = process.exitValue();
+            if (exitValue < 0 || exitValue > 1) {
+                final String msg = String.format("Error analyzing '%s'; Unexpected exit code from go process; exit code: %s",
+                        dependency.getFilePath(), exitValue);
+                throw new AnalysisException(msg);
+            }
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
-            throw new AnalysisException("go process interrupted", ie);
-        }
-        if (exitValue < 0 || exitValue > 1) {
-            final String msg = String.format("Unexpected exit code from go process; exit code: %s", exitValue);
-            throw new AnalysisException(msg);
-        }
-        try {
-            final StringBuilder error = new StringBuilder();
-            try (BufferedReader errReader = new BufferedReader(new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8))) {
-                while (errReader.ready()) {
-                    error.append(errReader.readLine());
-                }
+            throw new AnalysisException("go process interrupted while analyzing '" + dependency.getFilePath() + "'", ie);
+        } catch (IOException ex) {
+            throw new AnalysisException("Error closing the go process while analyzing '" + dependency.getFilePath() + "'", ex);
+        } catch (JsonParsingException ex) {
+            final String msg;
+            if (error != null) {
+                msg = String.format("Error analyzing '%s'; Unable to process output from `go list -json -m -mod=readonly all`; "
+                        + "the command reported the following errors: %s", dependency.getFilePath(), error);
+            } else {
+                msg = String.format("Error analyzing '%s'; Unable to process output from `go list -json -m -mod=readonly all`; "
+                        + "please validate that the command runs without errors.", dependency.getFilePath());
             }
-            if (!error.toString().equals("")) {
-                LOGGER.warn(error.toString());
-                throw new AnalysisException(error.toString());
-            }
-            final GoModJsonParser parser = new GoModJsonParser(process.getInputStream());
-            parser.process();
-            parser.getDependencies().forEach(goDep
-                    -> engine.addDependency(goDep.toDependency(dependency))
-            );
-        } catch (IOException ioe) {
-            LOGGER.warn("go mod failure", ioe);
+            throw new AnalysisException(msg, ex);
         }
     }
 }

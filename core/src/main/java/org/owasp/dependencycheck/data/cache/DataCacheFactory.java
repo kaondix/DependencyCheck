@@ -22,11 +22,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Properties;
-import org.apache.commons.jcs.JCS;
-import org.apache.commons.jcs.access.CacheAccess;
-import org.apache.commons.jcs.access.exception.CacheException;
-import org.apache.commons.jcs.engine.CompositeCacheAttributes;
-import org.apache.commons.jcs.engine.behavior.ICompositeCacheAttributes;
+import org.apache.commons.jcs3.JCS;
+import org.apache.commons.jcs3.access.CacheAccess;
+import org.apache.commons.jcs3.access.exception.CacheException;
+import org.apache.commons.jcs3.engine.CompositeCacheAttributes;
+import org.apache.commons.jcs3.engine.behavior.ICompositeCacheAttributes;
 import org.owasp.dependencycheck.data.nexus.MavenArtifact;
 import org.owasp.dependencycheck.data.nodeaudit.Advisory;
 import org.owasp.dependencycheck.utils.FileUtils;
@@ -92,7 +92,7 @@ public class DataCacheFactory {
                     throw new CacheException("Unable to obtain disk cache directory path", ex);
                 }
                 if (!cacheDirectory.isDirectory() && !cacheDirectory.mkdirs()) {
-                    throw new CacheException("Unable to create disk cache: " + cacheDirectory.toString());
+                    throw new CacheException("Unable to create disk cache: " + cacheDirectory);
                 }
                 try (InputStream in = FileUtils.getResourceAsStream(CACHE_PROPERTIES)) {
                     if (in == null) {
@@ -104,7 +104,7 @@ public class DataCacheFactory {
                     properties.put("jcs.auxiliary.ODC.attributes.DiskPath", cacheDirectory.getCanonicalPath());
                     for (CacheType t : CacheType.values()) {
                         final File fp = new File(cacheDirectory, t.toString());
-                        properties.put("jcs.auxiliary." + t.toString() + ".attributes.DiskPath", fp.getCanonicalPath());
+                        properties.put("jcs.auxiliary." + t + ".attributes.DiskPath", fp.getCanonicalPath());
                     }
 
                     JCS.setConfigProperties(properties);

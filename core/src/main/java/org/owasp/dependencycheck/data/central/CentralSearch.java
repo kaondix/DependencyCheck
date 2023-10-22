@@ -33,7 +33,7 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-import org.apache.commons.jcs.access.exception.CacheException;
+import org.apache.commons.jcs3.access.exception.CacheException;
 import org.owasp.dependencycheck.data.cache.DataCache;
 import org.owasp.dependencycheck.data.cache.DataCacheFactory;
 import org.owasp.dependencycheck.data.nexus.MavenArtifact;
@@ -152,7 +152,7 @@ public class CentralSearch {
         final List<MavenArtifact> result = new ArrayList<>();
         final URL url = new URL(String.format(query, rootURL, sha1));
 
-        LOGGER.debug("Searching Central url {}", url);
+        LOGGER.trace("Searching Central url {}", url);
 
         // Determine if we need to use a proxy. The rules:
         // 1) If the proxy is set, AND the setting is set to true, use the proxy
@@ -214,7 +214,8 @@ public class CentralSearch {
                 }
             } catch (ParserConfigurationException | IOException | SAXException | XPathExpressionException e) {
                 // Anything else is jacked up XML stuff that we really can't recover from well
-                throw new IOException(e.getMessage(), e);
+                final String errorMessage = "Failed to parse MavenCentral XML Response: " + e.getMessage();
+                throw new IOException(errorMessage, e);
             }
 
             if (missing) {

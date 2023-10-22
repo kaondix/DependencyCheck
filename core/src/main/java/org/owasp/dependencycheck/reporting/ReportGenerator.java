@@ -34,7 +34,6 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
 import javax.annotation.concurrent.NotThreadSafe;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.ParserConfigurationException;
@@ -47,6 +46,7 @@ import javax.xml.transform.sax.SAXSource;
 import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.text.WordUtils;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -58,6 +58,7 @@ import org.owasp.dependencycheck.dependency.Dependency;
 import org.owasp.dependencycheck.dependency.EvidenceType;
 import org.owasp.dependencycheck.exception.ExceptionCollection;
 import org.owasp.dependencycheck.exception.ReportException;
+import org.owasp.dependencycheck.utils.Checksum;
 import org.owasp.dependencycheck.utils.FileUtils;
 import org.owasp.dependencycheck.utils.Settings;
 import org.owasp.dependencycheck.utils.XmlUtils;
@@ -113,6 +114,14 @@ public class ReportGenerator {
          */
         CSV,
         /**
+         * Generate Sarif report.
+         */
+        SARIF,
+        /**
+         * Generate HTML report without script or non-vulnerable libraries for Jenkins.
+         */
+        JENKINS,
+        /**
          * Generate JUNIT report.
          */
         JUNIT
@@ -143,7 +152,7 @@ public class ReportGenerator {
      * NVD CVE data)
      * @param settings a reference to the database settings
      * @deprecated Please use
-     * {@link #ReportGenerator(java.lang.String, java.util.List, java.util.List, org.owasp.dependencycheck.data.nvdcve.DatabaseProperties, org.owasp.dependencycheck.utils.Settings, org.owasp.dependencycheck.exception.ExceptionCollection)}
+     * {@link #ReportGenerator(java.lang.String, java.util.List, java.util.List, DatabaseProperties, Settings, ExceptionCollection)}
      */
     @Deprecated
     public ReportGenerator(String applicationName, List<Dependency> dependencies, List<Analyzer> analyzers,
@@ -182,7 +191,7 @@ public class ReportGenerator {
      * NVD CVE data)
      * @param settings a reference to the database settings
      * @deprecated Please use
-     * {@link #ReportGenerator(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.util.List, java.util.List, org.owasp.dependencycheck.data.nvdcve.DatabaseProperties, org.owasp.dependencycheck.utils.Settings, org.owasp.dependencycheck.exception.ExceptionCollection)}
+     * {@link #ReportGenerator(String, String, String, String, List, List, DatabaseProperties, Settings, ExceptionCollection)}
      */
     @Deprecated
     public ReportGenerator(String applicationName, String groupID, String artifactID, String version,
@@ -245,9 +254,7 @@ public class ReportGenerator {
 
         final VelocityContext ctxt = new VelocityContext();
         ctxt.put("applicationName", applicationName);
-        Collections.sort(dependencies, (d1, d2) -> {
-            return d1.getDisplayFileName().compareTo(d2.getDisplayFileName());
-        });
+        dependencies.sort(Dependency.NAME_COMPARATOR);
         ctxt.put("dependencies", dependencies);
         ctxt.put("analyzers", analyzers);
         ctxt.put("properties", properties);
@@ -256,6 +263,7 @@ public class ReportGenerator {
         ctxt.put("scanDateJunit", scanDateJunit);
         ctxt.put("enc", new EscapeTool());
         ctxt.put("rpt", new ReportTool());
+        ctxt.put("checksum", Checksum.class);
         ctxt.put("WordUtils", new WordUtils());
         ctxt.put("VENDOR", EvidenceType.VENDOR);
         ctxt.put("PRODUCT", EvidenceType.PRODUCT);
@@ -309,9 +317,10 @@ public class ReportGenerator {
         if (reportFormat != null) {
             write(outputLocation, reportFormat);
         } else {
-            final File out = getReportFile(outputLocation, null);
+            File out = getReportFile(outputLocation, null);
             if (out.isDirectory()) {
-                throw new ReportException("Unable to write non-standard VSL output to a directory, please specify a file name");
+            	out = new File(out, FilenameUtils.getBaseName(format));
+            	LOGGER.warn("Writing non-standard VSL output to a directory using template name as file name.");
             }
             processTemplate(format, out);
         }
@@ -338,7 +347,7 @@ public class ReportGenerator {
             final String templateName = format.toString().toLowerCase() + "Report";
             processTemplate(templateName, out);
             if (settings.getBoolean(Settings.KEYS.PRETTY_PRINT, false)) {
-                if (format == Format.JSON) {
+                if (format == Format.JSON || format == Format.SARIF) {
                     pretifyJson(out.getPath());
                 } else if (format == Format.XML || format == Format.JUNIT) {
                     pretifyXml(out.getPath());
@@ -370,6 +379,9 @@ public class ReportGenerator {
         if (format == Format.HTML && !pathToCheck.endsWith(".html") && !pathToCheck.endsWith(".htm")) {
             return new File(outFile, "dependency-check-report.html");
         }
+        if (format == Format.JENKINS && !pathToCheck.endsWith(".html") && !pathToCheck.endsWith(".htm")) {
+            return new File(outFile, "dependency-check-jenkins.html");
+        }
         if (format == Format.JSON && !pathToCheck.endsWith(".json")) {
             return new File(outFile, "dependency-check-report.json");
         }
@@ -378,6 +390,9 @@ public class ReportGenerator {
         }
         if (format == Format.JUNIT && !pathToCheck.endsWith(".xml")) {
             return new File(outFile, "dependency-check-junit.xml");
+        }
+        if (format == Format.SARIF && !pathToCheck.endsWith(".sarif")) {
+            return new File(outFile, "dependency-check-report.sarif");
         }
         return outFile;
     }
@@ -395,6 +410,7 @@ public class ReportGenerator {
     @SuppressFBWarnings(justification = "try with resources will clean up the output stream", value = {"OBL_UNSATISFIED_OBLIGATION"})
     protected void processTemplate(String template, File file) throws ReportException {
         ensureParentDirectoryExists(file);
+        LOGGER.info("Writing report to: " + file.getAbsolutePath());
         try (OutputStream output = new FileOutputStream(file)) {
             processTemplate(template, output);
         } catch (IOException ex) {
@@ -444,9 +460,9 @@ public class ReportGenerator {
                 writer.flush();
             } catch (UnsupportedEncodingException ex) {
                 throw new ReportException("Unable to generate the report using UTF-8", ex);
-            } catch (IOException ex) {
-                throw new ReportException("Unable to write the report", ex);
             }
+        } catch (IOException ex) {
+            throw new ReportException("Unable to write the report", ex);
         } finally {
             if (input != null) {
                 try {
@@ -487,7 +503,7 @@ public class ReportGenerator {
         final String outputPath = path + ".pretty";
         final File in = new File(path);
         final File out = new File(outputPath);
-        try {
+        try (OutputStream os = new FileOutputStream(out)) {
             final TransformerFactory transformerFactory = SAXTransformerFactory.newInstance();
             transformerFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
             final Transformer transformer = transformerFactory.newTransformer();
@@ -499,11 +515,11 @@ public class ReportGenerator {
             final XMLReader saxReader = XmlUtils.buildSecureSaxParser().getXMLReader();
 
             saxs.setXMLReader(saxReader);
-            transformer.transform(saxs, new StreamResult(new OutputStreamWriter(new FileOutputStream(out), "utf-8")));
+            transformer.transform(saxs, new StreamResult(new OutputStreamWriter(os, StandardCharsets.UTF_8)));
         } catch (ParserConfigurationException | TransformerConfigurationException ex) {
             LOGGER.debug("Configuration exception when pretty printing", ex);
             LOGGER.error("Unable to generate pretty report, caused by: {}", ex.getMessage());
-        } catch (TransformerException | SAXException | FileNotFoundException | UnsupportedEncodingException ex) {
+        } catch (TransformerException | SAXException | IOException ex) {
             LOGGER.debug("Malformed XML?", ex);
             LOGGER.error("Unable to generate pretty report, caused by: {}", ex.getMessage());
         }
@@ -527,21 +543,25 @@ public class ReportGenerator {
      * @throws ReportException thrown if the given JSON file is malformed
      */
     private void pretifyJson(String pathToJson) throws ReportException {
+        LOGGER.debug("pretify json: {}", pathToJson);
         final String outputPath = pathToJson + ".pretty";
         final File in = new File(pathToJson);
         final File out = new File(outputPath);
 
         final JsonFactory factory = new JsonFactory();
 
-        try (
-                JsonParser parser = factory.createParser(new FileInputStream(in));
-                JsonGenerator generator = factory.createGenerator(new FileOutputStream(out))) {
+        try (InputStream is = new FileInputStream(in);
+                OutputStream os = new FileOutputStream(out)) {
+
+            final JsonParser parser = factory.createParser(is);
+            final JsonGenerator generator = factory.createGenerator(os);
 
             generator.useDefaultPrettyPrinter();
 
             while (parser.nextToken() != null) {
                 generator.copyCurrentEvent(parser);
             }
+            generator.flush();
         } catch (IOException ex) {
             LOGGER.debug("Malformed JSON?", ex);
             throw new ReportException("Unable to generate json report", ex);
