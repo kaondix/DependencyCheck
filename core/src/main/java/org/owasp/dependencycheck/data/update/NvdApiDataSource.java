@@ -264,7 +264,8 @@ public class NvdApiDataSource implements CachedWebDataSource {
                     .withDelay(2500)
                     .withThreadCount(4);
         } else {
-            LOGGER.warn("An NVD API Key was not provided - it is highly recommended to use an NVD API key as the update can take a VERY long time without an API Key");
+            LOGGER.warn("An NVD API Key was not provided - it is highly recommended to use "
+                    + "an NVD API key as the update can take a VERY long time without an API Key");
             builder.withDelay(8000);
         }
         long delay = 0;
