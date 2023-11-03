@@ -303,8 +303,12 @@ public class NvdApiDataSource implements CachedWebDataSource {
                         }
 
                     }
+                    final ZonedDateTime last = api.getLastUpdated();
+                    if (last != null && (lastModifiedRequest == null || lastModifiedRequest.compareTo(last) < 0)) {
+                        lastModifiedRequest = last;
+                    }
                 }
-                lastModifiedRequest = api.getLastUpdated();
+
             } catch (Exception e) {
                 throw new UpdateException("Error updating the NVD Data", e);
             }
@@ -319,7 +323,9 @@ public class NvdApiDataSource implements CachedWebDataSource {
                 Thread.currentThread().interrupt();
                 throw new UpdateException(ex);
             }
-            dbProperties.save(DatabaseProperties.NVD_API_LAST_MODIFIED, lastModifiedRequest);
+            if (lastModifiedRequest != null) {
+                dbProperties.save(DatabaseProperties.NVD_API_LAST_MODIFIED, lastModifiedRequest);
+            }
             return true;
         } finally {
             if (processingExecutorService != null) {
