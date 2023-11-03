@@ -253,7 +253,7 @@ public class NvdApiDataSource implements CachedWebDataSource {
 
     private boolean processApi() throws UpdateException {
 
-        ZonedDateTime lastChecked = dbProperties.getTimestamp(DatabaseProperties.NVD_API_LAST_CHECKED);
+        final ZonedDateTime lastChecked = dbProperties.getTimestamp(DatabaseProperties.NVD_API_LAST_CHECKED);
         if (cveDb.dataExists() && lastChecked != null) {
             final ZonedDateTime thirtyMinutesAgo = ZonedDateTime.now().minusMinutes(30);
             if (thirtyMinutesAgo.isBefore(lastChecked)) {
