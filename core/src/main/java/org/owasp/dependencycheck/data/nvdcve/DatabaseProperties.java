@@ -49,6 +49,10 @@ public class DatabaseProperties {
      */
     public static final String NVD_API_LAST_MODIFIED = "nvd.api.last.modified";
     /**
+     * The date the NVD API was last checked for an update.
+     */
+    public static final String NVD_API_LAST_CHECKED = "nvd.api.last.checked";
+    /**
      * The date the NVD cache was last checked for an update.
      */
     public static final String NVD_CACHE_LAST_CHECKED = "nvd.cache.last.checked";

@@ -252,6 +252,16 @@ public class NvdApiDataSource implements CachedWebDataSource {
     }
 
     private boolean processApi() throws UpdateException {
+
+        ZonedDateTime lastChecked = dbProperties.getTimestamp(DatabaseProperties.NVD_API_LAST_CHECKED);
+        if (cveDb.dataExists() && lastChecked != null) {
+            final ZonedDateTime thirtyMinutesAgo = ZonedDateTime.now().minusMinutes(30);
+            if (thirtyMinutesAgo.isBefore(lastChecked)) {
+                LOGGER.info("Skipping the NVD API Update as it was completed within the last 30 minutes");
+                return true;
+            }
+        }
+
         ZonedDateTime lastModifiedRequest = dbProperties.getTimestamp(DatabaseProperties.NVD_API_LAST_MODIFIED);
         final NvdCveClientBuilder builder = NvdCveClientBuilder.aNvdCveApi();
         if (lastModifiedRequest != null) {
@@ -325,6 +335,7 @@ public class NvdApiDataSource implements CachedWebDataSource {
                 throw new UpdateException(ex);
             }
             if (lastModifiedRequest != null) {
+                dbProperties.save(DatabaseProperties.NVD_API_LAST_CHECKED, ZonedDateTime.now());
                 dbProperties.save(DatabaseProperties.NVD_API_LAST_MODIFIED, lastModifiedRequest);
             }
             return true;
