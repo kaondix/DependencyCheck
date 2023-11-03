@@ -222,7 +222,8 @@ public class DatabaseProperties {
      */
     public static ZonedDateTime getTimestamp(Properties properties, String key) {
         final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ssX");
-        if (properties.contains(key)) {
+        String val = properties.getProperty(key);
+        if (val != null) {
             final String value = properties.getProperty(key);
             return ZonedDateTime.parse(value, dtf);
         }
