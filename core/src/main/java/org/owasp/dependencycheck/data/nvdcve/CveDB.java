@@ -1068,7 +1068,7 @@ public final class CveDB implements AutoCloseable {
      * @throws SQLException thrown if there is an error inserting the data
      */
     private void updateVulnerabilityInsertCwe(int vulnerabilityId, DefCveItem cve) throws SQLException {
-        if (cve.getCve() != null && cve.getCve().getWeaknesses() != null){
+        if (cve.getCve() != null && cve.getCve().getWeaknesses() != null) {
             try (Connection conn = databaseManager.getConnection();
                     PreparedStatement insertCWE = getPreparedStatement(conn, INSERT_CWE, vulnerabilityId)) {
                 for (Weakness weakness : cve.getCve().getWeaknesses()) {
