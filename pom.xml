@@ -656,7 +656,7 @@ Copyright (c) 2012 - Jeremy Long
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <argLine>@{surefireArgLine} -Dfile.encoding=UTF-8 -javaagent:${settings.localRepository}/org/jmockit/jmockit/${jmockit.version}/jmockit-${jmockit.version}.jar</argLine>
-                    <systemProperties>
+                    <systemPropertyVariables>
                         <property>
                             <name>data.directory</name>
                             <value>${project.build.directory}/data</value>
@@ -677,7 +677,7 @@ Copyright (c) 2012 - Jeremy Long
                             <name>cve.url.modified</name>
                             <value>${odc.cve.url.modified}</value>
                         </property>
-                    </systemProperties>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
             <plugin>
@@ -685,7 +685,7 @@ Copyright (c) 2012 - Jeremy Long
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <configuration>
                     <argLine>@{failsafeArgLine} -javaagent:${settings.localRepository}/org/jmockit/jmockit/${jmockit.version}/jmockit-${jmockit.version}.jar</argLine>
-                    <systemProperties>
+                    <systemPropertyVariables>
                         <property>
                             <name>data.directory</name>
                             <value>${project.build.directory}/data</value>
@@ -706,7 +706,7 @@ Copyright (c) 2012 - Jeremy Long
                             <name>cve.url.modified</name>
                             <value>${odc.cve.url.modified}</value>
                         </property>
-                    </systemProperties>
+                    </systemPropertyVariables>
                     <excludes>
                         <exclude>**/*MySqlIT.java</exclude>
                     </excludes>

@@ -388,7 +388,7 @@ Copyright (c) 2012 Jeremy Long. All Rights Reserved.
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-failsafe-plugin</artifactId>
                         <configuration>
-                            <systemProperties>
+                            <systemPropertyVariables>
                                 <property>
                                     <name>data.driver_path</name>
                                     <value>${driver_path}</value>
@@ -401,7 +401,7 @@ Copyright (c) 2012 Jeremy Long. All Rights Reserved.
                                     <name>data.connection_string</name>
                                     <value>${connection_string}</value>
                                 </property>
-                            </systemProperties>
+                            </systemPropertyVariables>
                             <includes>
                                 <include>**/*MySqlIT.java</include>
                             </includes>
@@ -438,7 +438,7 @@ Copyright (c) 2012 Jeremy Long. All Rights Reserved.
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-failsafe-plugin</artifactId>
                         <configuration>
-                            <systemProperties>
+                            <systemPropertyVariables>
                                 <property>
                                     <name>data.driver_path</name>
                                     <value>${driver_path}</value>
@@ -451,7 +451,7 @@ Copyright (c) 2012 Jeremy Long. All Rights Reserved.
                                     <name>data.connection_string</name>
                                     <value>${connection_string}</value>
                                 </property>
-                            </systemProperties>
+                            </systemPropertyVariables>
                             <includes>
                                 <include>**/*MySqlIT.java</include>
                             </includes>

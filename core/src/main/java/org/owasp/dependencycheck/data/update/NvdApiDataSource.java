@@ -278,6 +278,11 @@ public class NvdApiDataSource implements CachedWebDataSource {
                     + "an NVD API key as the update can take a VERY long time without an API Key");
             builder.withDelay(8000);
         }
+
+        final String virtualMatch = settings.getString(Settings.KEYS.CVE_CPE_STARTS_WITH_FILTER);
+        if (virtualMatch != null) {
+            builder.withVirtualMatchString(virtualMatch);
+        }
         long delay = 0;
         try {
             delay = settings.getLong(Settings.KEYS.NVD_API_DELAY);
@@ -310,7 +315,7 @@ public class NvdApiDataSource implements CachedWebDataSource {
                         ctr += 1;
                         if ((ctr % 10) == 0) {
                             final double percent = (double) (ctr * 2000) / max * 100;
-                            LOGGER.info(String.format("Processing %,d/%,d (%.0f%%)", ctr * 2000, max, percent));
+                            LOGGER.info(String.format("Downloaded %,d/%,d (%.0f%%)", ctr * 2000, max, percent));
                         }
 
                     }
@@ -323,16 +328,22 @@ public class NvdApiDataSource implements CachedWebDataSource {
             } catch (Exception e) {
                 throw new UpdateException("Error updating the NVD Data", e);
             }
-
-            try {
-                for (Future f : submitted) {
-                    while (!f.isDone()) {
-                        Thread.sleep(500);
-                    }
+            LOGGER.info(String.format("Downloaded %,d/%,d (%.0f%%)", max, max, 100f));
+            max = submitted.size();
+            ctr = 0;
+            for (Future f : submitted) {
+                try {
+                    f.get();
+                    ctr += 1;
+                    final double percent = (double) ctr / max * 100;
+                    LOGGER.info(String.format("Completed processing batch %d/%d (%.0f%%)", ctr, max, percent));
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException(ex);
+                } catch (ExecutionException ex) {
+                    LOGGER.error("Exception processing NVD API Results", ex);
+                    throw new RuntimeException(ex);
                 }
-            } catch (InterruptedException ex) {
-                Thread.currentThread().interrupt();
-                throw new UpdateException(ex);
             }
             if (lastModifiedRequest != null) {
                 dbProperties.save(DatabaseProperties.NVD_API_LAST_CHECKED, ZonedDateTime.now());

@@ -1009,7 +1009,6 @@ public final class CveDB implements AutoCloseable {
             if (cvssv3 != null) {
                 setUpdateColumn(callUpdate, 19, cvssv3.getExploitabilityScore());
                 setUpdateColumn(callUpdate, 20, cvssv3.getImpactScore());
-
                 setUpdateColumn(callUpdate, 21, cvssv3.getCvssData().getAttackVector());
                 setUpdateColumn(callUpdate, 22, cvssv3.getCvssData().getAttackComplexity());
                 setUpdateColumn(callUpdate, 23, cvssv3.getCvssData().getPrivilegesRequired());
@@ -1020,7 +1019,7 @@ public final class CveDB implements AutoCloseable {
                 setUpdateColumn(callUpdate, 28, cvssv3.getCvssData().getAvailabilityImpact());
                 setUpdateColumn(callUpdate, 29, cvssv3.getCvssData().getBaseScore());
                 setUpdateColumn(callUpdate, 30, cvssv3.getCvssData().getBaseSeverity());
-                setUpdateColumn(callUpdate, 30, cvssv3.getCvssData().getVersion());
+                setUpdateColumn(callUpdate, 31, cvssv3.getCvssData().getVersion());
             } else {
                 callUpdate.setNull(19, java.sql.Types.NULL);
                 callUpdate.setNull(20, java.sql.Types.NULL);
@@ -1069,22 +1068,24 @@ public final class CveDB implements AutoCloseable {
      * @throws SQLException thrown if there is an error inserting the data
      */
     private void updateVulnerabilityInsertCwe(int vulnerabilityId, DefCveItem cve) throws SQLException {
-        try (Connection conn = databaseManager.getConnection();
-                PreparedStatement insertCWE = getPreparedStatement(conn, INSERT_CWE, vulnerabilityId)) {
-            for (Weakness weakness : cve.getCve().getWeaknesses()) {
-                for (LangString desc : weakness.getDescription()) {
-                    if ("en".equals(desc.getLang())) {
-                        insertCWE.setString(2, desc.getValue());
-                        if (isBatchInsertEnabled()) {
-                            insertCWE.addBatch();
-                        } else {
-                            insertCWE.execute();
+        if (cve.getCve() != null && cve.getCve().getWeaknesses() != null){
+            try (Connection conn = databaseManager.getConnection();
+                    PreparedStatement insertCWE = getPreparedStatement(conn, INSERT_CWE, vulnerabilityId)) {
+                for (Weakness weakness : cve.getCve().getWeaknesses()) {
+                    for (LangString desc : weakness.getDescription()) {
+                        if ("en".equals(desc.getLang())) {
+                            insertCWE.setString(2, desc.getValue());
+                            if (isBatchInsertEnabled()) {
+                                insertCWE.addBatch();
+                            } else {
+                                insertCWE.execute();
+                            }
                         }
                     }
                 }
-            }
-            if (isBatchInsertEnabled()) {
-                insertCWE.executeBatch();
+                if (isBatchInsertEnabled()) {
+                    insertCWE.executeBatch();
+                }
             }
         }
     }
