@@ -389,18 +389,9 @@ Copyright (c) 2012 Jeremy Long. All Rights Reserved.
                         <artifactId>maven-failsafe-plugin</artifactId>
                         <configuration>
                             <systemPropertyVariables>
-                                <property>
-                                    <name>data.driver_path</name>
-                                    <value>${driver_path}</value>
-                                </property>
-                                <property>
-                                    <name>data.driver_name</name>
-                                    <value>${driver_name}</value>
-                                </property>
-                                <property>
-                                    <name>data.connection_string</name>
-                                    <value>${connection_string}</value>
-                                </property>
+                                <data.driver_path>${driver_path}</data.driver_path>
+                                <data.driver_name>${driver_name}</data.driver_name>
+                                <data.connection_string>${connection_string}</data.connection_string>
                             </systemPropertyVariables>
                             <includes>
                                 <include>**/*MySqlIT.java</include>
@@ -439,18 +430,9 @@ Copyright (c) 2012 Jeremy Long. All Rights Reserved.
                         <artifactId>maven-failsafe-plugin</artifactId>
                         <configuration>
                             <systemPropertyVariables>
-                                <property>
-                                    <name>data.driver_path</name>
-                                    <value>${driver_path}</value>
-                                </property>
-                                <property>
-                                    <name>data.driver_name</name>
-                                    <value>${driver_name}</value>
-                                </property>
-                                <property>
-                                    <name>data.connection_string</name>
-                                    <value>${connection_string}</value>
-                                </property>
+                                <data.driver_path>${driver_path}</data.driver_path>
+                                <data.driver_name>${driver_name}</data.driver_name>
+                                <data.connection_string>${connection_string}</data.connection_string>
                             </systemPropertyVariables>
                             <includes>
                                 <include>**/*MySqlIT.java</include>

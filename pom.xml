@@ -657,26 +657,9 @@ Copyright (c) 2012 - Jeremy Long
                 <configuration>
                     <argLine>@{surefireArgLine} -Dfile.encoding=UTF-8 -javaagent:${settings.localRepository}/org/jmockit/jmockit/${jmockit.version}/jmockit-${jmockit.version}.jar</argLine>
                     <systemPropertyVariables>
-                        <property>
-                            <name>data.directory</name>
-                            <value>${project.build.directory}/data</value>
-                        </property>
-                        <property>
-                            <name>temp.directory</name>
-                            <value>${project.build.directory}/temp</value>
-                        </property>
-                        <property>
-                            <name>analyzer.assembly.dotnet.path</name>
-                            <value>${odc.dotnet.path}</value>
-                        </property>
-                        <property>
-                            <name>cve.url.base</name>
-                            <value>${odc.cve.url.base}</value>
-                        </property>
-                        <property>
-                            <name>cve.url.modified</name>
-                            <value>${odc.cve.url.modified}</value>
-                        </property>
+                        <data.directory>${project.build.directory}/data</data.directory>
+                        <temp.directory>${project.build.directory}/temp</temp.directory>
+                        <analyzer.assembly.dotnet.path>${odc.dotnet.path}</analyzer.assembly.dotnet.path>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
@@ -686,26 +669,9 @@ Copyright (c) 2012 - Jeremy Long
                 <configuration>
                     <argLine>@{failsafeArgLine} -javaagent:${settings.localRepository}/org/jmockit/jmockit/${jmockit.version}/jmockit-${jmockit.version}.jar</argLine>
                     <systemPropertyVariables>
-                        <property>
-                            <name>data.directory</name>
-                            <value>${project.build.directory}/data</value>
-                        </property>
-                        <property>
-                            <name>temp.directory</name>
-                            <value>${project.build.directory}/temp</value>
-                        </property>
-                        <property>
-                            <name>analyzer.assembly.dotnet.path</name>
-                            <value>${odc.dotnet.path}</value>
-                        </property>
-                        <property>
-                            <name>cve.url.base</name>
-                            <value>${odc.cve.url.base}</value>
-                        </property>
-                        <property>
-                            <name>cve.url.modified</name>
-                            <value>${odc.cve.url.modified}</value>
-                        </property>
+                        <data.directory>${project.build.directory}/data</data.directory>
+                        <temp.directory>${project.build.directory}/temp</temp.directory>
+                        <analyzer.assembly.dotnet.path>${odc.dotnet.path}</analyzer.assembly.dotnet.path>
                     </systemPropertyVariables>
                     <excludes>
                         <exclude>**/*MySqlIT.java</exclude>
