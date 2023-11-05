@@ -37,7 +37,7 @@ public class NvdApiProcessor implements Callable<NvdApiProcessor> {
     /**
      * The collection of NVD API data to add to the database.
      */
-    private final Collection<DefCveItem> data;
+    private Collection<DefCveItem> data;
     /**
      * Reference to the CVE Ecosystem Mapper object.
      */
@@ -80,6 +80,7 @@ public class NvdApiProcessor implements Callable<NvdApiProcessor> {
             cveDB.updateVulnerability(entry, mapper.getEcosystem(entry));
         }
         endTime = System.currentTimeMillis();
+        data = null;
         return this;
     }
 
