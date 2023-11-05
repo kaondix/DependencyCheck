@@ -76,7 +76,6 @@ jobs:
         env:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         run: |
-            java -XX:+PrintFlagsFinal -version | grep HeapSize
             mvn -s settings.xml -pl utils,core,maven -am compile verify -DtestMavenPlugin -DreleaseTesting --no-transfer-progress --batch-mode
       - name: Archive IT test logs
         id: archive-logs
