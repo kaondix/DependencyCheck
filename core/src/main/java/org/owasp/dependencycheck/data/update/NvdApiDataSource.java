@@ -334,7 +334,7 @@ public class NvdApiDataSource implements CachedWebDataSource {
             ctr = 0;
             for (Future<NvdApiProcessor> f : submitted) {
                 try {
-                    NvdApiProcessor proc = f.get();
+                    final NvdApiProcessor proc = f.get();
                     ctr += 1;
                     final double percent = (double) ctr / max * 100;
                     LOGGER.info(String.format("Completed processing batch %d/%d (%.0f%%) in %,dms", ctr, max, percent, proc.getDurationMillis()));
