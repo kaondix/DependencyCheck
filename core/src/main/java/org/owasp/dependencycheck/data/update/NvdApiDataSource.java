@@ -270,8 +270,9 @@ public class NvdApiDataSource implements CachedWebDataSource {
         }
         final String key = settings.getString(Settings.KEYS.NVD_API_KEY);
         if (key != null) {
+            //using a higher delay as the system may not be able to process these faster.
             builder.withApiKey(key)
-                    .withDelay(2500)
+                    .withDelay(3000)
                     .withThreadCount(4);
         } else {
             LOGGER.warn("An NVD API Key was not provided - it is highly recommended to use "
@@ -331,12 +332,12 @@ public class NvdApiDataSource implements CachedWebDataSource {
             LOGGER.info(String.format("Downloaded %,d/%,d (%.0f%%)", max, max, 100f));
             max = submitted.size();
             ctr = 0;
-            for (Future f : submitted) {
+            for (Future<NvdApiProcessor> f : submitted) {
                 try {
-                    f.get();
+                    NvdApiProcessor proc = f.get();
                     ctr += 1;
                     final double percent = (double) ctr / max * 100;
-                    LOGGER.info(String.format("Completed processing batch %d/%d (%.0f%%)", ctr, max, percent));
+                    LOGGER.info(String.format("Completed processing batch %d/%d (%.0f%%) in %,dms", ctr, max, percent, proc.getDurationMillis()));
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
                     throw new RuntimeException(ex);
