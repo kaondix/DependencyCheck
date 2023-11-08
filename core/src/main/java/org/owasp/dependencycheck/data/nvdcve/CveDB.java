@@ -1227,11 +1227,11 @@ public final class CveDB implements AutoCloseable {
             if (cve.getCve().getReferences() != null) {
                 for (Reference r : cve.getCve().getReferences()) {
                     insertReference.setInt(1, vulnerabilityId);
-                    Optional<String> name = null;
+                    Optional<String> name = Optional.empty();
                     if (r.getTags() != null) {
                         name = r.getTags().stream().sorted().findFirst();
                     }
-                    if (name != null && name.isPresent()) {
+                    if (name.isPresent()) {
                         insertReference.setString(2, name.get());
                     } else {
                         insertReference.setNull(2, java.sql.Types.VARCHAR);
