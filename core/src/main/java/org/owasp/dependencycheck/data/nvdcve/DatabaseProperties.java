@@ -60,22 +60,6 @@ public class DatabaseProperties {
      * The date the NVD cache data was last modified/updated.
      */
     public static final String NVD_CACHE_LAST_MODIFIED = "nvd.cache.last.modified";
-
-    // TODO DELETE START--------------------------------------------------------
-    /**
-     * Modified key word, used as a key to store information about the modified
-     * file (i.e. the containing the last 8 days of updates)..
-     */
-    public static final String MODIFIED = "Modified";
-
-    /**
-     * Stores the last updated time for each of the NVD CVE files. These
-     * timestamps should be updated if we process the modified file within 7
-     * days of the last update.
-     */
-    public static final String LAST_UPDATED_BASE = "NVD CVE ";
-
-    // TODO DELETE END---------------------------------------------------------
     /**
      * The key for the last time the CPE data was updated.
      */
@@ -84,7 +68,6 @@ public class DatabaseProperties {
      * The key for the database schema version.
      */
     public static final String VERSION = "version";
-
     /**
      * The key for the last check time for the Known Exploited Vulnerabilities.
      */
@@ -93,7 +76,6 @@ public class DatabaseProperties {
      * The key for the version the Known Exploited Vulnerabilities.
      */
     public static final String KEV_VERSION = "kev.version";
-
     /**
      * A collection of properties about the data.
      */
