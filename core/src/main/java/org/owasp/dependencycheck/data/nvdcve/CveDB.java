@@ -991,19 +991,19 @@ public final class CveDB implements AutoCloseable {
                 callUpdate.setNull(17, java.sql.Types.NULL);
                 callUpdate.setNull(18, java.sql.Types.NULL);
             }
-            Optional<CvssV3> optCvssv30 = null;
+            Optional<CvssV3> optCvssv30 = Optional.empty();
             if (cve.getCve().getMetrics() != null && cve.getCve().getMetrics().getCvssMetricV30() != null) {
                 optCvssv30 = cve.getCve().getMetrics().getCvssMetricV30().stream().sorted(Comparator.comparing(CvssV3::getType)).findFirst();
             }
-            Optional<CvssV3> optCvssv31 = null;
+            Optional<CvssV3> optCvssv31 = Optional.empty();
             if (cve.getCve().getMetrics() != null && cve.getCve().getMetrics().getCvssMetricV31() != null) {
                 optCvssv31 = cve.getCve().getMetrics().getCvssMetricV31().stream().sorted(Comparator.comparing(CvssV3::getType)).findFirst();
             }
 
             CvssV3 cvssv3 = null;
-            if (optCvssv31 != null && optCvssv31.isPresent()) {
+            if (optCvssv31.isPresent()) {
                 cvssv3 = optCvssv31.get();
-            } else if (optCvssv30 != null && optCvssv30.isPresent()) {
+            } else if (optCvssv30.isPresent()) {
                 cvssv3 = optCvssv30.get();
             }
             if (cvssv3 != null) {
