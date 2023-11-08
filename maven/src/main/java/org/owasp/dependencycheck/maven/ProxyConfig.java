@@ -33,7 +33,7 @@ public class ProxyConfig {
      */
     private int port = 8080;
     /**
-     * ID od server in Maven settings.xml, &lt;username&gt; and &lt;password&gt; will be
+     * ID of server in Maven settings.xml, &lt;username&gt; and &lt;password&gt; will be
      * used.
      */
     private String serverId;
