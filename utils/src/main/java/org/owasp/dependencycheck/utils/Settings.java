@@ -162,7 +162,6 @@ public final class Settings {
          */
         public static final String CVE_CPE_STARTS_WITH_FILTER = "cve.cpe.startswith.filter";
 
-        //TODO NVD Begin New
         /**
          * API Key for the NVD API.
          */
