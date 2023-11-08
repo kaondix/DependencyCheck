@@ -147,6 +147,6 @@
     ],
 
     ## optional properties
-    "remediations": [], ## not implemented
+    "remediations": [] ## not implemented
 
 }
