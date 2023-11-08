@@ -104,7 +104,7 @@ public class CvssUtilTest {
      * Test of cvssV3ScoreToSeverity method, of class CvssUtil.
      */
     @Test
-    public void testCvssVeScoreToSeverity() {
+    public void testCvssV3ScoreToSeverity() {
         Double score = 0.0;
         CvssV3Data.SeverityType expResult = CvssV3Data.SeverityType.NONE;
         CvssV3Data.SeverityType result = CvssUtil.cvssV3ScoreToSeverity(score);
