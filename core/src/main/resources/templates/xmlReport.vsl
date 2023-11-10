@@ -19,7 +19,7 @@ Copyright (c) 2018 Jeremy Long. All Rights Reserved.
 @version 2.0
 
 *#<?xml version="1.0"?>
-<analysis xmlns="https://jeremylong.github.io/DependencyCheck/dependency-check.3.1.xsd">
+<analysis xmlns="https://jeremylong.github.io/DependencyCheck/dependency-check.4.0.xsd">
     <scanInfo>
         <engineVersion>$version</engineVersion>
 #foreach($prop in $properties.getMetaData().entrySet())
@@ -240,7 +240,7 @@ Copyright (c) 2018 Jeremy Long. All Rights Reserved.
                         <accessVector>#if($vuln.cvssV2.cvssData.accessVector)$enc.xml($vuln.cvssV2.cvssData.accessVector)#end</accessVector>
                         <accessComplexity>#if($vuln.cvssV2.cvssData.accessComplexity)$enc.xml($vuln.cvssV2.cvssData.accessComplexity)#end</accessComplexity>
                         <authenticationr>#if($vuln.cvssV2.cvssData.authentication)$enc.xml($vuln.cvssV2.cvssData.authentication)#end</authenticationr>
-                        <confidentialImpact>#if($vuln.cvssV2.cvssData.confidentialityImpact)$enc.xml($vuln.cvssV2.cvssData.confidentialityImpact)#end</confidentialImpact>
+                        <confidentialityImpact>#if($vuln.cvssV2.cvssData.confidentialityImpact)$enc.xml($vuln.cvssV2.cvssData.confidentialityImpact)#end</confidentialityImpact>
                         <integrityImpact>#if($vuln.cvssV2.cvssData.integrityImpact)$enc.xml($vuln.cvssV2.cvssData.integrityImpact)#end</integrityImpact>
                         <availabilityImpact>#if($vuln.cvssV2.cvssData.availabilityImpact)$enc.xml($vuln.cvssV2.cvssData.availabilityImpact)#end</availabilityImpact>
                         <severity>#if($vuln.cvssV2.cvssData.baseSeverity)$enc.xml($vuln.cvssV2.cvssData.baseSeverity)#end</severity>
@@ -313,7 +313,7 @@ Copyright (c) 2018 Jeremy Long. All Rights Reserved.
                         <accessVector>#if($vuln.cvssV2.cvssData.accessVector)$enc.xml($vuln.cvssV2.cvssData.accessVector)#end</accessVector>
                         <accessComplexity>#if($vuln.cvssV2.cvssData.accessComplexity)$enc.xml($vuln.cvssV2.cvssData.accessComplexity)#end</accessComplexity>
                         <authenticationr>#if($vuln.cvssV2.cvssData.authentication)$enc.xml($vuln.cvssV2.cvssData.authentication)#end</authenticationr>
-                        <confidentialImpact>#if($vuln.cvssV2.cvssData.confidentialityImpact)$enc.xml($vuln.cvssV2.cvssData.confidentialityImpact)#end</confidentialImpact>
+                        <confidentialityImpact>#if($vuln.cvssV2.cvssData.confidentialityImpact)$enc.xml($vuln.cvssV2.cvssData.confidentialityImpact)#end</confidentialityImpact>
                         <integrityImpact>#if($vuln.cvssV2.cvssData.integrityImpact)$enc.xml($vuln.cvssV2.cvssData.integrityImpact)#end</integrityImpact>
                         <availabilityImpact>#if($vuln.cvssV2.cvssData.availabilityImpact)$enc.xml($vuln.cvssV2.cvssData.availabilityImpact)#end</availabilityImpact>
                         <severity>#if($vuln.cvssV2.cvssData.baseSeverity)$enc.xml($vuln.cvssV2.cvssData.baseSeverity)#end</severity>

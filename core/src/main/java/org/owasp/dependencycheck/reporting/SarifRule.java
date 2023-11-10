@@ -596,18 +596,18 @@ public class SarifRule {
     }
 
     /**
-     * Get the value of CVSS2 Confidential Impact.
+     * Get the value of CVSS2 Confidentiality Impact.
      *
-     * @return the value of CVSS2 Confidential Impact
+     * @return the value of CVSS2 Confidentiality Impact
      */
     public String getCvssv2ConfidentialityImpact() {
         return cvssv2ConfidentialityImpact;
     }
 
     /**
-     * Set the value of CVSS2 Confidential Impact.
+     * Set the value of CVSS2 Confidentiality Impact.
      *
-     * @param cvssv2ConfidentialityImpact new value of CVSS2 Confidential Impact
+     * @param cvssv2ConfidentialityImpact new value of CVSS2 Confidentiality Impact
      */
     public void setCvssv2ConfidentialityImpact(String cvssv2ConfidentialityImpact) {
         this.cvssv2ConfidentialityImpact = cvssv2ConfidentialityImpact;
