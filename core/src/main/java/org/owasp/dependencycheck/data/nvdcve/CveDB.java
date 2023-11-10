@@ -974,22 +974,22 @@ public final class CveDB implements AutoCloseable {
                 setUpdateColumn(callUpdate, 17, cvssv2.getCvssData().getAvailabilityImpact());
                 setUpdateColumn(callUpdate, 18, cvssv2.getCvssData().getVersion());
             } else {
-                callUpdate.setNull(3, java.sql.Types.NULL);
-                callUpdate.setNull(4, java.sql.Types.NULL);
-                callUpdate.setNull(5, java.sql.Types.NULL);
-                callUpdate.setNull(6, java.sql.Types.NULL);
-                callUpdate.setNull(7, java.sql.Types.NULL);
-                callUpdate.setNull(8, java.sql.Types.NULL);
-                callUpdate.setNull(9, java.sql.Types.NULL);
-                callUpdate.setNull(10, java.sql.Types.NULL);
-                callUpdate.setNull(11, java.sql.Types.NULL);
-                callUpdate.setNull(12, java.sql.Types.NULL);
-                callUpdate.setNull(13, java.sql.Types.NULL);
-                callUpdate.setNull(14, java.sql.Types.NULL);
-                callUpdate.setNull(15, java.sql.Types.NULL);
-                callUpdate.setNull(16, java.sql.Types.NULL);
-                callUpdate.setNull(17, java.sql.Types.NULL);
-                callUpdate.setNull(18, java.sql.Types.NULL);
+                callUpdate.setNull(3, java.sql.Types.VARCHAR);
+                callUpdate.setNull(4, java.sql.Types.DOUBLE);
+                callUpdate.setNull(5, java.sql.Types.DOUBLE);
+                callUpdate.setNull(6, java.sql.Types.VARCHAR);
+                callUpdate.setNull(7, java.sql.Types.BOOLEAN);
+                callUpdate.setNull(8, java.sql.Types.BOOLEAN);
+                callUpdate.setNull(9, java.sql.Types.BOOLEAN);
+                callUpdate.setNull(10, java.sql.Types.BOOLEAN);
+                callUpdate.setNull(11, java.sql.Types.DOUBLE);
+                callUpdate.setNull(12, java.sql.Types.VARCHAR);
+                callUpdate.setNull(13, java.sql.Types.VARCHAR);
+                callUpdate.setNull(14, java.sql.Types.VARCHAR);
+                callUpdate.setNull(15, java.sql.Types.VARCHAR);
+                callUpdate.setNull(16, java.sql.Types.VARCHAR);
+                callUpdate.setNull(17, java.sql.Types.VARCHAR);
+                callUpdate.setNull(18, java.sql.Types.VARCHAR);
             }
             Optional<CvssV3> optCvssv30 = Optional.empty();
             if (cve.getCve().getMetrics() != null && cve.getCve().getMetrics().getCvssMetricV30() != null) {
@@ -1021,19 +1021,19 @@ public final class CveDB implements AutoCloseable {
                 setUpdateColumn(callUpdate, 30, cvssv3.getCvssData().getBaseSeverity());
                 setUpdateColumn(callUpdate, 31, cvssv3.getCvssData().getVersion());
             } else {
-                callUpdate.setNull(19, java.sql.Types.NULL);
-                callUpdate.setNull(20, java.sql.Types.NULL);
-                callUpdate.setNull(21, java.sql.Types.NULL);
-                callUpdate.setNull(22, java.sql.Types.NULL);
-                callUpdate.setNull(23, java.sql.Types.NULL);
-                callUpdate.setNull(24, java.sql.Types.NULL);
-                callUpdate.setNull(25, java.sql.Types.NULL);
-                callUpdate.setNull(26, java.sql.Types.NULL);
-                callUpdate.setNull(27, java.sql.Types.NULL);
-                callUpdate.setNull(28, java.sql.Types.NULL);
-                callUpdate.setNull(29, java.sql.Types.NULL);
-                callUpdate.setNull(30, java.sql.Types.NULL);
-                callUpdate.setNull(31, java.sql.Types.NULL);
+                callUpdate.setNull(19, java.sql.Types.DOUBLE);
+                callUpdate.setNull(20, java.sql.Types.DOUBLE);
+                callUpdate.setNull(21, java.sql.Types.VARCHAR);
+                callUpdate.setNull(22, java.sql.Types.VARCHAR);
+                callUpdate.setNull(23, java.sql.Types.VARCHAR);
+                callUpdate.setNull(24, java.sql.Types.VARCHAR);
+                callUpdate.setNull(25, java.sql.Types.VARCHAR);
+                callUpdate.setNull(26, java.sql.Types.VARCHAR);
+                callUpdate.setNull(27, java.sql.Types.VARCHAR);
+                callUpdate.setNull(28, java.sql.Types.VARCHAR);
+                callUpdate.setNull(29, java.sql.Types.DOUBLE);
+                callUpdate.setNull(30, java.sql.Types.VARCHAR);
+                callUpdate.setNull(31, java.sql.Types.VARCHAR);
             }
             if (isOracle) {
                 try {
@@ -1593,7 +1593,7 @@ public final class CveDB implements AutoCloseable {
 
     private void setUpdateColumn(PreparedStatement ps, int i, Double value) throws SQLException {
         if (value == null) {
-            ps.setNull(i, java.sql.Types.NULL);
+            ps.setNull(i, java.sql.Types.DOUBLE);
         } else {
             ps.setDouble(i, value);
         }
@@ -1601,7 +1601,7 @@ public final class CveDB implements AutoCloseable {
 
     private void setUpdateColumn(PreparedStatement ps, int i, CvssV2Data.AuthenticationType value) throws SQLException {
         if (value == null) {
-            ps.setNull(i, java.sql.Types.NULL);
+            ps.setNull(i, java.sql.Types.VARCHAR);
         } else {
             ps.setString(i, value.value());
         }
@@ -1609,7 +1609,7 @@ public final class CveDB implements AutoCloseable {
 
     private void setUpdateColumn(PreparedStatement ps, int i, CvssV2Data.CiaType value) throws SQLException {
         if (value == null) {
-            ps.setNull(i, java.sql.Types.NULL);
+            ps.setNull(i, java.sql.Types.VARCHAR);
         } else {
             ps.setString(i, value.value());
         }
@@ -1617,7 +1617,7 @@ public final class CveDB implements AutoCloseable {
 
     private void setUpdateColumn(PreparedStatement ps, int i, CvssV2Data.Version value) throws SQLException {
         if (value == null) {
-            ps.setNull(i, java.sql.Types.NULL);
+            ps.setNull(i, java.sql.Types.VARCHAR);
         } else {
             ps.setString(i, value.value());
         }
@@ -1625,7 +1625,7 @@ public final class CveDB implements AutoCloseable {
 
     private void setUpdateColumn(PreparedStatement ps, int i, CvssV2Data.AccessComplexityType value) throws SQLException {
         if (value == null) {
-            ps.setNull(i, java.sql.Types.NULL);
+            ps.setNull(i, java.sql.Types.VARCHAR);
         } else {
             ps.setString(i, value.value());
         }
@@ -1633,7 +1633,7 @@ public final class CveDB implements AutoCloseable {
 
     private void setUpdateColumn(PreparedStatement ps, int i, CvssV2Data.AccessVectorType value) throws SQLException {
         if (value == null) {
-            ps.setNull(i, java.sql.Types.NULL);
+            ps.setNull(i, java.sql.Types.VARCHAR);
         } else {
             ps.setString(i, value.value());
         }
@@ -1641,7 +1641,7 @@ public final class CveDB implements AutoCloseable {
 
     private void setUpdateColumn(PreparedStatement ps, int i, String value) throws SQLException {
         if (value == null) {
-            ps.setNull(i, java.sql.Types.NULL);
+            ps.setNull(i, java.sql.Types.VARCHAR);
         } else {
             ps.setString(i, value);
         }
@@ -1649,7 +1649,7 @@ public final class CveDB implements AutoCloseable {
 
     private void setUpdateColumn(PreparedStatement ps, int i, Boolean value) throws SQLException {
         if (value == null) {
-            ps.setNull(i, java.sql.Types.NULL);
+            ps.setNull(i, java.sql.Types.BOOLEAN);
         } else {
             ps.setBoolean(i, value);
         }
@@ -1657,7 +1657,7 @@ public final class CveDB implements AutoCloseable {
 
     private void setUpdateColumn(PreparedStatement ps, int i, CvssV3Data.AttackVectorType value) throws SQLException {
         if (value == null) {
-            ps.setNull(i, java.sql.Types.NULL);
+            ps.setNull(i, java.sql.Types.VARCHAR);
         } else {
             ps.setString(i, value.value());
         }
@@ -1665,7 +1665,7 @@ public final class CveDB implements AutoCloseable {
 
     private void setUpdateColumn(PreparedStatement ps, int i, CvssV3Data.AttackComplexityType value) throws SQLException {
         if (value == null) {
-            ps.setNull(i, java.sql.Types.NULL);
+            ps.setNull(i, java.sql.Types.VARCHAR);
         } else {
             ps.setString(i, value.value());
         }
@@ -1673,7 +1673,7 @@ public final class CveDB implements AutoCloseable {
 
     private void setUpdateColumn(PreparedStatement ps, int i, CvssV3Data.PrivilegesRequiredType value) throws SQLException {
         if (value == null) {
-            ps.setNull(i, java.sql.Types.NULL);
+            ps.setNull(i, java.sql.Types.VARCHAR);
         } else {
             ps.setString(i, value.value());
         }
@@ -1681,7 +1681,7 @@ public final class CveDB implements AutoCloseable {
 
     private void setUpdateColumn(PreparedStatement ps, int i, CvssV3Data.UserInteractionType value) throws SQLException {
         if (value == null) {
-            ps.setNull(i, java.sql.Types.NULL);
+            ps.setNull(i, java.sql.Types.VARCHAR);
         } else {
             ps.setString(i, value.value());
         }
@@ -1689,7 +1689,7 @@ public final class CveDB implements AutoCloseable {
 
     private void setUpdateColumn(PreparedStatement ps, int i, CvssV3Data.ScopeType value) throws SQLException {
         if (value == null) {
-            ps.setNull(i, java.sql.Types.NULL);
+            ps.setNull(i, java.sql.Types.VARCHAR);
         } else {
             ps.setString(i, value.value());
         }
@@ -1697,7 +1697,7 @@ public final class CveDB implements AutoCloseable {
 
     private void setUpdateColumn(PreparedStatement ps, int i, CvssV3Data.SeverityType value) throws SQLException {
         if (value == null) {
-            ps.setNull(i, java.sql.Types.NULL);
+            ps.setNull(i, java.sql.Types.VARCHAR);
         } else {
             ps.setString(i, value.value());
         }
@@ -1705,7 +1705,7 @@ public final class CveDB implements AutoCloseable {
 
     private void setUpdateColumn(PreparedStatement ps, int i, CvssV3Data.CiaType value) throws SQLException {
         if (value == null) {
-            ps.setNull(i, java.sql.Types.NULL);
+            ps.setNull(i, java.sql.Types.VARCHAR);
         } else {
             ps.setString(i, value.value());
         }
@@ -1713,7 +1713,7 @@ public final class CveDB implements AutoCloseable {
 
     private void setUpdateColumn(PreparedStatement ps, int i, CvssV3Data.Version value) throws SQLException {
         if (value == null) {
-            ps.setNull(i, java.sql.Types.NULL);
+            ps.setNull(i, java.sql.Types.VARCHAR);
         } else {
             ps.setString(i, value.value());
         }
@@ -1733,10 +1733,10 @@ public final class CveDB implements AutoCloseable {
             try {
                 ps.setFloat(i, Float.parseFloat(props.get(key).toString()));
             } catch (NumberFormatException nfe) {
-                ps.setNull(i, java.sql.Types.NULL);
+                ps.setNull(i, java.sql.Types.FLOAT);
             }
         } else {
-            ps.setNull(i, java.sql.Types.NULL);
+            ps.setNull(i, java.sql.Types.FLOAT);
         }
     }
 
@@ -1753,7 +1753,7 @@ public final class CveDB implements AutoCloseable {
         if (props != null && props.containsKey(key)) {
             ps.setString(i, props.get(key).toString());
         } else {
-            ps.setNull(i, java.sql.Types.NULL);
+            ps.setNull(i, java.sql.Types.VARCHAR);
         }
     }
 
@@ -1770,7 +1770,7 @@ public final class CveDB implements AutoCloseable {
         if (props != null && props.containsKey(key)) {
             ps.setBoolean(i, Boolean.parseBoolean(props.get(key).toString()));
         } else {
-            ps.setNull(i, java.sql.Types.NULL);
+            ps.setNull(i, java.sql.Types.BOOLEAN);
         }
     }
 
