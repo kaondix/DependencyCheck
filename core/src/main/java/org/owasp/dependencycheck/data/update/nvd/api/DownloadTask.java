@@ -74,7 +74,7 @@ public class DownloadTask implements Callable<Future<NvdApiProcessor>> {
      * correct reference to the global settings.
      * @throws UpdateException thrown if temporary files could not be created
      */
-    public DownloadTask(String url, ExecutorService processor, CveDB cveDB, Settings settings) throws UpdateException {
+    public DownloadTask(String url, ExecutorService processor, CveDB cveDB, Settings settings) {
         this.url = url;
         this.processorService = processor;
         this.cveDB = cveDB;
