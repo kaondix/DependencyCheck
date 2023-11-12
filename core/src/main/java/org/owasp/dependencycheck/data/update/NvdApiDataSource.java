@@ -515,7 +515,7 @@ public class NvdApiDataSource implements CachedWebDataSource {
     }
 
     /**
-     * Downloads the NVD CVE Meta file properties.
+     * Downloads the metadata properties of the NVD API cache.
      *
      * @param url the URL to the NVD API cache
      * @return the cache properties
