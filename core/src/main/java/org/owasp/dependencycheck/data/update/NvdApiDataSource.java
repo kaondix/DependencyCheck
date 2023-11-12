@@ -114,12 +114,11 @@ public class NvdApiDataSource implements CachedWebDataSource {
         try {
             dbProperties = cveDb.getDatabaseProperties();
             if (checkUpdate()) {
-                String url = settings.getString(Settings.KEYS.NVD_API_DATAFEED_URL);
-                if (url == null) {
-                    throw new UpdateException("NVD API Cache URL was not provided");
-                }
-                if (!url.endsWith("/")) {
-                    url += "/";
+                final String url;
+                if (!nvdDataFeedUrl.endsWith("/")) {
+                    url = nvdDataFeedUrl + "/";
+                } else {
+                    url = nvdDataFeedUrl;
                 }
                 final Properties cacheProperties = getRemoteCacheProperties(url);
                 final ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
