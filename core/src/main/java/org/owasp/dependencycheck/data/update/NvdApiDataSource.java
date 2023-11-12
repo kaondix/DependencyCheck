@@ -529,7 +529,7 @@ public class NvdApiDataSource implements CachedWebDataSource {
             final String content = d.fetchContent(u, true, Settings.KEYS.NVD_API_DATAFEED_USER, Settings.KEYS.NVD_API_DATAFEED_PASSWORD);
             final Properties properties = new Properties();
             properties.load(new StringReader(content));
-            return new Properties();
+            return properties;
         } catch (MalformedURLException ex) {
             throw new UpdateException("Invalid NVD Cache URL", ex);
         } catch (DownloadFailedException | TooManyRequestsException | ResourceNotFoundException ex) {
