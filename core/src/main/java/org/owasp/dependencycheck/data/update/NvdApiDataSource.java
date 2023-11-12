@@ -470,7 +470,7 @@ public class NvdApiDataSource implements CachedWebDataSource {
             // for establishing the current year use the timezone where the new year starts first
             // as from that moment on CNAs might start assigning CVEs with the new year depending
             // on the CNA's timezone
-            final int endYear = now.getYear();
+            final int endYear = now.withZoneSameInstant(ZoneId.of("UTC+14:00")).getYear();
             boolean needsFullUpdate = false;
             for (int y = startYear; y <= endYear; y++) {
                 final ZonedDateTime val = dbProperties.getTimestamp(DatabaseProperties.NVD_CACHE_LAST_MODIFIED + "." + y);
