@@ -325,6 +325,11 @@ public final class Settings {
         public static final String JUNIT_FAIL_ON_CVSS = "junit.fail.on.cvss";
 
         /**
+         * The properties key for whether the pom Analyzer is enabled.
+         */
+        public static final String ANALYZER_MAVENSOURCE_ENABLED = "analyzer.mavensource.enabled";
+
+        /**
          * The properties key for whether the Jar Analyzer is enabled.
          */
         public static final String ANALYZER_JAR_ENABLED = "analyzer.jar.enabled";
@@ -626,6 +631,7 @@ public final class Settings {
          * The properties key for the Central search query.
          */
         public static final String ANALYZER_CENTRAL_QUERY = "analyzer.central.query";
+
         /**
          * The properties key for whether Central search results will be cached.
          */

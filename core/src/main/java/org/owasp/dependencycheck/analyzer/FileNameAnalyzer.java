@@ -59,6 +59,7 @@ public class FileNameAnalyzer extends AbstractAnalyzer {
         "Package.swift",
         "classes.jar",
         "build.gradle",
+        "pom.xml",
         "CMakeLists.txt"}, IOCase.INSENSITIVE);
     //CSON: WhitespaceAfter
 
