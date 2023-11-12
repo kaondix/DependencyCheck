@@ -87,6 +87,11 @@ public class NvdApiDataSource implements CachedWebDataSource {
      * The key for the NVD API cache properties file's last modified date.
      */
     private static final String NVD_API_CACHE_MODIFIED_DATE = "lastModifiedDate";
+    /**
+     * The number of results per page from the NVD API. The default is 2000; we
+     * are setting the value to be explicit.
+     */
+    private static final int RESULTS_PER_PAGE = 2000;
 
     @Override
     public boolean update(Engine engine) throws UpdateException {
@@ -219,10 +224,6 @@ public class NvdApiDataSource implements CachedWebDataSource {
         for (Future<NvdApiProcessor> future : processFutures) {
             try {
                 final NvdApiProcessor task = future.get();
-                //TODO - do we need to check for errors?
-//                                if (task.getException() != null) {
-//                                    throw task.getException();
-//                                }
             } catch (InterruptedException ex) {
                 LOGGER.debug("Thread was interrupted during processing", ex);
                 Thread.currentThread().interrupt();
@@ -252,7 +253,6 @@ public class NvdApiDataSource implements CachedWebDataSource {
     }
 
     private boolean processApi() throws UpdateException {
-
         final ZonedDateTime lastChecked = dbProperties.getTimestamp(DatabaseProperties.NVD_API_LAST_CHECKED);
         if (cveDb.dataExists() && lastChecked != null) {
             final ZonedDateTime thirtyMinutesAgo = ZonedDateTime.now().minusMinutes(30);
@@ -279,7 +279,7 @@ public class NvdApiDataSource implements CachedWebDataSource {
                     + "an NVD API key as the update can take a VERY long time without an API Key");
             builder.withDelay(8000);
         }
-
+        builder.withResultsPerPage(RESULTS_PER_PAGE);
         final String virtualMatch = settings.getString(Settings.KEYS.CVE_CPE_STARTS_WITH_FILTER);
         if (virtualMatch != null) {
             builder.withVirtualMatchString(virtualMatch);
@@ -294,12 +294,10 @@ public class NvdApiDataSource implements CachedWebDataSource {
             builder.withDelay(delay);
         }
 
-        //TODO consider using CVE_CPE_STARTS_WITH_FILTER
         ExecutorService processingExecutorService = null;
         try {
             processingExecutorService = Executors.newFixedThreadPool(PROCESSING_THREAD_POOL_SIZE);
             final List<Future<NvdApiProcessor>> submitted = new ArrayList<>();
-            int errorCount = 0;
             int max = -1;
             int ctr = 0;
             try (NvdCveClient api = builder.build()) {
@@ -312,13 +310,11 @@ public class NvdApiDataSource implements CachedWebDataSource {
                     if (items != null && !items.isEmpty()) {
                         final Future<NvdApiProcessor> f = processingExecutorService.submit(new NvdApiProcessor(cveDb, items));
                         submitted.add(f);
-                        errorCount = 0;
                         ctr += 1;
                         if ((ctr % 10) == 0) {
-                            final double percent = (double) (ctr * 2000) / max * 100;
-                            LOGGER.info(String.format("Downloaded %,d/%,d (%.0f%%)", ctr * 2000, max, percent));
+                            final double percent = (double) (ctr * RESULTS_PER_PAGE) / max * 100;
+                            LOGGER.info(String.format("Downloaded %,d/%,d (%.0f%%)", ctr * RESULTS_PER_PAGE, max, percent));
                         }
-
                     }
                     final ZonedDateTime last = api.getLastUpdated();
                     if (last != null && (lastModifiedRequest == null || lastModifiedRequest.compareTo(last) < 0)) {
@@ -331,6 +327,7 @@ public class NvdApiDataSource implements CachedWebDataSource {
             }
             LOGGER.info(String.format("Downloaded %,d/%,d (%.0f%%)", max, max, 100f));
             max = submitted.size();
+            final boolean updated = max > 0;
             ctr = 0;
             for (Future<NvdApiProcessor> f : submitted) {
                 try {
@@ -350,13 +347,14 @@ public class NvdApiDataSource implements CachedWebDataSource {
                 dbProperties.save(DatabaseProperties.NVD_API_LAST_CHECKED, ZonedDateTime.now());
                 dbProperties.save(DatabaseProperties.NVD_API_LAST_MODIFIED, lastModifiedRequest);
             }
-            return true;
+            return updated;
         } finally {
             if (processingExecutorService != null) {
                 processingExecutorService.shutdownNow();
             }
         }
     }
+    
 
     /**
      * Checks if the system is configured NOT to update.
