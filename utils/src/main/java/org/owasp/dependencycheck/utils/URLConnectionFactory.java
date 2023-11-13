@@ -194,10 +194,9 @@ public final class URLConnectionFactory {
         final String host = url.getHost();
 
         // code partially from org.apache.maven.plugins.site.AbstractDeployMojo#getProxyInfo
-        final String nonProxyHosts = settings.getString(Settings.KEYS.PROXY_NON_PROXY_HOSTS);
+        final String[] nonProxyHosts = settings.getArray(Settings.KEYS.PROXY_NON_PROXY_HOSTS);
         if (null != nonProxyHosts) {
-            final String[] nonProxies = nonProxyHosts.split("(,)|(;)|(\\|)");
-            for (final String nonProxyHost : nonProxies) {
+            for (final String nonProxyHost : nonProxyHosts) {
                 //if ( StringUtils.contains( nonProxyHost, "*" ) )
                 if (null != nonProxyHost && nonProxyHost.contains("*")) {
                     // Handle wildcard at the end, beginning or middle of the nonProxyHost
