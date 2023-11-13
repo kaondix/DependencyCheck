@@ -45,10 +45,6 @@ public class MvnListProcessor extends Processor<InputStream> {
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(MvnListProcessor.class);
     /**
-     * Reference to the gem lock dependency.
-     */
-    private final Dependency pomDependency;
-    /**
      * Reference to the dependency-check engine.
      */
     private final Engine engine;
@@ -215,14 +211,13 @@ public class MvnListProcessor extends Processor<InputStream> {
     /**
      * Constructs a new processor to consume the output of `bundler-audit`.
      *
-     * @param pomDependency a reference to `gem.lock` dependency
+     * @param mavenSourceAnalyzer instance of MavenSourceAnalyzer
      * @param engine a reference to the dependency-check engine
      */
-    public MvnListProcessor(Dependency pomDependency, Engine engine, MavenSourceAnalyzer pomAnalyzer) {
-        this.pomDependency = pomDependency;
+    public MvnListProcessor(Engine engine, MavenSourceAnalyzer mavenSourceAnalyzer) {
         this.engine = engine;
-        this.mavenSourceAnalyzer = pomAnalyzer;
-        this.mavenLocalRepositoryPath = pomAnalyzer.getMavenLocalRepository();
+        this.mavenSourceAnalyzer = mavenSourceAnalyzer;
+        this.mavenLocalRepositoryPath = mavenSourceAnalyzer.getMavenLocalRepository();
     }
 
     /**
