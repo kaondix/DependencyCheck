@@ -1,3 +1,4 @@
+org.owasp.dependencycheck.analyzer.MavenSourceAnalyzer
 org.owasp.dependencycheck.analyzer.ArchiveAnalyzer
 org.owasp.dependencycheck.analyzer.FileNameAnalyzer
 org.owasp.dependencycheck.analyzer.PEAnalyzer

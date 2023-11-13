@@ -317,6 +317,11 @@ public final class Settings {
         public static final String JUNIT_FAIL_ON_CVSS = "junit.fail.on.cvss";
 
         /**
+         * The properties key for whether the pom Analyzer is enabled.
+         */
+        public static final String ANALYZER_MAVENSOURCE_ENABLED = "analyzer.mavensource.enabled";
+
+        /**
          * The properties key for whether the Jar Analyzer is enabled.
          */
         public static final String ANALYZER_JAR_ENABLED = "analyzer.jar.enabled";
@@ -618,6 +623,7 @@ public final class Settings {
          * The properties key for the Central search query.
          */
         public static final String ANALYZER_CENTRAL_QUERY = "analyzer.central.query";
+
         /**
          * The properties key for whether Central search results will be cached.
          */
@@ -913,12 +919,12 @@ public final class Settings {
 
     /**
      * Initializes the masked keys collection. This is done outside of the
-     * {@link #initialize(java.lang.String)} method because a caller may use the
-     * {@link #mergeProperties(java.io.File)} to add additional properties after
+     * {@link #initialize(String)} method because a caller may use the
+     * {@link #mergeProperties(File)} to add additional properties after
      * the call to initialize.
      */
     void initMaskedKeys() {
-        final String[] masked = getArray(Settings.KEYS.MASKED_PROPERTIES);
+        final String[] masked = getArray(KEYS.MASKED_PROPERTIES);
         if (masked == null) {
             maskedKeys = new ArrayList<>();
         } else {
@@ -1084,9 +1090,9 @@ public final class Settings {
      * before properties loaded from files.
      *
      * @param filePath the path to the properties file to merge.
-     * @throws java.io.FileNotFoundException is thrown when the filePath points
+     * @throws FileNotFoundException is thrown when the filePath points
      * to a non-existent file
-     * @throws java.io.IOException is thrown when there is an exception
+     * @throws IOException is thrown when there is an exception
      * loading/merging the properties
      */
     @SuppressFBWarnings(justification = "try with resource will clenaup the resources", value = {"OBL_UNSATISFIED_OBLIGATION"})
@@ -1103,9 +1109,9 @@ public final class Settings {
      * properties loaded from files.
      *
      * @param filePath the path to the properties file to merge.
-     * @throws java.io.FileNotFoundException is thrown when the filePath points
+     * @throws FileNotFoundException is thrown when the filePath points
      * to a non-existent file
-     * @throws java.io.IOException is thrown when there is an exception
+     * @throws IOException is thrown when there is an exception
      * loading/merging the properties
      */
     @SuppressFBWarnings(justification = "try with resource will clenaup the resources", value = {"OBL_UNSATISFIED_OBLIGATION"})
@@ -1122,7 +1128,7 @@ public final class Settings {
      * before properties loaded from files.
      *
      * @param stream an Input Stream pointing at a properties file to merge
-     * @throws java.io.IOException is thrown when there is an exception
+     * @throws IOException is thrown when there is an exception
      * loading/merging the properties
      */
     public void mergeProperties(@NotNull final InputStream stream) throws IOException {
@@ -1224,11 +1230,11 @@ public final class Settings {
      * Returns the temporary directory.
      *
      * @return the temporary directory
-     * @throws java.io.IOException if any.
+     * @throws IOException if any.
      */
     public synchronized File getTempDirectory() throws IOException {
         if (tempDirectory == null) {
-            final File baseTemp = new File(getString(Settings.KEYS.TEMP_DIRECTORY, System.getProperty("java.io.tmpdir")));
+            final File baseTemp = new File(getString(KEYS.TEMP_DIRECTORY, System.getProperty("java.io.tmpdir")));
             tempDirectory = FileUtils.createTempDirectory(baseTemp);
         }
         return tempDirectory;
@@ -1253,7 +1259,7 @@ public final class Settings {
      * If the property is not set then {@code null} will be returned.
      *
      * @param key the key to get from this
-     * {@link org.owasp.dependencycheck.utils.Settings}.
+     * {@link Settings}.
      * @return the list or {@code null} if the key wasn't present.
      */
     public String[] getArray(@NotNull final String key) {
@@ -1290,7 +1296,7 @@ public final class Settings {
      *
      * @param key the key to lookup within the properties file
      * @return the property from the properties file
-     * @throws org.owasp.dependencycheck.utils.InvalidSettingException is thrown
+     * @throws InvalidSettingException is thrown
      * if there is an error retrieving the setting
      */
     public int getInt(@NotNull final String key) throws InvalidSettingException {
@@ -1334,7 +1340,7 @@ public final class Settings {
      *
      * @param key the key to lookup within the properties file
      * @return the property from the properties file
-     * @throws org.owasp.dependencycheck.utils.InvalidSettingException is thrown
+     * @throws InvalidSettingException is thrown
      * if there is an error retrieving the setting
      */
     public long getLong(@NotNull final String key) throws InvalidSettingException {
@@ -1354,7 +1360,7 @@ public final class Settings {
      *
      * @param key the key to lookup within the properties file
      * @return the property from the properties file
-     * @throws org.owasp.dependencycheck.utils.InvalidSettingException is thrown
+     * @throws InvalidSettingException is thrown
      * if there is an error retrieving the setting
      */
     public boolean getBoolean(@NotNull final String key) throws InvalidSettingException {
@@ -1448,11 +1454,11 @@ public final class Settings {
      * content.
      *
      * @return the data directory to store data files
-     * @throws java.io.IOException is thrown if an java.io.IOException occurs of
+     * @throws IOException is thrown if an java.io.IOException occurs of
      * course...
      */
     public File getDataDirectory() throws IOException {
-        final File path = getDataFile(Settings.KEYS.DATA_DIRECTORY);
+        final File path = getDataFile(KEYS.DATA_DIRECTORY);
         if (path != null && (path.exists() || path.mkdirs())) {
             return path;
         }
@@ -1465,16 +1471,16 @@ public final class Settings {
      * temp directory this method will return the temp directory.
      *
      * @return the data directory to store data files
-     * @throws java.io.IOException is thrown if an java.io.IOException occurs of
+     * @throws IOException is thrown if an java.io.IOException occurs of
      * course...
      */
     public File getH2DataDirectory() throws IOException {
-        final String h2Test = getString(Settings.KEYS.H2_DATA_DIRECTORY);
+        final String h2Test = getString(KEYS.H2_DATA_DIRECTORY);
         final File path;
         if (h2Test != null && !h2Test.isEmpty()) {
-            path = getDataFile(Settings.KEYS.H2_DATA_DIRECTORY);
+            path = getDataFile(KEYS.H2_DATA_DIRECTORY);
         } else {
-            path = getDataFile(Settings.KEYS.DATA_DIRECTORY);
+            path = getDataFile(KEYS.DATA_DIRECTORY);
         }
         if (path != null && (path.exists() || path.mkdirs())) {
             return path;
@@ -1489,7 +1495,7 @@ public final class Settings {
      * @param prefix the prefix for the file name to generate
      * @param extension the extension of the generated file name
      * @return a temporary File
-     * @throws java.io.IOException if any.
+     * @throws IOException if any.
      */
     public File getTempFile(@NotNull final String prefix, @NotNull final String extension) throws IOException {
         final File dir = getTempDirectory();
