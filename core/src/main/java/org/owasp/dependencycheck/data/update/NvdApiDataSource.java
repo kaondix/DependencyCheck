@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.MessageFormat;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -114,15 +115,26 @@ public class NvdApiDataSource implements CachedWebDataSource {
         try {
             dbProperties = cveDb.getDatabaseProperties();
             if (checkUpdate()) {
-                final String url;
-                if (!nvdDataFeedUrl.endsWith("/")) {
-                    url = nvdDataFeedUrl + "/";
+                String url;
+                String pattern = null;
+                if (nvdDataFeedUrl.endsWith(".json.gz")) {
+                    final int lio = nvdDataFeedUrl.lastIndexOf("/");
+                    pattern = nvdDataFeedUrl.substring(lio);
+                    url = nvdDataFeedUrl.substring(0, lio);
                 } else {
                     url = nvdDataFeedUrl;
                 }
+                if (!url.endsWith("/")) {
+                    url += "/";
+                }
                 final Properties cacheProperties = getRemoteCacheProperties(url);
+                if (pattern==null) {
+                    final String prefix = cacheProperties.getProperty("prefix", "nvdcve-");
+                    pattern = prefix + "%d.json.gz";
+                }
+                
                 final ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
-                final Map<String, String> updateable = getUpdatesNeeded(url, cacheProperties, now);
+                final Map<String, String> updateable = getUpdatesNeeded(url, pattern, cacheProperties, now);
                 if (!updateable.isEmpty()) {
                     final int downloadPoolSize;
                     final int max = settings.getInt(Settings.KEYS.MAX_DOWNLOAD_THREAD_POOL_SIZE, 1);
@@ -453,13 +465,15 @@ public class NvdApiDataSource implements CachedWebDataSource {
      * need to be updated.
      *
      * @param url the URL of the NVD API cache
+     * @param filePattern the string format pattern for the cached files (e.g. 
+     * "nvdcve-{0}.json.gz")
      * @param cacheProperties the properties from the remote NVD API cache
      * @param now the start time of the update process
      * @return the map of key to URLs - where the key is the year or `modified`
      * @throws UpdateException Is thrown if there is an issue with the last
      * updated properties file
      */
-    protected final Map<String, String> getUpdatesNeeded(String url, Properties cacheProperties, ZonedDateTime now) throws UpdateException {
+    protected final Map<String, String> getUpdatesNeeded(String url, String filePattern, Properties cacheProperties, ZonedDateTime now) throws UpdateException {
         LOGGER.debug("starting getUpdatesNeeded() ...");
         final Map<String, String> updates = new HashMap<>();
         if (dbProperties != null && !dbProperties.isEmpty()) {
@@ -479,16 +493,14 @@ public class NvdApiDataSource implements CachedWebDataSource {
             final ZonedDateTime lastUpdated = dbProperties.getTimestamp(DatabaseProperties.NVD_CACHE_LAST_MODIFIED);
             final int days = settings.getInt(Settings.KEYS.NVD_API_DATAFEED_VALID_FOR_DAYS, 7);
 
-            final String prefix = cacheProperties.getProperty("prefix", "nvdcve-");
-
             if (!needsFullUpdate && lastUpdated.equals(DatabaseProperties.getTimestamp(cacheProperties, NVD_API_CACHE_MODIFIED_DATE))) {
                 return updates;
             } else {
-                updates.put("modified", url + prefix + "-modified.json.gz");
+                updates.put("modified", url + MessageFormat.format(filePattern, "modified"));
                 if (needsFullUpdate) {
                     for (int i = startYear; i < endYear; i++) {
                         if (cacheProperties.containsKey(NVD_API_CACHE_MODIFIED_DATE + "." + i)) {
-                            updates.put(String.valueOf(i), url + prefix + "-" + i + ".json.gz");
+                            updates.put(String.valueOf(i), url + MessageFormat.format(filePattern, i));
                         }
                     }
                 } else if (!DateUtil.withinDateRange(lastUpdated, now, days)) {
@@ -498,7 +510,7 @@ public class NvdApiDataSource implements CachedWebDataSource {
                                     NVD_API_CACHE_MODIFIED_DATE + "." + i);
                             final ZonedDateTime lastModifiedDB = dbProperties.getTimestamp(DatabaseProperties.NVD_CACHE_LAST_MODIFIED + "." + i);
                             if (lastModifiedDB == null || lastModifiedCache.compareTo(lastModifiedDB) > 0) {
-                                updates.put(String.valueOf(i), url + prefix + "-" + i + ".json.gz");
+                                updates.put(String.valueOf(i), url + MessageFormat.format(filePattern, i));
                             }
                         }
                     }
