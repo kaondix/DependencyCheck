@@ -130,7 +130,7 @@ public class NvdApiDataSource implements CachedWebDataSource {
                 final Properties cacheProperties = getRemoteCacheProperties(url);
                 if (pattern==null) {
                     final String prefix = cacheProperties.getProperty("prefix", "nvdcve-");
-                    pattern = prefix + "%d.json.gz";
+                    pattern = prefix + "{0}.json.gz";
                 }
                 
                 final ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
@@ -177,7 +177,6 @@ public class NvdApiDataSource implements CachedWebDataSource {
                     updatesMade = true;
                 }
                 storeLastModifiedDates(now, cacheProperties, updateable);
-                dbProperties.save(url, url);
                 if (updatesMade) {
                     cveDb.persistEcosystemCache();
                 }
@@ -500,7 +499,7 @@ public class NvdApiDataSource implements CachedWebDataSource {
                 if (needsFullUpdate) {
                     for (int i = startYear; i < endYear; i++) {
                         if (cacheProperties.containsKey(NVD_API_CACHE_MODIFIED_DATE + "." + i)) {
-                            updates.put(String.valueOf(i), url + MessageFormat.format(filePattern, i));
+                            updates.put(String.valueOf(i), url + MessageFormat.format(filePattern, String.valueOf(i)));
                         }
                     }
                 } else if (!DateUtil.withinDateRange(lastUpdated, now, days)) {
@@ -510,7 +509,7 @@ public class NvdApiDataSource implements CachedWebDataSource {
                                     NVD_API_CACHE_MODIFIED_DATE + "." + i);
                             final ZonedDateTime lastModifiedDB = dbProperties.getTimestamp(DatabaseProperties.NVD_CACHE_LAST_MODIFIED + "." + i);
                             if (lastModifiedDB == null || lastModifiedCache.compareTo(lastModifiedDB) > 0) {
-                                updates.put(String.valueOf(i), url + MessageFormat.format(filePattern, i));
+                                updates.put(String.valueOf(i), url + MessageFormat.format(filePattern, String.valueOf(i)));
                             }
                         }
                     }

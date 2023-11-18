@@ -145,7 +145,7 @@ Property             | Description                                              
 ---------------------|--------------------------------------------------------------------------------------------------------------|------------------
 nvdApiKey            | The API Key to access the NVD API; obtained from https://nvd.nist.gov/developers/request-an-api-key          | &nbsp;
 nvdApiDelay          | The number of milliseconds to wait between calls to the NVD API.                                             | &nbsp;
-nvdDatafeedUrl       | The URL for the NVD API Data feed that can be generated using https://github.com/jeremylong/Open-Vulnerability-Project/tree/main/vulnz#caching-the-nvd-cve-data | &nbsp;
+nvdDatafeedUrl       | The URL for the NVD API Data feed that can be generated using https://github.com/jeremylong/Open-Vulnerability-Project/tree/main/vulnz#caching-the-nvd-cve-data - example value `https://internal.server/cache/nvdcve-{0}.json.gz` | &nbsp;
 nvdUser              | Credentials used for basic authentication for the NVD API Data feed.                                         | &nbsp;
 nvdPassword          | Credentials used for basic authentication for the NVD API Data feed.                                         | &nbsp;
 nvdValidForHours     | The number of hours to wait before checking for new updates from the NVD. The default is 4 hours.            | 4

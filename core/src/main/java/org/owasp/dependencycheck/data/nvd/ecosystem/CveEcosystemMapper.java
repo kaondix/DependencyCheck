@@ -82,19 +82,21 @@ public class CveEcosystemMapper {
      * <code>null</code>
      */
     private boolean hasMultipleVendorProductConfigurations(DefCveItem cve) {
-        final List<CpeMatch> cpeEntries = cve.getCve().getConfigurations().stream()
-                .map(Config::getNodes)
-                .flatMap(List::stream)
-                .map(Node::getCpeMatch)
-                .flatMap(List::stream)
-                .filter(match -> match.getCriteria() != null)
-                .collect(Collectors.toList());
-        if (!cpeEntries.isEmpty() && cpeEntries.size() > 1) {
-            final CpeMatch firstMatch = cpeEntries.get(0);
-            final String uri = firstMatch.getCriteria();
-            final int pos = uri.indexOf(":", uri.indexOf(":", 10) + 1);
-            final String match = uri.substring(0, pos + 1);
-            return !cpeEntries.stream().allMatch(e -> e.getCriteria().startsWith(match));
+        if (cve.getCve().getConfigurations()!=null) {
+            final List<CpeMatch> cpeEntries = cve.getCve().getConfigurations().stream()
+                    .map(Config::getNodes)
+                    .flatMap(List::stream)
+                    .map(Node::getCpeMatch)
+                    .flatMap(List::stream)
+                    .filter(match -> match.getCriteria() != null)
+                    .collect(Collectors.toList());
+            if (!cpeEntries.isEmpty() && cpeEntries.size() > 1) {
+                final CpeMatch firstMatch = cpeEntries.get(0);
+                final String uri = firstMatch.getCriteria();
+                final int pos = uri.indexOf(":", uri.indexOf(":", 10) + 1);
+                final String match = uri.substring(0, pos + 1);
+                return !cpeEntries.stream().allMatch(e -> e.getCriteria().startsWith(match));
+            }
         }
         return false;
     }

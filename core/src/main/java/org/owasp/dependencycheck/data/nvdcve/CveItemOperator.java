@@ -217,13 +217,16 @@ public class CveItemOperator {
      * configured CPE Starts with filter
      */
     protected boolean testCveCpeStartWithFilter(final DefCveItem cve) {
-        //cycle through to see if this is a CPE we care about (use the CPE filters
-        return cve.getCve().getConfigurations().stream()
-                .map(Config::getNodes)
-                .flatMap(List::stream)
-                .map(Node::getCpeMatch)
-                .flatMap(List::stream)
-                .filter(cpe -> cpe.getCriteria() != null)
-                .anyMatch(cpe -> cpe.getCriteria().startsWith(cpeStartsWithFilter));
+        if (cve.getCve().getConfigurations() != null) {
+            //cycle through to see if this is a CPE we care about (use the CPE filters
+            return cve.getCve().getConfigurations().stream()
+                    .map(Config::getNodes)
+                    .flatMap(List::stream)
+                    .map(Node::getCpeMatch)
+                    .flatMap(List::stream)
+                    .filter(cpe -> cpe.getCriteria() != null)
+                    .anyMatch(cpe -> cpe.getCriteria().startsWith(cpeStartsWithFilter));
+        }
+        return false;
     }
 }

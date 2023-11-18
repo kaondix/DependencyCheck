@@ -89,7 +89,7 @@ public class DownloadTask implements Callable<Future<NvdApiProcessor>> {
             LOGGER.info("Download Started for NVD Cache - {}", url);
             final long startDownload = System.currentTimeMillis();
             final Downloader d = new Downloader(settings);
-            final String content = d.fetchContent(u, true, Settings.KEYS.NVD_API_DATAFEED_USER, Settings.KEYS.NVD_API_DATAFEED_PASSWORD);
+            final String content = d.fetchGzContent(u, true, Settings.KEYS.NVD_API_DATAFEED_USER, Settings.KEYS.NVD_API_DATAFEED_PASSWORD);
             final ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.registerModule(new JavaTimeModule());
             final CveApiJson20 data = objectMapper.readValue(content, CveApiJson20.class);

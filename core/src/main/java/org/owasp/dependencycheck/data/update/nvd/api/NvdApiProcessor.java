@@ -22,6 +22,8 @@ import java.util.Collection;
 import java.util.concurrent.Callable;
 import org.owasp.dependencycheck.data.nvd.ecosystem.CveEcosystemMapper;
 import org.owasp.dependencycheck.data.nvdcve.CveDB;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Stores a collection of NVD CVE Data from the NVD API into the database.
@@ -30,6 +32,10 @@ import org.owasp.dependencycheck.data.nvdcve.CveDB;
  */
 public class NvdApiProcessor implements Callable<NvdApiProcessor> {
 
+    /**
+     * The Logger for use throughout the class.
+     */
+    private static final Logger LOGGER = LoggerFactory.getLogger(NvdApiProcessor.class);
     /**
      * A reference to the database.
      */
@@ -77,7 +83,11 @@ public class NvdApiProcessor implements Callable<NvdApiProcessor> {
     @Override
     public NvdApiProcessor call() throws Exception {
         for (DefCveItem entry : data) {
+            try {
             cveDB.updateVulnerability(entry, mapper.getEcosystem(entry));
+            } catch (Exception ex) {
+                LOGGER.error("Failed to process " + entry.getCve().getId(), ex);
+            }
         }
         endTime = System.currentTimeMillis();
         data = null;
