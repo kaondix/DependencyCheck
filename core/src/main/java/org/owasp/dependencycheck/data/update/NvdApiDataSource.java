@@ -128,11 +128,11 @@ public class NvdApiDataSource implements CachedWebDataSource {
                     url += "/";
                 }
                 final Properties cacheProperties = getRemoteCacheProperties(url);
-                if (pattern==null) {
+                if (pattern == null) {
                     final String prefix = cacheProperties.getProperty("prefix", "nvdcve-");
                     pattern = prefix + "{0}.json.gz";
                 }
-                
+
                 final ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
                 final Map<String, String> updateable = getUpdatesNeeded(url, pattern, cacheProperties, now);
                 if (!updateable.isEmpty()) {
@@ -364,7 +364,6 @@ public class NvdApiDataSource implements CachedWebDataSource {
             }
         }
     }
-    
 
     /**
      * Checks if the system is configured NOT to update.
@@ -464,7 +463,7 @@ public class NvdApiDataSource implements CachedWebDataSource {
      * need to be updated.
      *
      * @param url the URL of the NVD API cache
-     * @param filePattern the string format pattern for the cached files (e.g. 
+     * @param filePattern the string format pattern for the cached files (e.g.
      * "nvdcve-{0}.json.gz")
      * @param cacheProperties the properties from the remote NVD API cache
      * @param now the start time of the update process
@@ -472,7 +471,8 @@ public class NvdApiDataSource implements CachedWebDataSource {
      * @throws UpdateException Is thrown if there is an issue with the last
      * updated properties file
      */
-    protected final Map<String, String> getUpdatesNeeded(String url, String filePattern, Properties cacheProperties, ZonedDateTime now) throws UpdateException {
+    protected final Map<String, String> getUpdatesNeeded(String url, String filePattern,
+            Properties cacheProperties, ZonedDateTime now) throws UpdateException {
         LOGGER.debug("starting getUpdatesNeeded() ...");
         final Map<String, String> updates = new HashMap<>();
         if (dbProperties != null && !dbProperties.isEmpty()) {

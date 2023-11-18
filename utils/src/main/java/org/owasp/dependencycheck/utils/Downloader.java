@@ -196,7 +196,7 @@ public final class Downloader {
             }
         }
     }
-    
+
     /**
      * Retrieves a gzip file from a given URL and returns the uncompressed contents.
      *

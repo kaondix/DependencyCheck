@@ -17,7 +17,6 @@
  */
 package org.owasp.dependencycheck.utils;
 
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import org.owasp.dependencycheck.exception.ParseException;
 
