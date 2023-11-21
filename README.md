@@ -10,11 +10,15 @@ Documentation and links to production binary releases can be found on the [githu
 
 ## 9.0.0 Upgrade Notice
 
+### NVD API Key Highly Recommended
+
 With 9.0.0 dependency-check has moved from using the NVD data-feed to the NVD API.
 Users of dependency-check are **highly** encouraged to obtain an NVD API Key; see https://nvd.nist.gov/developers/request-an-api-key
 Without an NVD API Key dependency-check's updates will be **extremely slow**.
 Please see the documentation for the cli, maven, gradle, or ant integrations on
 how to set the NVD API key.
+
+### Breaking Changes
 
 9.0.0 contains breaking changes which requires updates to the database. If using
 an externally hosted database the schema will need to be updated. When using the
