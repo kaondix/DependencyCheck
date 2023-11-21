@@ -1,4 +1,4 @@
-FROM golang:1.17.1-alpine AS go
+FROM golang:1.21.4-alpine AS go
 
 FROM azul/zulu-openjdk-alpine:17 AS jlink
 
