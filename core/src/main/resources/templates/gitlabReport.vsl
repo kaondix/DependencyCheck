@@ -140,6 +140,7 @@
             "package_manager": "maven",
             "dependencies": [
                 #foreach( $dependency in $dependencies )
+                    #if( $dependency.name )
                     {
                         "package": {
                             "name": "$enc.json($dependency.name)"
@@ -152,6 +153,7 @@
                         ##"dependency_path": [] --> not implemented
                     }
                     #if( $foreach.hasNext ),#end
+                    #end
                 #end
             ]
             ## no optional properties
