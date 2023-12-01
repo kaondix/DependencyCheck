@@ -116,9 +116,10 @@
                         "links": [
                             #foreach( $ref in $vulnerability.getReferences(true) )
                                 {
+                                #if($ref.name)
+                                    ## optional property
                                     "name": "$enc.json($ref.name)",
-
-                                    ## optional properties
+                                #end
                                     "url": "$enc.json($ref.url)"
                                 }
                                 #if( $foreach.hasNext ),#end
