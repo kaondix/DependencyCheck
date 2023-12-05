@@ -272,7 +272,7 @@ public class NvdApiDataSource implements CachedWebDataSource {
             final Duration duration = Duration.between(lastChecked, now);
             final long difference = duration.getSeconds();
             if (difference < validForSeconds) {
-                LOGGER.info("Skipping the NVD API Update as it was completed within the last 30 minutes");
+                LOGGER.info("Skipping the NVD API Update as it was completed within the last {} minutes", validForSeconds/60);
                 return false;
             }
         }
