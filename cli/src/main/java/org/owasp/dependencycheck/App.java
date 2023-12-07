@@ -651,7 +651,7 @@ public class App {
 
         String key = cli.getStringArgument(CliParser.ARGUMENT.NVD_API_KEY);
         if (key != null) {
-            if (key.startsWith("\"") && key.endsWith("\"")) {
+            if ((key.startsWith("\"") && key.endsWith("\"") || (key.startsWith("'") && key.endsWith("'")))) {
                 key = key.substring(1, key.length() - 1);
             }
             settings.setStringIfNotEmpty(Settings.KEYS.NVD_API_KEY, key);
