@@ -26,7 +26,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.zip.GZIPInputStream;
 import org.owasp.dependencycheck.data.nvd.ecosystem.CveEcosystemMapper;
