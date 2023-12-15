@@ -140,6 +140,7 @@ public final class Downloader {
                  FileChannel destChannel = new FileOutputStream(outputPath).getChannel()) {
                 ByteBuffer buffer = ByteBuffer.allocateDirect(8192);
                 while (sourceChannel.read(buffer) != -1) {
+                    // cast is a workaround, see https://github.com/plasma-umass/doppio/issues/497#issuecomment-334740243
                     ((Buffer)buffer).flip();
                     destChannel.write(buffer);
                     buffer.compact();
