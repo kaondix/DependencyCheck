@@ -16,13 +16,13 @@
  * Copyright (c) 2017 The OWASP Foundation. All Rights Reserved.
  */
 
-import org.apache.commons.io.FileUtils
 import org.apache.commons.lang.StringUtils
 
-import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 
 // Check that suppression worked.
-String log = FileUtils.readFileToString(new File(basedir, "build.log"), Charset.defaultCharset().name());
+String log = new String(Files.readAllByte(new File(basedir, "build.log").toPath()), StandardCharsets.UTF_8);
 int count = StringUtils.countMatches(log, "CVE-2016-5696");
 if (count > 0) {
     System.out.println(String.format("CVE-2016-5696 (android-json-0.0.20131108.vaadin1.jar) was identified and should be suppressed"));

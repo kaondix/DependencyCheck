@@ -16,14 +16,13 @@
  * Copyright (c) 2014 Jeremy Long. All Rights Reserved.
  */
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
-import java.nio.charset.Charset;
+import org.apache.commons.lang.StringUtils
 
-
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 // Check to see if jackson-dataformat-xml-2.4.5.jar was identified.
 //TODO change this to xpath and check for CVE-2018-11307
-String log = FileUtils.readFileToString(new File(basedir, "target/dependency-check-report.xml"), Charset.defaultCharset().name());
+String log = new String(Files.readAllBytes(new File(basedir, "target/dependency-check-report.xml").toPath()), StandardCharsets.UTF_8);
 int count = StringUtils.countMatches(log, "<name>CVE-2018-11307</name>");
 if (count == 0){
     System.out.println(String.format("jackson-dataformat-xml (CVE-2018-11307) was not identified", count));

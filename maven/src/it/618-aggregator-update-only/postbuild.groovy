@@ -16,14 +16,16 @@
  * Copyright (c) 2014 Jeremy Long. All Rights Reserved.
  */
 
-import java.nio.charset.Charset;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
- 
+
+import org.apache.commons.lang.StringUtils
+
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+
 // Analyse number of "Checking for updates"
-String log = FileUtils.readFileToString(new File(basedir, "build.log"), Charset.defaultCharset().name());
+String log = new String(Files.readAllByte(new File(basedir, "build.log").toPath()), StandardCharsets.UTF_8);
 int count = StringUtils.countMatches(log, "[INFO] Checking for updates");
-if (count > 1){
+if (count > 1) {
     System.out.println(String.format("The update should be unique, it is %s", count));
     return false;
 }

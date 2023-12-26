@@ -16,12 +16,13 @@
  * Copyright (c) 2014 Jeremy Long. All Rights Reserved.
  */
 
-import org.apache.commons.io.FileUtils
-import org.w3c.dom.NodeList;
+import org.w3c.dom.NodeList
 
-import java.nio.charset.Charset;
-import javax.xml.xpath.*
 import javax.xml.parsers.DocumentBuilderFactory
+import javax.xml.xpath.XPathConstants
+import javax.xml.xpath.XPathFactory
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 
 def countMatches(String xml, String xpathQuery) {
     def xpath = XPathFactory.newInstance().newXPath()
@@ -35,7 +36,7 @@ def countMatches(String xml, String xpathQuery) {
 // Check to see if jackson-dataformat-cbor-2.10.0.jar was identified with issue while suppressing it for jackson-dataformat-ion-2.10.0.jar
 // both of which map to cpe:2.3:a:fasterxml:jackson-dataformats-binary
 //
-String log = FileUtils.readFileToString(new File(basedir, "target/dependency-check-report.xml"), Charset.defaultCharset().name());
+String log = ew String(Files.readAllByte(new File(basedir, "target/dependency-check-report.xml").toPath()), StandardCharsets.UTF_8);
 int count = countMatches(log,"/analysis/dependencies/dependency[./fileName = 'jackson-dataformat-cbor-2.10.0.jar']/vulnerabilities/vulnerability[./name = 'CVE-2020-28491']");
 if (count != 1){
     System.out.println(String.format("jackson-dataformat-cbor CVE-2020-28491 was identified %s times, expected 1", count));
