@@ -23,6 +23,7 @@ import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import java.nio.file.Path
 
 // Check to see if jackson-databind-2.5.3.jar was identified with a known CVE - using CVE-2018-7489.
 
@@ -35,7 +36,8 @@ def countMatches(String xml, String xpathQuery) {
     nodes.getLength();
 }
 
-String log = new String(Files.readAllByte(new File(basedir, "target/dependency-check-report.xml").toPath()), StandardCharsets.UTF_8);
+Path path = new File(basedir, "target/dependency-check-report.xml").toPath()
+String log = new String(Files.readAllByte(path), StandardCharsets.UTF_8);
 int count = countMatches(log, "/analysis/dependencies/dependency/evidenceCollected/evidence[@type='product' and ./value = 'commons-compress' and ./name = 'artifactid']");
 if (count != 1) {
     System.out.println(String.format("commons-compress was identified %s times, expected 1", count));

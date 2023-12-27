@@ -21,9 +21,11 @@ import org.apache.commons.lang.StringUtils
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import java.nio.file.Path
 
+Path path = new File(basedir, "build.log").toPath()
 // Analyse number of "Checking for updates"
-String log = new String(Files.readAllByte(new File(basedir, "build.log").toPath()), StandardCharsets.UTF_8);
+String log = new String(Files.readAllByte(path), StandardCharsets.UTF_8);
 int count = StringUtils.countMatches(log, "[INFO] Checking for updates");
 if (count > 1) {
     System.out.println(String.format("The update should be unique, it is %s", count));

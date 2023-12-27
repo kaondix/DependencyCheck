@@ -23,6 +23,7 @@ import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import java.nio.file.Path
 
 // Check to see if lib-1.0.0-SNAPSHOT.jar was added to the report only once as a virtual dependency.
 
@@ -35,7 +36,8 @@ def countMatches(String xml, String xpathQuery) {
     nodes.getLength();
 }
 
-String log = new String(Files.readAllByte(new File(basedir, "target/dependency-check-report.xml").toPath()), StandardCharsets.UTF_8);
+Path path = new File(basedir, "target/dependency-check-report.xml").toPath();
+String log = new String(Files.readAllByte(path), StandardCharsets.UTF_8);
 int count = countMatches(log, "/analysis/dependencies/dependency[./fileName = 'org.owasp.test.aggregate.issue-3944:lib:1.0.0-SNAPSHOT']");
 if (count != 1) {
     System.out.println(String.format("virtual dependency lib 1.0.0-SNAPSHOT was identified %s times, expected 1", count));

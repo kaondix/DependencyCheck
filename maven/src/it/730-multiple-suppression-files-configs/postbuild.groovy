@@ -20,9 +20,11 @@ import org.apache.commons.lang.StringUtils
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import java.nio.file.Path
 
 // Check that suppression worked.
-String log = new String(Files.readAllByte(new File(basedir, "build.log").toPath()), StandardCharsets.UTF_8);
+Path path = new File(basedir, "build.log").toPath()
+String log = new String(Files.readAllByte(path), StandardCharsets.UTF_8);
 int count = StringUtils.countMatches(log, "CVE-2016-5696");
 if (count > 0) {
     System.out.println(String.format("CVE-2016-5696 (android-json-0.0.20131108.vaadin1.jar) was identified and should be suppressed"));
