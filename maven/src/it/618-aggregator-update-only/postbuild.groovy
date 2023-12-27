@@ -25,7 +25,7 @@ import java.nio.file.Path
 
 Path path = new File(basedir, "build.log").toPath()
 // Analyse number of "Checking for updates"
-String log = new String(Files.readAllByte(path), StandardCharsets.UTF_8);
+String log = new String(Files.readAllByte((java.nio.file.Path) path), StandardCharsets.UTF_8);
 int count = StringUtils.countMatches(log, "[INFO] Checking for updates");
 if (count > 1) {
     System.out.println(String.format("The update should be unique, it is %s", count));
