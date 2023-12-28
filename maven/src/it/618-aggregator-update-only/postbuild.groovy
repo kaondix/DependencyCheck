@@ -16,7 +16,6 @@
  * Copyright (c) 2014 Jeremy Long. All Rights Reserved.
  */
 
-
 import org.apache.commons.lang.StringUtils
 
 // Analyse number of "Checking for updates"

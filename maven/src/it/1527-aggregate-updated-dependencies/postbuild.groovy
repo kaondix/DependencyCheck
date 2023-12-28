@@ -16,23 +16,16 @@
  * Copyright (c) 2014 Jeremy Long. All Rights Reserved.
  */
 
-
 import org.apache.commons.lang.StringUtils
 
-import java.nio.charset.StandardCharsets
-import java.nio.file.Path
-import java.nio.file.Files
-
-Path oldPath = new File(basedir, "old/target/dependency-check-report.xml").toPath()
-String oldReport = new String(Files.readAllBytes(oldPath), StandardCharsets.UTF_8);
+String oldReport = new File(basedir, "old/target/dependency-check-report.xml").text
 int count = StringUtils.countMatches(oldReport, "pkg:maven/org.slf4j/slf4j-api@1.7.30");
 if (count == 0) {
     System.out.println("pkg:maven/org.slf4j/slf4j-api@1.7.30 was not identified and is a dependency of war-1.0.0-SNAPSHOT via lib-1.0.0-SNAPSHOT");
     return false;
 }
 
-Path newPath = new File(basedir, "new/target/dependency-check-report.xml").toPath()
-String newReport = new String(Files.readAllBytes(newPath), StandardCharsets.UTF_8);
+String newReport = new File(basedir, "new/target/dependency-check-report.xml").text
 count = StringUtils.countMatches(newReport, "pkg:maven/org.slf4j/slf4j-api@1.7.30");
 if (count != 0) {
     System.out.println("pkg:maven/org.slf4j/slf4j-api@1.7.30 was identified but has been removed as a dependency in the new project to simulate mitigating vulnerabilities");

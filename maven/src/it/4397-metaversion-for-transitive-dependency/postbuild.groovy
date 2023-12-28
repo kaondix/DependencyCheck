@@ -16,14 +16,12 @@
  * Copyright (c) 2023 Hans Aikema. All Rights Reserved.
  */
 
+
 import org.w3c.dom.NodeList
 
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Path
 
 def countMatches(String xml, String xpathQuery) {
     def xpath = XPathFactory.newInstance().newXPath()
@@ -34,8 +32,7 @@ def countMatches(String xml, String xpathQuery) {
     nodes.getLength();
 }
 
-Path path = new File(basedir, "main/target/dependency-check-report.xml").toPath()
-String log = new String(Files.readAllByte(path), StandardCharsets.UTF_8);
+String log = new File(basedir, "main/target/dependency-check-report.xml").text
 int count = countMatches(log, "/analysis/dependencies/dependency/evidenceCollected/evidence[@type='product' and ./value = 'commons-compress' and ./name = 'artifactid']");
 if (count != 1) {
     System.out.println(String.format("commons-compress was identified %s times, expected 1", count));

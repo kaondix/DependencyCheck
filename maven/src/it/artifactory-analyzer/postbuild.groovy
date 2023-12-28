@@ -18,10 +18,7 @@
 
 import org.apache.commons.lang.StringUtils
 
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-
-String log = new String(Files.readAllBytes(new File(basedir, "build.log").toPath()), StandardCharsets.UTF_8);
+String log = new File(basedir, "build.log").text
 int count = StringUtils.countMatches(log, "There was an issue connecting to Artifactory . Disabling analyzer.");
 if (count > 0) {
     System.out.println(String.format("There was an issue connecting to Artifactory . Disabling analyzer."));

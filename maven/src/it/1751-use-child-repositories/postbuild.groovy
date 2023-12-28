@@ -16,15 +16,9 @@
  * Copyright (c) 2014 Jeremy Long. All Rights Reserved.
  */
 
-
 import groovy.util.XmlSlurper
 
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Path
-
-Path path = new File(basedir, "target/dependency-check-report.xml").toPath()
-String report = new String(Files.readAllByte(path), StandardCharsets.UTF_8);
+String report = new File(basedir, "target/dependency-check-report.xml").text;
 
 def analysis = new XmlSlurper().parseText(report);
 def databindDep = analysis.dependencies.'*'.find { node -> node.fileName.text() == 'jackson-databind-2.4.3.jar' };

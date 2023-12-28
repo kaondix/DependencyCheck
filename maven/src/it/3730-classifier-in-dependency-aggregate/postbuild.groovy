@@ -16,15 +16,12 @@
  * Copyright (c) 2014 Jeremy Long. All Rights Reserved.
  */
 
+
 import org.w3c.dom.NodeList
 
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Path
-
 // Check to see if jackson-databind-2.5.3.jar was identified with a known CVE - using CVE-2018-7489.
 
 def countMatches(String xml, String xpathQuery) {
@@ -36,8 +33,7 @@ def countMatches(String xml, String xpathQuery) {
     nodes.getLength();
 }
 
-Path path = new File(basedir, "target/dependency-check-report.xml").toPath()
-String log = new String(Files.readAllByte(path), StandardCharsets.UTF_8);
+String log = new File(basedir, "target/dependency-check-report.xml").text
 int count = countMatches(log, "/analysis/dependencies/dependency[./fileName = 'guice-4.2.2-no_aop.jar']");
 if (count != 1) {
     System.out.println(String.format("google guice no_aop was identified %s times, expected 1", count));

@@ -18,16 +18,13 @@
 
 import org.apache.commons.lang.StringUtils
 
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-
 // Check to see if jackson-dataformat-xml-2.4.5.jar was identified.
 //TODO change this to xpath and check for CVE-2018-11307
 File file = new File(basedir, "target/dependency-check-report.xml");
 if (!file.isFile()) {
     System.err.println("Could not find XML Report: " + file);
 }
-String log = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
+String log = file.text
 int count = StringUtils.countMatches(log, "<name>CVE-2018-11307</name>");
 count += StringUtils.countMatches(log, "<name>CVE-2016-7051</name>");
 

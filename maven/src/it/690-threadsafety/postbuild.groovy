@@ -17,11 +17,8 @@
  */
 
 import org.apache.commons.lang.StringUtils
-
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files;
  
-String log = new String(Files.readAllBytes(new File(basedir, "build.log").toPath()), StandardCharsets.UTF_8);
+String log = new File(basedir, "build.log").text
 int count = StringUtils.countMatches(log, "Download Started for NVD CVE - 2020");
 if (count > 1){
     System.out.println(String.format("NVD CVE was downloaded %s times, should be 0 or 1 times", count));
