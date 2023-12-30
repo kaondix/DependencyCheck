@@ -64,7 +64,7 @@ public final class CliParser {
     /**
      * The supported reported formats.
      */
-    private static final String SUPPORTED_FORMATS = "HTML, XML, CSV, JSON, JUNIT, SARIF, JENKINS, or ALL";
+    private static final String SUPPORTED_FORMATS = "HTML, XML, CSV, JSON, JUNIT, SARIF, JENKINS, GITLAB or ALL";
 
     /**
      * Constructs a new CLI Parser object with the configured settings.
@@ -114,7 +114,7 @@ public final class CliParser {
      */
     private void validateArgs() throws FileNotFoundException, ParseException {
         if (isUpdateOnly() || isRunScan()) {
-            
+
             String value = line.getOptionValue(ARGUMENT.NVD_API_VALID_FOR_HOURS);
             if (value != null) {
                 try {
@@ -353,6 +353,8 @@ public final class CliParser {
                         "Only update the local NVD data cache; no scan will be executed."))
                 .addOption(newOptionWithArg(ARGUMENT.NVD_API_DELAY, "milliseconds",
                         "Time in milliseconds to wait between downloading from the NVD."))
+                .addOption(newOptionWithArg(ARGUMENT.NVD_API_ENDPOINT, "endpoint",
+                        "The NVD API Endpoint - setting this is rare."))
                 .addOption(newOptionWithArg(ARGUMENT.NVD_API_DATAFEED_URL, "url",
                         "The URL to the NVD API Datafeed."))
                 .addOption(newOptionWithArg(ARGUMENT.NVD_API_DATAFEED_USER, "user",
@@ -413,11 +415,11 @@ public final class CliParser {
                 .addOption(newOption(ARGUMENT.RETIRE_JS_FORCEUPDATE, "Force the RetireJS Analyzer to update "
                         + "even if autoupdate is disabled"))
                 .addOption(newOptionWithArg(ARGUMENT.RETIREJS_URL, "url",
-                        "The Retire JS Respository URL"))
+                        "The Retire JS Repository URL"))
                 .addOption(newOptionWithArg(ARGUMENT.RETIREJS_URL_USER, "username",
-                        "The password to authenticate to Retire JS Respository URL"))
+                        "The password to authenticate to Retire JS Repository URL"))
                 .addOption(newOptionWithArg(ARGUMENT.RETIREJS_URL_PASSWORD, "password",
-                        "The password to authenticate to Retire JS Respository URL"))
+                        "The password to authenticate to Retire JS Repository URL"))
                 .addOption(newOption(ARGUMENT.RETIREJS_FILTER_NON_VULNERABLE, "Specifies that the Retire JS "
                         + "Analyzer should filter out non-vulnerable JS files from the report."))
                 .addOption(newOptionWithArg(ARGUMENT.ARTIFACTORY_PARALLEL_ANALYSIS, "true/false",
@@ -1128,7 +1130,11 @@ public final class CliParser {
          */
         public static final String DATA_DIRECTORY = "data";
         /**
-         * The CLI argument name for setting the URL for the CVE Data Files.
+         * The CLI argument name for setting the URL for the NVD API Endpoint
+         */
+        public static final String NVD_API_ENDPOINT = "nvdApiEndpoint";
+        /**
+         * The CLI argument name for setting the URL for the NVD API Key.
          */
         public static final String NVD_API_KEY = "nvdApiKey";
         /**

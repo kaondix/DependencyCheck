@@ -18,7 +18,7 @@
 package org.owasp.dependencycheck;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.jcs3.JCS;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.owasp.dependencycheck.analyzer.AnalysisPhase;
@@ -39,6 +39,7 @@ import org.owasp.dependencycheck.exception.NoDataException;
 import org.owasp.dependencycheck.exception.ReportException;
 import org.owasp.dependencycheck.exception.WriteLockException;
 import org.owasp.dependencycheck.reporting.ReportGenerator;
+import org.owasp.dependencycheck.utils.FileUtils;
 import org.owasp.dependencycheck.utils.Settings;
 import org.owasp.dependencycheck.utils.WriteLock;
 import org.slf4j.Logger;
@@ -222,6 +223,7 @@ public class Engine implements FileFilter, AutoCloseable {
         } else {
             System.clearProperty("javax.xml.accessExternalSchema");
         }
+        JCS.shutdown();
     }
 
     /**
@@ -947,7 +949,7 @@ public class Engine implements FileFilter, AutoCloseable {
         try {
             final File cache = new File(settings.getDataDirectory(), "cache");
             if (cache.exists()) {
-                if (FileUtils.deleteQuietly(cache)) {
+                if (FileUtils.delete(cache)) {
                     LOGGER.info("Cache directory purged");
                 }
             }
@@ -957,7 +959,7 @@ public class Engine implements FileFilter, AutoCloseable {
         try {
             final File cache = new File(settings.getDataDirectory(), "oss_cache");
             if (cache.exists()) {
-                if (FileUtils.deleteQuietly(cache)) {
+                if (FileUtils.delete(cache)) {
                     LOGGER.info("OSS Cache directory purged");
                 }
             }
@@ -1185,7 +1187,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * @param applicationName the name of the application/project
      * @param outputDir the path to the output directory (can include the full
      * file name if the format is not ALL)
-     * @param format the report format (ALL, HTML, CSV, JSON, etc.)
+     * @param format the report format (see {@link ReportGenerator.Format})
      * @throws ReportException thrown if there is an error generating the report
      * @deprecated use
      * {@link #writeReports(java.lang.String, java.io.File, java.lang.String, org.owasp.dependencycheck.exception.ExceptionCollection)}
@@ -1202,7 +1204,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * @param applicationName the name of the application/project
      * @param outputDir the path to the output directory (can include the full
      * file name if the format is not ALL)
-     * @param format the report format (ALL, HTML, CSV, JSON, etc.)
+     * @param format the report format (see {@link ReportGenerator.Format})
      * @param exceptions a collection of exceptions that may have occurred
      * during the analysis
      * @throws ReportException thrown if there is an error generating the report
@@ -1221,7 +1223,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * @param version the Maven version
      * @param outputDir the path to the output directory (can include the full
      * file name if the format is not ALL)
-     * @param format the report format (ALL, HTML, CSV, JSON, etc.)
+     * @param format the report format (see {@link ReportGenerator.Format})
      * @throws ReportException thrown if there is an error generating the report
      * @deprecated use
      * {@link #writeReports(String, String, String, String, File, String, ExceptionCollection)}
@@ -1243,7 +1245,7 @@ public class Engine implements FileFilter, AutoCloseable {
      * @param version the Maven version
      * @param outputDir the path to the output directory (can include the full
      * file name if the format is not ALL)
-     * @param format the report format (ALL, HTML, CSV, JSON, etc.)
+     * @param format the report format  (see {@link ReportGenerator.Format})
      * @param exceptions a collection of exceptions that may have occurred
      * during the analysis
      * @throws ReportException thrown if there is an error generating the report

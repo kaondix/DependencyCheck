@@ -17,16 +17,16 @@ Configuration: dependency-check-update Task
 --------------------
 The following properties can be set on the dependency-check-update task.
 
-Property              | Description                                                             | Default Value
-----------------------|-------------------------------------------------------------------------|------------------
-proxyServer           | The Proxy Server.                                                       | &nbsp;
-proxyPort             | The Proxy Port.                                                         | &nbsp;
-proxyUsername         | Defines the proxy user name.                                            | &nbsp;
-proxyPassword         | Defines the proxy password.                                             | &nbsp;
-nonProxyHosts         | Defines the hosts that will not be proxied.                             | &nbsp;
-connectionTimeout     | The URL Connection Timeout (in milliseconds).                           | 10000
-readtimeout           | The URL Read Timeout (in milliseconds).                                 | 60000
-failOnError           | Whether the build should fail if there is an error executing the update | true
+Property              | Description                                                                                   | Default Value
+----------------------|-----------------------------------------------------------------------------------------------|------------------
+proxyServer           | The Proxy Server; see the [proxy configuration](../data/proxy.html) page for more information.| &nbsp;
+proxyPort             | The Proxy Port.                                                                               | &nbsp;
+proxyUsername         | Defines the proxy user name.                                                                  | &nbsp;
+proxyPassword         | Defines the proxy password.                                                                   | &nbsp;
+nonProxyHosts         | Defines the hosts that will not be proxied.                                                   | &nbsp;
+connectionTimeout     | The URL Connection Timeout (in milliseconds).                                                 | 10000
+readtimeout           | The URL Read Timeout (in milliseconds).                                                       | 60000
+failOnError           | Whether the build should fail if there is an error executing the update                       | true
 
 Advanced Configuration
 ====================
@@ -35,8 +35,9 @@ The following properties can be configured in the plugin. However, they are less
 Property             | Description                                                                                                          | Default Value
 ---------------------|----------------------------------------------------------------------------------------------------------------------|------------------
 nvdApiKey            | The API Key to access the NVD API; obtained from https://nvd.nist.gov/developers/request-an-api-key                  | &nbsp;
+nvdApiEndpoint       | The NVD API endpoint URL; setting this is uncommon.                                                                  | https://services.nvd.nist.gov/rest/json/cves/2.0
 nvdMaxRetryCount     | The maximum number of retry requests for a single call to the NVD API.                                               | 10
-nvdApiDelay          | The number of milliseconds to wait between calls to the NVD API.                                                     | 2000 with an NVD API Key or 8000 without an API Key
+nvdApiDelay          | The number of milliseconds to wait between calls to the NVD API.                                                     | 3500 with an NVD API Key or 8000 without an API Key
 nvdDatafeedUrl       | The URL for the NVD API Data feed that can be generated using https://github.com/jeremylong/Open-Vulnerability-Project/tree/main/vulnz#caching-the-nvd-cve-data - example value `https://internal.server/cache/nvdcve-{0}.json.gz` | &nbsp;
 nvdUser              | Credentials used for basic authentication for the NVD API Data feed.                                                 | &nbsp;
 nvdPassword          | Credentials used for basic authentication for the NVD API Data feed.                                                 | &nbsp;

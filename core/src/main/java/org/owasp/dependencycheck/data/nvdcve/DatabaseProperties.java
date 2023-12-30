@@ -28,6 +28,7 @@ import java.util.TreeMap;
 import javax.annotation.concurrent.ThreadSafe;
 
 import org.owasp.dependencycheck.data.update.exception.UpdateException;
+import org.owasp.dependencycheck.utils.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,6 +73,14 @@ public class DatabaseProperties {
      * The key for the last check time for the Known Exploited Vulnerabilities.
      */
     public static final String KEV_LAST_CHECKED = "kev.checked";
+    /**
+     * The key for the last check time for the Retire JS repository.
+     */
+    public static final String RETIRE_LAST_CHECKED = "retirejs.checked";
+    /**
+     * The key for the last check time for the hosted suppression file.
+     */
+    public static final String HOSTED_SUPPRESSION_LAST_CHECKED = "hosted.suppression.checked";
     /**
      * The key for the version the Known Exploited Vulnerabilities.
      */
@@ -160,18 +169,17 @@ public class DatabaseProperties {
         for (Entry<Object, Object> entry : properties.entrySet()) {
             final String key = (String) entry.getKey();
             if (!"version".equals(key)) {
-                if ("NVD CVE Modified".equals(key) || "NVD CVE Checked".equals(key) || "VersionCheckOn".equals(key)) {
-                    try {
-                        final long epoch = Long.parseLong((String) entry.getValue());
-                        final ZonedDateTime dateTime = Instant.ofEpochSecond(epoch).atZone(ZoneId.systemDefault());
-                        final String formatted = DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(dateTime);
-                        map.put(key, formatted);
-                    } catch (Throwable ex) { //deliberately being broad in this catch clause
-                        LOGGER.debug("Unable to parse timestamp from DB", ex);
-                        map.put(key, (String) entry.getValue());
-                    }
-                } else if (!key.startsWith("NVD CVE ")) {
-                    map.put(key, (String) entry.getValue());
+                if (DatabaseProperties.NVD_API_LAST_CHECKED.equals(key)) {
+                    map.put("NVD API Last Checked", entry.getValue().toString());
+
+                } else if (DatabaseProperties.NVD_API_LAST_MODIFIED.equals(key)) {
+                    map.put("NVD API Last Modified", entry.getValue().toString());
+
+                } else if (DatabaseProperties.NVD_CACHE_LAST_CHECKED.equals(key)) {
+                    map.put("NVD Cache Last Checked", entry.getValue().toString());
+
+                } else if (DatabaseProperties.NVD_CACHE_LAST_MODIFIED.equals(key)) {
+                    map.put("NVD Cache Last Modified", entry.getValue().toString());
                 }
             }
         }
@@ -200,6 +208,18 @@ public class DatabaseProperties {
     }
 
     /**
+     * Stores a timestamp in the properties file.
+     *
+     * @param properties the properties to store the timestamp
+     * @param key the property key
+     * @param timestamp the zoned date time
+     */
+    public static void setTimestamp(Properties properties, String key, ZonedDateTime timestamp) throws UpdateException {
+        final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ssX");
+        properties.put(key, dtf.format(timestamp));
+    }
+
+    /**
      * Retrieves a zoned date time.
      *
      * @param properties the properties file containing the date time
@@ -214,6 +234,35 @@ public class DatabaseProperties {
             return ZonedDateTime.parse(value, dtf);
         }
         return null;
+    }
+
+    /**
+     * Retrieves a zoned date time.
+     *
+     * @param properties the properties file containing the date time
+     * @param key the property key
+     * @return the zoned date time
+     */
+    public static ZonedDateTime getIsoTimestamp(Properties properties, String key) {
+        //final DateTimeFormatter dtf = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ssX");
+        final DateTimeFormatter dtf = DateTimeFormatter.ISO_DATE_TIME;
+        final String val = properties.getProperty(key);
+        if (val != null) {
+            final String value = properties.getProperty(key);
+            return ZonedDateTime.parse(value, dtf);
+        }
+        return null;
+    }
+
+    /**
+     * Returns the database property value in seconds.
+     *
+     * @param key the key to the property
+     * @return the property value in seconds
+     */
+    public long getPropertyInSeconds(String key) {
+        final String value = getProperty(key, "0");
+        return DateUtil.getEpochValueInSeconds(value);
     }
 
 }

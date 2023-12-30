@@ -20,7 +20,7 @@ Copyright (c) 2012 - Jeremy Long
 
     <groupId>org.owasp</groupId>
     <artifactId>dependency-check-parent</artifactId>
-    <version>9.0.2-SNAPSHOT</version>
+    <version>9.0.8-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -112,7 +112,7 @@ Copyright (c) 2012 - Jeremy Long
     </licenses>
     <properties>
         <!--reproducible build-->
-        <project.build.outputTimestamp>2023-11-26T11:34:05Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2023-12-18T11:42:10Z</project.build.outputTimestamp>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <github.global.server>github</github.global.server>
@@ -140,7 +140,7 @@ Copyright (c) 2012 - Jeremy Long
         <spotbugs.maven.plugin.version>4.7.3.6</spotbugs.maven.plugin.version>
         <taglist-maven-plugin.version>3.0.0</taglist-maven-plugin.version>
         <versions-maven-plugin.version>2.16.2</versions-maven-plugin.version>
-        <jetbrains.annotations.version>24.0.1</jetbrains.annotations.version>
+        <jetbrains.annotations.version>24.1.0</jetbrains.annotations.version>
         <com.h2database.version>2.1.214</com.h2database.version>
         <commons-cli.version>1.6.0</commons-cli.version>
         <commons-io.version>2.15.0</commons-io.version>
@@ -302,7 +302,7 @@ Copyright (c) 2012 - Jeremy Long
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.2.1</version>
+                    <version>3.2.2</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -972,7 +972,7 @@ Copyright (c) 2012 - Jeremy Long
             <dependency>
                 <groupId>io.github.jeremylong</groupId>
                 <artifactId>open-vulnerability-clients</artifactId>
-                <version>5.0.2</version>
+                <version>5.1.1</version>
             </dependency>
             <dependency>
                 <groupId>org.anarres.jdiagnostics</groupId>
@@ -1011,7 +1011,7 @@ Copyright (c) 2012 - Jeremy Long
             <dependency>
                 <groupId>io.github.jeremylong</groupId>
                 <artifactId>jcs3-slf4j</artifactId>
-                <version>1.0.3</version>
+                <version>1.0.5</version>
             </dependency>
             <dependency>
                 <groupId>commons-validator</groupId>

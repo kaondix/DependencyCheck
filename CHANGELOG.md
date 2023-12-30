@@ -1,5 +1,78 @@
 # Change Log
 
+## [Version 9.0.7](https://github.com/jereong/DependencyCheck/releases/tag/v9.0.7) (2023-12-18)
+
+- docs: document insecure configuration for GHSA-qqhq-8r2c-c3f5 (#6315)
+- fix: improve memory usage on NVD update (#6321)
+- fix: skip pyproject.toml unless it contains `tool.poetry` (#6316)
+- fix: resolve build error that may cause an issue on some JDK versions (#6312)
+
+See the full listing of [changes](https://github.com/jeremylong/DependencyCheck/milestone/77?closed=1).
+
+## [Version 9.0.6](https://github.com/jereong/DependencyCheck/releases/tag/v9.0.6) (2023-12-15)
+
+- build: bump open-vulnerability-clients@5.1.1 (#6308)
+- fix: mask nvd.api.key in logs; see GHSA-qqhq-8r2c-c3f5 (#6307)
+- fix: update java version check (#6297)
+- fix: more efficient memory usage (#6299)
+- fix: stream NVD data via Jackson to reduce memory footprint (#6275)
+- docs: document github action caching (#6301)
+
+See the full listing of [changes](https://github.com/jeremylong/DependencyCheck/milestone/76?closed=1).
+
+## [Version 9.0.5](https://github.com/jereong/DependencyCheck/releases/tag/v9.0.5) (2023-12-13)
+
+- fix: make NVD API endpoint configurable (#6287)
+- fix: synch last modified timestamp for NVD API (#6281)
+- fix: read NVD cache meta files if cache.properties does not exist (#6282)
+- fix: correct property for nonProxyHosts (#6285)
+- fix: reduce apache http logging (#6280)
+- fix: store last modified timestamp for RetireJS and the Hosted Suppression File in db (#6271)
+- build: bump golang in the docker image (#6274)
+- fix: use temporary files to reduce memory usage during the NVD Update (#6270)
+- fix: use BIT for Oracle DB instead of Boolean when calling prepared statements (#6264)
+- fix: showing all reference tags in reports (#6259)
+
+See the full listing of [changes](https://github.com/jeremylong/DependencyCheck/milestone/75?closed=1).
+
+## [Version 9.0.4](https://github.com/jereong/DependencyCheck/releases/tag/v9.0.4) (2023-12-08)
+
+- fix: utilize maven proxy if present (#6255)
+- fix: allow api key in cli to be quoted (#6253)
+- fix: use correct maven plugin reporting plugin (#6244)
+- fix: correct trailing comma in JSON report (#6245)
+
+See the full listing of [changes](https://github.com/jeremylong/DependencyCheck/milestone/74?closed=1).
+
+## [Version 9.0.3](https://github.com/jereong/DependencyCheck/releases/tag/v9.0.3) (2023-12-06)
+
+- fix: use Java properties for proxy configuration (#6238)
+- docs: update proxy configuration documentation (#6237)
+- docs: add documentation on caching (#6204)
+- docs: Clarify H2 database caching strategy (#6220)
+- docs: Update list of supported report formats (#6224)
+- docs: example 5 with new nvdDatafeedUrl parameter (#6215)
+- fix: prevent NPEs (#6232 and #6206)
+- fix: check valid for hours for NVD API (#6225)
+- fix: correct NVD cache last checked logic (#6218)
+- fix: nvd datafeed should process current year (#6213)
+- fix: correct references to cvssv2 and cvssv3 fields in json and xml reports (#6212)
+- fix: correct name on reference links in report (#6205)
+- fix: flaws int the gitlab report (#6193)
+
+See the full listing of [changes](https://github.com/jeremylong/DependencyCheck/milestone/73?closed=1).
+
+## [Version 9.0.2](https://github.com/jereong/DependencyCheck/releases/tag/v9.0.2) (2023-12-01)
+
+- fix: remove virtual match string on NVD API Request (#6177)
+- fix: correct meta data in report after switching the NVD API (#6154)
+- fix: retry HTTP connections to NVD on 502 and 504 errors (#6151)
+- fix: Gitlab report format needs severity capitalized (#6182)
+- fix: improve JDK update version parsing (#6163)
+- fix: mute JCS logging (again) (#6153)
+
+See the full listing of [changes](https://github.com/jeremylong/DependencyCheck/milestone/72?closed=1).
+
 ## [Version 9.0.1](https://github.com/jereong/DependencyCheck/releases/tag/v9.0.1) (2023-11-26)
 
 **breaking changes**: See the [upgrade notice](https://github.com/jeremylong/DependencyCheck#900-upgrade-notice)
@@ -191,7 +264,7 @@ See the full listing of [changes](https://github.com/jeremylong/DependencyCheck/
 - The `gradle` and `maven` plugins now have the capability to scan the build plugins ([#4035](https://github.com/jeremylong/DependencyCheck/issues/4035)).
 - The `gradle` and `maven` plugins, for transitive dependencies, will report the root dependency in the project that included the transitive dependency ([#5001](https://github.com/jeremylong/DependencyCheck/pull/5001)).
 - Added `properties.security-severity` to SARIF report for better integration with GitHub Security Code scanning ([#5277](https://github.com/jeremylong/DependencyCheck/pull/5227)).
-- Allow for HTTP auth settings for Retire JS respository ([#5209](https://github.com/jeremylong/DependencyCheck/pull/5209)).
+- Allow for HTTP auth settings for Retire JS repository ([#5209](https://github.com/jeremylong/DependencyCheck/pull/5209)).
 - New schema for the XML report was added to support some of the above additions ([#5296](https://github.com/jeremylong/DependencyCheck/pull/5296)).
 - Added missing gradle option to only warn on remote errors from the OSS Index Analyzer ([gradle #303](https://github.com/dependency-check/dependency-check-gradle/pull/303)).
 

@@ -44,6 +44,7 @@ import ch.qos.logback.classic.filter.ThresholdFilter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
+import io.github.jeremylong.jcs3.slf4j.Slf4jAdapter;
 import java.util.TreeSet;
 import org.owasp.dependencycheck.utils.SeverityUtil;
 
@@ -79,9 +80,9 @@ public class App {
      */
     @SuppressWarnings("squid:S4823")
     public static void main(String[] args) {
-        if (System.getProperty("jcs.logSystem") == null) {
-            System.setProperty("jcs.logSystem", "slf4j");
-            System.setProperty("jcs.logSystem.mute", Boolean.toString(!LOGGER.isDebugEnabled()));
+        System.setProperty("jcs.logSystem", "slf4j");
+        if (!LOGGER.isDebugEnabled()) {
+            Slf4jAdapter.muteLogging(true);
         }
         final int exitCode;
         final App app = new App();
@@ -648,7 +649,15 @@ public class App {
         settings.setStringIfNotEmpty(Settings.KEYS.ANALYZER_ASSEMBLY_DOTNET_PATH,
                 cli.getStringArgument(CliParser.ARGUMENT.PATH_TO_CORE));
 
-        settings.setStringIfNotEmpty(Settings.KEYS.NVD_API_KEY, cli.getStringArgument(CliParser.ARGUMENT.NVD_API_KEY));
+        String key = cli.getStringArgument(CliParser.ARGUMENT.NVD_API_KEY);
+        if (key != null) {
+            if ((key.startsWith("\"") && key.endsWith("\"") || (key.startsWith("'") && key.endsWith("'")))) {
+                key = key.substring(1, key.length() - 1);
+            }
+            settings.setStringIfNotEmpty(Settings.KEYS.NVD_API_KEY, key);
+        }
+        settings.setStringIfNotEmpty(Settings.KEYS.NVD_API_ENDPOINT,
+                cli.getStringArgument(CliParser.ARGUMENT.NVD_API_ENDPOINT));
         settings.setIntIfNotNull(Settings.KEYS.NVD_API_DELAY, cli.getIntegerValue(CliParser.ARGUMENT.NVD_API_DELAY));
         settings.setStringIfNotEmpty(Settings.KEYS.NVD_API_DATAFEED_URL, cli.getStringArgument(CliParser.ARGUMENT.NVD_API_DATAFEED_URL));
         settings.setStringIfNotEmpty(Settings.KEYS.NVD_API_DATAFEED_USER, cli.getStringArgument(CliParser.ARGUMENT.NVD_API_DATAFEED_USER));

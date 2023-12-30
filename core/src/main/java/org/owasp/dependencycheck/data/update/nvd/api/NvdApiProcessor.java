@@ -18,8 +18,15 @@
 package org.owasp.dependencycheck.data.update.nvd.api;
 
 import io.github.jeremylong.openvulnerability.client.nvd.DefCveItem;
-import java.util.Collection;
+
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.concurrent.Callable;
+import java.util.zip.GZIPInputStream;
+
 import org.owasp.dependencycheck.data.nvd.ecosystem.CveEcosystemMapper;
 import org.owasp.dependencycheck.data.nvdcve.CveDB;
 import org.slf4j.Logger;
@@ -41,9 +48,9 @@ public class NvdApiProcessor implements Callable<NvdApiProcessor> {
      */
     private final CveDB cveDB;
     /**
-     * The collection of NVD API data to add to the database.
+     * The file containing the data to inject.
      */
-    private Collection<DefCveItem> data;
+    private File jsonFile;
     /**
      * Reference to the CVE Ecosystem Mapper object.
      */
@@ -60,13 +67,13 @@ public class NvdApiProcessor implements Callable<NvdApiProcessor> {
     /**
      * Create a new processor to put the NVD data into the database.
      *
-     * @param cveDB a reference to the database
-     * @param data the data to add to the database
+     * @param cveDB a reference to the database.
+     * @param jsonFile the JSON data file to inject.
      * @param startTime the start time of the update process.
      */
-    public NvdApiProcessor(final CveDB cveDB, Collection<DefCveItem> data, long startTime) {
+    public NvdApiProcessor(final CveDB cveDB, File jsonFile, long startTime) {
         this.cveDB = cveDB;
-        this.data = data;
+        this.jsonFile = jsonFile;
         this.startTime = startTime;
     }
 
@@ -74,24 +81,46 @@ public class NvdApiProcessor implements Callable<NvdApiProcessor> {
      * Create a new processor to put the NVD data into the database.
      *
      * @param cveDB a reference to the database
-     * @param data the data to add to the database
+     * @param jsonFile the JSON data file to inject.
      */
-    public NvdApiProcessor(final CveDB cveDB, Collection<DefCveItem> data) {
-        this(cveDB, data, System.currentTimeMillis());
+    public NvdApiProcessor(final CveDB cveDB, File jsonFile) {
+        this(cveDB, jsonFile, System.currentTimeMillis());
     }
 
     @Override
     public NvdApiProcessor call() throws Exception {
-        for (DefCveItem entry : data) {
+        if (jsonFile.getName().endsWith(".jsonarray.gz")) {
+            try (InputStream fis = Files.newInputStream(jsonFile.toPath());
+                 InputStream is = new BufferedInputStream(new GZIPInputStream(fis));
+                 CveItemSource<DefCveItem> itemSource = new JsonArrayCveItemSource(is)) {
+                updateCveDb(itemSource);
+            }
+        } else if (jsonFile.getName().endsWith(".gz")) {
+            try (InputStream fis = Files.newInputStream(jsonFile.toPath());
+                 InputStream is = new BufferedInputStream(new GZIPInputStream(fis));
+                 CveItemSource<DefCveItem> itemSource = new CveApiJson20CveItemSource(is)) {
+                updateCveDb(itemSource);
+            }
+        } else {
+            try (InputStream fis = Files.newInputStream(jsonFile.toPath());
+                 InputStream is = new BufferedInputStream(fis);
+                 CveItemSource<DefCveItem> itemSource = new JsonArrayCveItemSource(is)) {
+                updateCveDb(itemSource);
+            }
+        }
+        endTime = System.currentTimeMillis();
+        return this;
+    }
+
+    private void updateCveDb(CveItemSource<DefCveItem> itemSource) throws IOException {
+        while (itemSource.hasNext()) {
+            DefCveItem entry = itemSource.next();
             try {
-            cveDB.updateVulnerability(entry, mapper.getEcosystem(entry));
+                cveDB.updateVulnerability(entry, mapper.getEcosystem(entry));
             } catch (Exception ex) {
                 LOGGER.error("Failed to process " + entry.getCve().getId(), ex);
             }
         }
-        endTime = System.currentTimeMillis();
-        data = null;
-        return this;
     }
 
     /**

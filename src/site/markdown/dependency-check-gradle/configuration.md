@@ -29,8 +29,8 @@ Property             | Description                                              
 ---------------------|----------------------------------------------------------------------------------------------------------------------|------------------
 autoUpdate           | Sets whether auto-updating of the NVD API CVE data is enabled. It is not recommended that this be turned to false.   | true
 analyzedTypes        | The default artifact types that will be analyzed.                                                                    | ['jar', 'aar', 'js', 'war', 'ear', 'zip']
-format               | The report format to be generated (HTML, XML, CSV, JSON, JUNIT, ALL).                                                | HTML
-formats              | A list of report formats to be generated (HTML, XML, CSV, JSON, JUNIT, ALL).                                         | &nbsp;
+format               | The report format to be generated (HTML, XML, CSV, JSON, JUNIT, SARIF, JENKINS, GITLAB, ALL).                        | HTML
+formats              | A list of report formats to be generated (HTML, XML, CSV, JSON, JUNIT, SARIF, JENKINS, GITLAB, ALL).                 | &nbsp;
 junitFailOnCVSS      | If using the JUNIT report format the junitFailOnCVSS sets the CVSS score threshold that is considered a failure.     | 0
 failBuildOnCVSS      | Specifies if the build should be failed if a CVSS score equal to or above a specified level is identified. The default is 11; since the CVSS scores are 0-10, by default the build will never fail. More information on CVSS scores can be found at the [NVD](https://nvd.nist.gov/vuln-metrics/cvss) | 11
 failOnError          | Fails the build if an error occurs during the dependency-check analysis.                                             | true
@@ -52,7 +52,6 @@ scanSet              | A list of directories that will be scanned for additional
 ```groovy
 dependencyCheck {
     autoUpdate=false
-    cveValidForHours=1
     format='ALL'
 }
 ```
@@ -68,8 +67,9 @@ The following properties can be configured in the dependencyCheck task. However,
 Config Group | Property          | Description                                                                                                          | Default Value
 -------------|-------------------|----------------------------------------------------------------------------------------------------------------------|------------------
 nvd          | apiKey            | The API Key to access the NVD API; obtained from https://nvd.nist.gov/developers/request-an-api-key                  | &nbsp;                                                              |
+nvd          | endpoint          | The NVD API endpoint URL; setting this is uncommon.                                                          | https://services.nvd.nist.gov/rest/json/cves/2.0                            |
 nvd          | maxRetryCount     | The maximum number of retry requests for a single call to the NVD API.                                               | 10                                                                  |
-nvd          | delay             | The number of milliseconds to wait between calls to the NVD API.                                                     | 2000 with an NVD API Key or 8000 without an API Key                 |
+nvd          | delay             | The number of milliseconds to wait between calls to the NVD API.                                                     | 3500 with an NVD API Key or 8000 without an API Key                 |
 nvd          | datafeedUrl       | The URL for the NVD API Data feed that can be generated using https://github.com/jeremylong/Open-Vulnerability-Project/tree/main/vulnz#caching-the-nvd-cve-data | &nbsp;                   |
 nvd          | datafeedUser      | Credentials used for basic authentication for the NVD API Data feed.                                                 | &nbsp;                                                              |
 nvd          | datafeedPassword  | Credentials used for basic authentication for the NVD API Data feed.                                                 | &nbsp;                                                              |

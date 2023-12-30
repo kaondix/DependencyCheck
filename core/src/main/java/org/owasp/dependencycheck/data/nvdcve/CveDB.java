@@ -872,13 +872,13 @@ public final class CveDB implements AutoCloseable {
                 }
             }
         } catch (SQLException ex) {
-            final String msg = String.format("Error updating '%s'", cveId);
+            final String msg = String.format("Error updating '%s'; %s", cveId, ex.getMessage());
             LOGGER.debug(msg, ex);
-            throw new DatabaseException(msg, ex);
+            throw new DatabaseException(msg);
         } catch (CpeValidationException ex) {
-            final String msg = String.format("Error parsing CPE entry from '%s'", cveId);
+            final String msg = String.format("Error parsing CPE entry from '%s'; %s", cveId, ex.getMessage());
             LOGGER.debug(msg, ex);
-            throw new DatabaseException(msg, ex);
+            throw new DatabaseException(msg);
         }
     }
 
@@ -978,10 +978,19 @@ public final class CveDB implements AutoCloseable {
                 callUpdate.setNull(4, java.sql.Types.DOUBLE);
                 callUpdate.setNull(5, java.sql.Types.DOUBLE);
                 callUpdate.setNull(6, java.sql.Types.VARCHAR);
-                callUpdate.setNull(7, java.sql.Types.BOOLEAN);
-                callUpdate.setNull(8, java.sql.Types.BOOLEAN);
-                callUpdate.setNull(9, java.sql.Types.BOOLEAN);
-                callUpdate.setNull(10, java.sql.Types.BOOLEAN);
+                //TODO this is may also be an issue for MS SQL, if an issue is created we'll just need
+                // to create an isMsSQL flag. See todo below in setUpdateColum
+                if (isOracle) {
+                    callUpdate.setNull(7, java.sql.Types.BIT);
+                    callUpdate.setNull(8, java.sql.Types.BIT);
+                    callUpdate.setNull(9, java.sql.Types.BIT);
+                    callUpdate.setNull(10, java.sql.Types.BIT);
+                } else {
+                    callUpdate.setNull(7, java.sql.Types.BOOLEAN);
+                    callUpdate.setNull(8, java.sql.Types.BOOLEAN);
+                    callUpdate.setNull(9, java.sql.Types.BOOLEAN);
+                    callUpdate.setNull(10, java.sql.Types.BOOLEAN);
+                }
                 callUpdate.setNull(11, java.sql.Types.DOUBLE);
                 callUpdate.setNull(12, java.sql.Types.VARCHAR);
                 callUpdate.setNull(13, java.sql.Types.VARCHAR);
@@ -1227,12 +1236,12 @@ public final class CveDB implements AutoCloseable {
             if (cve.getCve().getReferences() != null) {
                 for (Reference r : cve.getCve().getReferences()) {
                     insertReference.setInt(1, vulnerabilityId);
-                    Optional<String> name = Optional.empty();
+                    String name = null;
                     if (r.getTags() != null) {
-                        name = r.getTags().stream().sorted().findFirst();
+                        name = r.getTags().stream().sorted().collect(Collectors.joining(",")).toUpperCase().replaceAll("\\s", "_");
                     }
-                    if (name.isPresent()) {
-                        insertReference.setString(2, name.get());
+                    if (name != null) {
+                        insertReference.setString(2, name);
                     } else {
                         insertReference.setNull(2, java.sql.Types.VARCHAR);
                     }
@@ -1649,7 +1658,13 @@ public final class CveDB implements AutoCloseable {
 
     private void setUpdateColumn(PreparedStatement ps, int i, Boolean value) throws SQLException {
         if (value == null) {
-            ps.setNull(i, java.sql.Types.BOOLEAN);
+            //TODO this is may also be an issue for MS SQL, if an issue is created we'll just need
+            // to create an isMsSQL flag. See todo above in updateOrInsertVulnerability.
+            if (isOracle) {
+                ps.setNull(i, java.sql.Types.BIT);
+            } else {
+                ps.setNull(i, java.sql.Types.BOOLEAN);
+            }
         } else {
             ps.setBoolean(i, value);
         }

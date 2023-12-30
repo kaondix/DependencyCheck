@@ -20,7 +20,9 @@ have a few options:
 
 1. Configure the [proxy settings](proxy.html) so that the build server can access the Internet
 2. [Mirror the NVD](./mirrornvd.html) locally within your organization
-3. Use a more robust [centralized database](./database.html) with a single update node
+3. Build the H2 database on one node and [cache the H2 database](./cacheh2.md).
+4. Use a more robust [centralized database](./database.html) with a single update node
+5. In GitHub Actions utilize the cache action; [example here](./cache-action.md).
 
 ## CISA Known Exploited Vulnerabilities
 

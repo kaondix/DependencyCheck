@@ -2,10 +2,10 @@ name: Build and Deploy Release
 
 ##
 ## Automates the release process
-## 1. Update the 'body:' below and the changelog.md
+## 1. Run `./list-changes.sh` and update the changelog.md.
 ## 2. Run `./prepare-release.sh`
 ## 3. Create PR, merge PR
-## 4. Run `git push origin main --tags`
+## 4. Run `git push origin --tags`
 ##
 
 permissions:
@@ -76,10 +76,10 @@ jobs:
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         run: |
-          mvn -s settings.xml -Prelease "-DnexusUrl=https://oss.sonatype.org/" clean package source:jar javadoc:jar gpg:sign deploy site site:stage -DreleaseTesting --no-transfer-progress --batch-mode -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }} 
+          mvn -V -s settings.xml -Prelease "-DnexusUrl=https://oss.sonatype.org/" clean package source:jar javadoc:jar gpg:sign deploy site site:stage -DreleaseTesting --no-transfer-progress --batch-mode -Dgpg.passphrase=${{ secrets.OSSRH_GPG_SECRET_KEY_PASSWORD }}
       - name: Archive code coverage results
         id: archive-coverage
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: code-coverage-report
           retention-days: 7
@@ -88,7 +88,7 @@ jobs:
             **/target/jacoco-results/**/*.html
       - name: Archive Release
         id: archive-release
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: archive-release
           retention-days: 7
@@ -101,7 +101,7 @@ jobs:
             target/*.buildinfo
       - name: Archive Site
         id: archive-site
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: archive-site
           retention-days: 7
@@ -113,7 +113,7 @@ jobs:
     needs: build
     steps:
       - name: Download coverage reports
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: code-coverage-report
       - name: Run codacy-coverage-reporter
@@ -145,7 +145,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Download release build
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: archive-release
       - name: Build Docker Image
@@ -172,7 +172,7 @@ jobs:
           VERSION=$( mvn help:evaluate -Dexpression=project.version -q -DforceStdout )
           echo "VERSION=$VERSION" >> $GITHUB_ENV
       - name: Download release build
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: archive-release
       - name: Create Release
@@ -186,16 +186,7 @@ jobs:
           prerelease: false
           draft: false
           body: |
-            - fix: check java 8 update version; minimum JRE is 8 update 251 (#6118)
-            - fix: add retry for failed NVD API requests (#6136)
-            - docs: add default values to documentation for the NVD API Delay (#6135)
-            - chore: Revert "build(deps): bump com.h2database:h2 from 2.1.214 to 2.2.224" (#6131)
-              - this is a **breaking change** for anyone that successfully created the H2 database with 9.0.0.
-            - fix: mute jcs logging (#6130)
-            - docs: update NVD notice (#6110)
-            - fix: Use the correct key for NVD API-Key from Maven Settings serverId (#6109)
-
-            See the full listing of [changes](https://github.com/jeremylong/DependencyCheck/milestone/71?closed=1).
+            Refer to the [CHANGELOG.md](https://github.com/jeremylong/DependencyCheck/blob/main/CHANGELOG.md#change-log) for information about improvements and upgrade notes.
 
       - name: Upload CLI
         id: upload-release-cli
@@ -256,7 +247,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Download Site
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: archive-site
           path: target/staging
