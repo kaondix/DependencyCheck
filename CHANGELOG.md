@@ -1,6 +1,40 @@
 # Change Log
 
-## [Version 9.0.7](https://github.com/jereong/DependencyCheck/releases/tag/v9.0.7) (2023-12-18)
+## [Version 9.0.10](https://github.com/jeremylong/DependencyCheck/releases/tag/v9.0.10) (2024-03-15)
+
+- fix: #4321 Suppress redis server CVEs for client libraries (#4321) (#6489)
+- fix: bump commons-compress from 1.25.0 to 1.26.0 to fix CVE-2024-25710 and CVE-2024-26308 (#6492)
+- feat: Allow to pass NVD API key via environment variable (#6454)
+- fix: issue 5452 - ConcurrentModificationException in NodePackageAnalyzer.processDependencies - adding synchronized block  (#6501)
+- docs: document the default data directory (#6484)
+- fix: prevent NPE in bundler audit (#6462)
+- fix: #6441 Improve suppression rule to not restrict to a single version (#6442)
+
+See the full listing of [changes](https://github.com/jeremylong/DependencyCheck/milestone/80?closed=1).
+
+## [Version 9.0.9](https://github.com/jeremylong/DependencyCheck/releases/tag/v9.0.9) (2024-01-17)
+
+- fix: for #6374 to delete non-empty directories (#6375)
+- fix: NoSuchMethodError closeQuietly(java.io.Closeable[]) (#6377)
+- chore: close stream to prevent possible resource leak (#6382)
+- docs: Document default for CLI --data (#6359)
+- docs: document gradle build (#6371)
+
+See the full listing of [changes](https://github.com/jeremylong/DependencyCheck/milestone/79?closed=1).
+
+## [Version 9.0.8](https://github.com/jeremylong/DependencyCheck/releases/tag/v9.0.8) (2024-01-06)
+
+- fix: favor stability over performance (#6349)
+- chore: replace commons-io with core java calls (#6343)
+- fix: improve error reporting for invalid H2 database (#6339)
+- fix: rework fix for closing input streams on errors correctly (#6338)
+- fix: reduce chance NVD API block updates due to rate limit (#6333)
+- fix: ensure open handles will not leak on errors (#6326)
+- fix: improve error reporting (#6324)
+
+See the full listing of [changes](https://github.com/jeremylong/DependencyCheck/milestone/78?closed=1).
+
+## [Version 9.0.7](https://github.com/jeremylong/DependencyCheck/releases/tag/v9.0.7) (2023-12-18)
 
 - docs: document insecure configuration for GHSA-qqhq-8r2c-c3f5 (#6315)
 - fix: improve memory usage on NVD update (#6321)
@@ -9,7 +43,7 @@
 
 See the full listing of [changes](https://github.com/jeremylong/DependencyCheck/milestone/77?closed=1).
 
-## [Version 9.0.6](https://github.com/jereong/DependencyCheck/releases/tag/v9.0.6) (2023-12-15)
+## [Version 9.0.6](https://github.com/jeremylong/DependencyCheck/releases/tag/v9.0.6) (2023-12-15)
 
 - build: bump open-vulnerability-clients@5.1.1 (#6308)
 - fix: mask nvd.api.key in logs; see GHSA-qqhq-8r2c-c3f5 (#6307)
@@ -20,7 +54,7 @@ See the full listing of [changes](https://github.com/jeremylong/DependencyCheck/
 
 See the full listing of [changes](https://github.com/jeremylong/DependencyCheck/milestone/76?closed=1).
 
-## [Version 9.0.5](https://github.com/jereong/DependencyCheck/releases/tag/v9.0.5) (2023-12-13)
+## [Version 9.0.5](https://github.com/jeremylong/DependencyCheck/releases/tag/v9.0.5) (2023-12-13)
 
 - fix: make NVD API endpoint configurable (#6287)
 - fix: synch last modified timestamp for NVD API (#6281)
@@ -35,7 +69,7 @@ See the full listing of [changes](https://github.com/jeremylong/DependencyCheck/
 
 See the full listing of [changes](https://github.com/jeremylong/DependencyCheck/milestone/75?closed=1).
 
-## [Version 9.0.4](https://github.com/jereong/DependencyCheck/releases/tag/v9.0.4) (2023-12-08)
+## [Version 9.0.4](https://github.com/jeremylong/DependencyCheck/releases/tag/v9.0.4) (2023-12-08)
 
 - fix: utilize maven proxy if present (#6255)
 - fix: allow api key in cli to be quoted (#6253)
@@ -44,7 +78,7 @@ See the full listing of [changes](https://github.com/jeremylong/DependencyCheck/
 
 See the full listing of [changes](https://github.com/jeremylong/DependencyCheck/milestone/74?closed=1).
 
-## [Version 9.0.3](https://github.com/jereong/DependencyCheck/releases/tag/v9.0.3) (2023-12-06)
+## [Version 9.0.3](https://github.com/jeremylong/DependencyCheck/releases/tag/v9.0.3) (2023-12-06)
 
 - fix: use Java properties for proxy configuration (#6238)
 - docs: update proxy configuration documentation (#6237)
@@ -62,7 +96,7 @@ See the full listing of [changes](https://github.com/jeremylong/DependencyCheck/
 
 See the full listing of [changes](https://github.com/jeremylong/DependencyCheck/milestone/73?closed=1).
 
-## [Version 9.0.2](https://github.com/jereong/DependencyCheck/releases/tag/v9.0.2) (2023-12-01)
+## [Version 9.0.2](https://github.com/jeremylong/DependencyCheck/releases/tag/v9.0.2) (2023-12-01)
 
 - fix: remove virtual match string on NVD API Request (#6177)
 - fix: correct meta data in report after switching the NVD API (#6154)
@@ -73,7 +107,7 @@ See the full listing of [changes](https://github.com/jeremylong/DependencyCheck/
 
 See the full listing of [changes](https://github.com/jeremylong/DependencyCheck/milestone/72?closed=1).
 
-## [Version 9.0.1](https://github.com/jereong/DependencyCheck/releases/tag/v9.0.1) (2023-11-26)
+## [Version 9.0.1](https://github.com/jeremylong/DependencyCheck/releases/tag/v9.0.1) (2023-11-26)
 
 **breaking changes**: See the [upgrade notice](https://github.com/jeremylong/DependencyCheck#900-upgrade-notice)
 
