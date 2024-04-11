@@ -221,7 +221,7 @@ public class SwiftAnalyzersTest extends BaseTest {
         assertThat(engine.getDependencies()[0].getVersion(), equalTo("5.4.3"));
         assertThat(engine.getDependencies()[1].getName(), equalTo("alamofireimage"));
         assertThat(engine.getDependencies()[1].getVersion(), equalTo("4.2.0"));
-        assertThat(engine.getDependencies()[2].getName(), equalTo("facebook"));
+        assertThat(engine.getDependencies()[2].getName(), equalTo("facebook-ios-sdk"));
         assertThat(engine.getDependencies()[2].getVersion(), equalTo("9.3.0"));
     }
 
