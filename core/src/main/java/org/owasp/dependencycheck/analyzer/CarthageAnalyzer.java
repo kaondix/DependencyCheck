@@ -33,8 +33,6 @@ import org.owasp.dependencycheck.utils.FileFilterBuilder;
 import org.owasp.dependencycheck.utils.Settings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import us.springett.parsers.cpe.exceptions.CpeEncodingException;
-import us.springett.parsers.cpe.util.Convert;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.io.File;
@@ -89,17 +87,20 @@ public class CarthageAnalyzer extends AbstractFileTypeAnalyzer {
 
     /**
      * The capture group #1 is the dependency type, #2 is the name, #3 is dependency version.
+     * The version can be a commit ref, so we can't assume it's a number
      *
      * Example values:
      * - binary "https://dl.google.com/geosdk/GoogleMaps.json" "7.2.0"
      * - git "https://gitlab.matrix.org/matrix-org/olm.git" "3.2.16"
+     * - github "alinradut/SwiftEntryKit" "95f4a08f41ddcf2c02e2b22789038774c8c94df5""
      * - github "CocoaLumberjack/CocoaLumberjack" "3.8.5"
+     * - github "realm/realm-swift" "v10.44.0"
      */
-
-    // the version could be a git commit, so we can't assume a number here
-    // private static final Pattern CARTFILE_RESOLVED_DEPENDENCY_PATTERN = Pattern.compile("(github|git|binary) \"([^\"]+)\" \"(\\d+(\\.\\d+){0,4})\"");
     private static final Pattern CARTFILE_RESOLVED_DEPENDENCY_PATTERN = Pattern.compile("(github|git|binary) \"([^\"]+)\" \"([^\"]+)\"");
 
+    /**
+     * The capture group #1 is the actual numerical version.
+     */
     private static final Pattern CARTFILE_VERSION_PATTERN = Pattern.compile("^v?(\\d+(\\.\\d+){0,4})$");
 
     /**
