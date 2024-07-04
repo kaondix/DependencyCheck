@@ -40,4 +40,4 @@ ALTER TABLE vulnerability ADD   COLUMN v4environmentalSeverity VARCHAR(15);
 ALTER TABLE vulnerability ADD   COLUMN v4source VARCHAR(50);
 ALTER TABLE vulnerability ADD   COLUMN v4type VARCHAR(15);
 
-UPDATE Properties SET `value`='5.5' WHERE ID='version';
+UPDATE Properties SET value='5.5' WHERE ID='version';
